@@ -1,0 +1,883 @@
+{
+  "users": [
+    {
+      "id": "usr-admin-01",
+      "email": "admin@welfare.gov",
+      "password_hash": "admin123",
+      "name": "System Administrator",
+      "role": "admin",
+      "profile": {}
+    },
+    {
+      "id": "usr-citizen-01",
+      "email": "citizen@welfare.gov",
+      "password_hash": "password123",
+      "name": "Rajesh Kumar",
+      "role": "citizen",
+      "profile": {
+        "name": "Rajesh Kumar",
+        "age": 42,
+        "gender": "Male",
+        "state": "Uttar Pradesh",
+        "district": "Varanasi",
+        "occupation": "Farmer",
+        "annual_income": 120000.0,
+        "education": "Secondary",
+        "caste_category": "OBC",
+        "disability_status": false,
+        "student_status": false,
+        "farmer_status": true,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true
+      }
+    },
+    {
+      "id": "usr-52a49713",
+      "email": "saipavan@gmail.com",
+      "password_hash": "hashed_123456",
+      "name": "Sai Pavan",
+      "role": "citizen",
+      "profile": {
+        "name": "Sai Pavan",
+        "age": 20,
+        "gender": "Male",
+        "state": "telangana",
+        "district": "hyderabad",
+        "occupation": "Student",
+        "annual_income": 120000.0,
+        "education": "Graduate",
+        "caste_category": "OBC",
+        "disability_status": false,
+        "student_status": false,
+        "farmer_status": true,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true
+      }
+    },
+    {
+      "id": "usr-13383e41",
+      "email": "rohan@gmail.com",
+      "password_hash": "hashed_123456",
+      "name": "rohan",
+      "role": "citizen",
+      "profile": {
+        "name": "rohan",
+        "age": 20,
+        "gender": "Male",
+        "state": "telangana",
+        "district": "hyderabad",
+        "occupation": "Student",
+        "annual_income": 100000.0,
+        "education": "Graduate",
+        "caste_category": "OBC",
+        "disability_status": false,
+        "student_status": false,
+        "farmer_status": true,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true
+      }
+    },
+    {
+      "id": "usr-70069c1b",
+      "email": "rahul@gmail.com",
+      "password_hash": "hashed_123456",
+      "name": "Rahul",
+      "role": "citizen",
+      "profile": {
+        "name": "Rahul",
+        "age": 30,
+        "gender": "Male",
+        "state": "Uttar Pradesh",
+        "district": "Varanasi",
+        "occupation": "Self-Employed",
+        "annual_income": 180000,
+        "education": "Secondary",
+        "caste_category": "General",
+        "disability_status": false,
+        "student_status": false,
+        "farmer_status": false,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true
+      }
+    },
+    {
+      "id": "usr-794c3ecd",
+      "email": "thogitisrivaibhou@gmail.com",
+      "password_hash": "hashed_123456",
+      "name": "Thogiti Srivaibhou",
+      "mobile_number": "9440638282",
+      "role": "citizen",
+      "profile": {
+        "name": "Thogiti Srivaibhou",
+        "mobile_number": "9440638282",
+        "age": 25,
+        "gender": "Male",
+        "marital_status": "Single",
+        "state": "telangana",
+        "district": "hyderabad",
+        "occupation": "Student",
+        "annual_income": 150000.0,
+        "education": "Graduate",
+        "caste_category": "OBC",
+        "disability_status": false,
+        "student_status": true,
+        "farmer_status": false,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true,
+        "aadhaar_available": true,
+        "bank_account_available": true,
+        "rural_urban": "Rural"
+      }
+    },
+    {
+      "id": "usr-f1d35263",
+      "email": "akhil@gmail.com",
+      "password_hash": "hashed_123456",
+      "name": "Akhil",
+      "mobile_number": "8975628293",
+      "role": "citizen",
+      "profile": {
+        "name": "Akhil",
+        "mobile_number": "8975628293",
+        "age": 25,
+        "gender": "Male",
+        "marital_status": "Single",
+        "state": "telangana",
+        "district": "hyderabad",
+        "occupation": "Student",
+        "annual_income": 120000.0,
+        "education": "Graduate",
+        "caste_category": "OBC",
+        "disability_status": false,
+        "student_status": true,
+        "farmer_status": true,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true,
+        "aadhaar_available": true,
+        "bank_account_available": true,
+        "rural_urban": "Rural"
+      }
+    },
+    {
+      "id": "usr-05766928",
+      "email": "bksid07@gmail.com",
+      "password_hash": "hashed_@abc123",
+      "name": "kot sidd",
+      "mobile_number": "1234567890",
+      "role": "citizen",
+      "profile": {
+        "name": "kot sidd",
+        "mobile_number": "1234567890",
+        "age": 25,
+        "gender": "Male",
+        "marital_status": "Single",
+        "state": "telangana",
+        "district": "hyderabad",
+        "occupation": "Student",
+        "annual_income": 100000.0,
+        "education": "Graduate",
+        "caste_category": "ST",
+        "disability_status": true,
+        "student_status": true,
+        "farmer_status": true,
+        "senior_citizen_status": false,
+        "widow_status": false,
+        "bpl_status": true,
+        "aadhaar_available": true,
+        "bank_account_available": true,
+        "rural_urban": "Urban"
+      }
+    },
+    {
+      "id": "usr-a974c4f9",
+      "email": "ananya.sharma@example.com",
+      "password_hash": "hashed_NewSecurePassword456",
+      "name": "Ananya Sharma",
+      "mobile_number": "9876543210",
+      "role": "citizen",
+      "profile": {
+        "name": "Ananya Sharma",
+        "mobile_number": "9876543210",
+        "age": 45,
+        "gender": "Female",
+        "marital_status": "Widow",
+        "state": "Uttar Pradesh",
+        "district": "Varanasi",
+        "occupation": "Unemployed",
+        "annual_income": 80000.0,
+        "education": "Secondary",
+        "caste_category": "OBC",
+        "disability_status": false,
+        "student_status": false,
+        "farmer_status": false,
+        "senior_citizen_status": false,
+        "widow_status": true,
+        "bpl_status": true,
+        "aadhaar_available": true,
+        "bank_account_available": true,
+        "rural_urban": "Rural"
+      }
+    }
+  ],
+  "schemes": [
+    {
+      "id": "scheme-001",
+      "name": "PM-Kisan Samman Nidhi (PM-KISAN)",
+      "category": "Agriculture",
+      "description": "Financial benefit of ₹6,000 per year transferred directly into the bank accounts of landholding farmer families across India in 3 equal installments.",
+      "benefits": "₹6,000 per annum direct cash transfer in 3 equal installments of ₹2,000.",
+      "criteria": {
+        "farmer_status": true,
+        "max_income": 300000
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Land Ownership Document (Khatauni/Khasra)",
+        "Active Bank Passbook",
+        "Residence Certificate"
+      ],
+      "official_link": "https://pmkisan.gov.in",
+      "last_date": "Open Round the Year",
+      "state_restriction": "All",
+      "icon": "sprout"
+    },
+    {
+      "id": "scheme-002",
+      "name": "Ayushman Bharat PM Jan Arogya Yojana (PM-JAY)",
+      "category": "Healthcare",
+      "description": "World's largest government-funded health insurance scheme offering cashless coverage up to ₹5 Lakh per family per year for hospitalization.",
+      "benefits": "Cashless & paperless health insurance cover up to ₹5,000,000 per family per year for secondary and tertiary care hospitalization.",
+      "criteria": {
+        "bpl_status": true,
+        "max_income": 250000
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Ration Card / BPL Card",
+        "Income Certificate",
+        "Residence Certificate"
+      ],
+      "official_link": "https://pmjay.gov.in",
+      "last_date": "Ongoing Scheme",
+      "state_restriction": "All",
+      "icon": "activity"
+    },
+    {
+      "id": "scheme-003",
+      "name": "Pradhan Mantri Awas Yojana (PMAY)",
+      "category": "Housing",
+      "description": "Provides financial subsidy and financial assistance to construct a pucca house with toilet, electricity, and clean cooking water facilities.",
+      "benefits": "Financial assistance of ₹1,20,000 to ₹1,30,000 for house construction plus interest subvention up to 6.5%.",
+      "criteria": {
+        "max_income": 300000,
+        "bpl_status": true
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Income Certificate",
+        "Bank Passbook",
+        "Land / Property Rights Document",
+        "Passport-size Photograph"
+      ],
+      "official_link": "https://pmaymis.gov.in",
+      "last_date": "31-12-2026",
+      "state_restriction": "All",
+      "icon": "home"
+    },
+    {
+      "id": "scheme-004",
+      "name": "National Scholarship Portal (NSP) Post-Matric Scholarship",
+      "category": "Education",
+      "description": "Financial grant for students belonging to SC, ST, OBC, EWS, or economically weaker families pursuing post-secondary or higher education.",
+      "benefits": "Up to ₹25,000 annual fee reimbursement, maintenance allowance, and academic book grants.",
+      "criteria": {
+        "student_status": true,
+        "max_income": 250000
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Income Certificate",
+        "Caste Certificate",
+        "Marksheet of Last Examination",
+        "Student ID / Bonafide Certificate",
+        "Bank Passbook"
+      ],
+      "official_link": "https://scholarships.gov.in",
+      "last_date": "31-10-2026",
+      "state_restriction": "All",
+      "icon": "graduation-cap"
+    },
+    {
+      "id": "scheme-005",
+      "name": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
+      "category": "Pension",
+      "description": "Social security pension scheme delivering monthly financial assistance directly into the bank accounts of senior citizens in low-income families.",
+      "benefits": "Monthly pension of ₹500 to ₹1,000 directly transferred to eligible senior citizens.",
+      "criteria": {
+        "min_age": 60,
+        "bpl_status": true
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Age Proof Certificate / Voter ID",
+        "BPL Ration Card",
+        "Bank Passbook",
+        "Residence Certificate"
+      ],
+      "official_link": "https://nsap.nic.in",
+      "last_date": "Open Round the Year",
+      "state_restriction": "All",
+      "icon": "user-check"
+    },
+    {
+      "id": "scheme-006",
+      "name": "Sukanya Samriddhi Yojana (SSY)",
+      "category": "Women & Child",
+      "description": "Government-backed savings scheme aimed at securing the financial future, higher education, and marriage expense of girl children.",
+      "benefits": "High guaranteed tax-free interest (8.2% p.a.), tax savings under 80C, and lump sum maturity corpus.",
+      "criteria": {
+        "gender": "Female",
+        "max_age": 25
+      },
+      "required_documents": [
+        "Birth Certificate of Girl Child",
+        "Guardian's Aadhaar Card",
+        "Residence Certificate",
+        "Passport Photographs",
+        "Bank Passbook"
+      ],
+      "official_link": "https://www.indiapost.gov.in",
+      "last_date": "Open Scheme",
+      "state_restriction": "All",
+      "icon": "heart"
+    },
+    {
+      "id": "scheme-007",
+      "name": "PM Garib Kalyan Anna Yojana (PMGKAY)",
+      "category": "Food Security",
+      "description": "National food security welfare scheme providing free food grains per month to eligible priority households and BPL cardholders.",
+      "benefits": "5 KG free wheat/rice per family member every month through National Food Security Act (NFSA).",
+      "criteria": {
+        "bpl_status": true
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "BPL / Ration Card",
+        "Residence Certificate"
+      ],
+      "official_link": "https://nfsa.gov.in",
+      "last_date": "Ongoing Scheme",
+      "state_restriction": "All",
+      "icon": "shopping-bag"
+    },
+    {
+      "id": "scheme-008",
+      "name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "category": "Pension",
+      "description": "Financial protection scheme providing monthly income support for widowed women from underprivileged backgrounds.",
+      "benefits": "Monthly pension of ₹600 to ₹1,200 deposited directly into savings accounts.",
+      "criteria": {
+        "widow_status": true,
+        "min_age": 40,
+        "bpl_status": true
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Death Certificate of Husband",
+        "Income Certificate",
+        "BPL Ration Card",
+        "Bank Passbook"
+      ],
+      "official_link": "https://nsap.nic.in",
+      "last_date": "Open Scheme",
+      "state_restriction": "All",
+      "icon": "shield"
+    },
+    {
+      "id": "scheme-009",
+      "name": "Divyangjan Disability Financial Pension Assistance",
+      "category": "Disability Assistance",
+      "description": "Monthly disability pension and assistive device grant provided to persons with benchmark disabilities to promote financial independence.",
+      "benefits": "Monthly allowance of ₹1,000 to ₹1,500 plus free allocation of motorized tricycles, hearing aids, or prosthetic devices.",
+      "criteria": {
+        "disability_status": true,
+        "max_income": 200000
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Disability Certificate (40%+ certified by Medical Board)",
+        "Income Certificate",
+        "Bank Passbook",
+        "Passport Photo"
+      ],
+      "official_link": "https://disabilityaffairs.gov.in",
+      "last_date": "Open Scheme",
+      "state_restriction": "All",
+      "icon": "heart-pulse"
+    },
+    {
+      "id": "scheme-010",
+      "name": "PM SVANidhi Micro-Credit Scheme",
+      "category": "Employment",
+      "description": "Special micro-credit facility empowering street vendors, micro-entrepreneurs, and small business owners with collateral-free working capital loans.",
+      "benefits": "Collateral-free working capital loan of ₹10,000 to ₹50,000 with 7% interest rate subsidy and digital transaction cashback.",
+      "criteria": {
+        "occupation_in": [
+          "Street Vendor",
+          "Vendor",
+          "Self-Employed",
+          "Daily Wager",
+          "Laborer",
+          "Business"
+        ],
+        "max_income": 300000
+      },
+      "required_documents": [
+        "Aadhaar Card",
+        "Certificate of Vending / Urban Local Body ID",
+        "Bank Passbook",
+        "Passport Photograph"
+      ],
+      "official_link": "https://pmsvanidhi.mohua.gov.in",
+      "last_date": "31-12-2026",
+      "state_restriction": "All",
+      "icon": "briefcase"
+    }
+  ],
+  "applications": [
+    {
+      "id": "app-101",
+      "user_id": "usr-citizen-01",
+      "scheme_id": "scheme-001",
+      "scheme_name": "PM-Kisan Samman Nidhi (PM-KISAN)",
+      "status": "Approved",
+      "applied_date": "2026-03-15",
+      "remarks": "Application verified and approved by District Agriculture Officer."
+    },
+    {
+      "id": "app-102",
+      "user_id": "usr-citizen-01",
+      "scheme_id": "scheme-002",
+      "scheme_name": "Ayushman Bharat PM Jan Arogya Yojana (PM-JAY)",
+      "status": "Approved",
+      "applied_date": "2026-06-10",
+      "remarks": "Status updated by Admin to Approved"
+    },
+    {
+      "id": "app-f2c504",
+      "user_id": "usr-admin-01",
+      "user_name": "System Administrator",
+      "user_email": "admin@welfare.gov",
+      "scheme_id": "scheme-001",
+      "scheme_name": "PM-Kisan Samman Nidhi (PM-KISAN)",
+      "status": "Applied",
+      "applied_date": "2026-07-27",
+      "remarks": "Application submitted successfully by citizen."
+    },
+    {
+      "id": "app-644785",
+      "user_id": "usr-citizen-01",
+      "user_name": "Rajesh Kumar",
+      "user_email": "citizen@welfare.gov",
+      "scheme_id": "scheme-008",
+      "scheme_name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "status": "Applied",
+      "applied_date": "2026-07-27",
+      "remarks": "Application submitted successfully by citizen."
+    },
+    {
+      "id": "app-827c36",
+      "user_id": "usr-citizen-01",
+      "user_name": "Rajesh Kumar",
+      "user_email": "citizen@welfare.gov",
+      "scheme_id": "scheme-003",
+      "scheme_name": "Pradhan Mantri Awas Yojana (PMAY)",
+      "status": "Applied",
+      "applied_date": "2026-07-27",
+      "remarks": "Application submitted successfully by citizen."
+    },
+    {
+      "id": "app-a08fe3",
+      "user_id": "usr-70069c1b",
+      "user_name": "Rahul",
+      "user_email": "rahul@gmail.com",
+      "scheme_id": "scheme-002",
+      "scheme_name": "Ayushman Bharat PM Jan Arogya Yojana (PM-JAY)",
+      "status": "Applied",
+      "applied_date": "2026-07-27",
+      "remarks": "Application submitted successfully by citizen."
+    },
+    {
+      "id": "app-de335b",
+      "user_id": "usr-61352398",
+      "user_name": "Ananya Sharma",
+      "user_email": "ananya.sharma@example.com",
+      "scheme_id": "scheme-008",
+      "scheme_name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "status": "Applied",
+      "applied_date": "2026-07-28",
+      "uploaded_documents": {
+        "Aadhaar Card": "/static/uploads/usr-61352398_aadhaar_card_d5771f.jpeg",
+        "Death Certificate of Husband": "/static/uploads/usr-61352398_death_certificate_of_husband_4f4a4c.jpeg",
+        "Income Certificate": "/static/uploads/usr-61352398_income_certificate_c2c67d.jpeg",
+        "BPL Ration Card": "/static/uploads/usr-61352398_bpl_ration_card_f2fa28.jpeg",
+        "Bank Passbook": "/static/uploads/usr-61352398_bank_passbook_3f122a.jpeg"
+      },
+      "remarks": "Application submitted with verified JPEG documents."
+    },
+    {
+      "id": "app-db84b6",
+      "user_id": "usr-9c74512f",
+      "user_name": "Ananya Sharma",
+      "user_email": "ananya.sharma@example.com",
+      "scheme_id": "scheme-008",
+      "scheme_name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "status": "Applied",
+      "applied_date": "2026-07-28",
+      "uploaded_documents": {
+        "Aadhaar Card": "/static/uploads/usr-9c74512f_aadhaar_card_e42015.jpeg",
+        "Death Certificate of Husband": "/static/uploads/usr-9c74512f_death_certificate_of_husband_61cdb3.jpeg",
+        "Income Certificate": "/static/uploads/usr-9c74512f_income_certificate_0dda45.jpeg",
+        "BPL Ration Card": "/static/uploads/usr-9c74512f_bpl_ration_card_56664e.jpeg",
+        "Bank Passbook": "/static/uploads/usr-9c74512f_bank_passbook_fd3387.jpeg"
+      },
+      "remarks": "Application submitted with verified JPEG documents."
+    },
+    {
+      "id": "app-269f47",
+      "user_id": "usr-581c4077",
+      "user_name": "Ananya Sharma",
+      "user_email": "ananya.sharma@example.com",
+      "scheme_id": "scheme-008",
+      "scheme_name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "status": "Applied",
+      "applied_date": "2026-07-28",
+      "uploaded_documents": {
+        "Aadhaar Card": "/static/uploads/usr-581c4077_aadhaar_card_2a6592.jpeg",
+        "Death Certificate of Husband": "/static/uploads/usr-581c4077_death_certificate_of_husband_019fa1.jpeg",
+        "Income Certificate": "/static/uploads/usr-581c4077_income_certificate_c3f74e.jpeg",
+        "BPL Ration Card": "/static/uploads/usr-581c4077_bpl_ration_card_e5bad4.jpeg",
+        "Bank Passbook": "/static/uploads/usr-581c4077_bank_passbook_c6aed0.jpeg"
+      },
+      "remarks": "Application submitted with verified JPEG documents."
+    },
+    {
+      "id": "app-5fc640",
+      "user_id": "usr-72a2176e",
+      "user_name": "Ananya Sharma",
+      "user_email": "ananya.sharma@example.com",
+      "scheme_id": "scheme-008",
+      "scheme_name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "status": "Applied",
+      "applied_date": "2026-07-28",
+      "uploaded_documents": {
+        "Aadhaar Card": "/static/uploads/usr-72a2176e_aadhaar_card_af99b7.jpeg",
+        "Death Certificate of Husband": "/static/uploads/usr-72a2176e_death_certificate_of_husband_f6653a.jpeg",
+        "Income Certificate": "/static/uploads/usr-72a2176e_income_certificate_a2aa5c.jpeg",
+        "BPL Ration Card": "/static/uploads/usr-72a2176e_bpl_ration_card_c431ff.jpeg",
+        "Bank Passbook": "/static/uploads/usr-72a2176e_bank_passbook_11ac4d.jpeg"
+      },
+      "remarks": "Application submitted with verified JPEG documents."
+    },
+    {
+      "id": "app-77fd62",
+      "user_id": "usr-a974c4f9",
+      "user_name": "Ananya Sharma",
+      "user_email": "ananya.sharma@example.com",
+      "scheme_id": "scheme-008",
+      "scheme_name": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+      "status": "Applied",
+      "applied_date": "2026-07-28",
+      "uploaded_documents": {
+        "Aadhaar Card": "/static/uploads/usr-a974c4f9_aadhaar_card_861349.jpeg",
+        "Death Certificate of Husband": "/static/uploads/usr-a974c4f9_death_certificate_of_husband_69c35e.jpeg",
+        "Income Certificate": "/static/uploads/usr-a974c4f9_income_certificate_b7435e.jpeg",
+        "BPL Ration Card": "/static/uploads/usr-a974c4f9_bpl_ration_card_3454e7.jpeg",
+        "Bank Passbook": "/static/uploads/usr-a974c4f9_bank_passbook_53a22a.jpeg"
+      },
+      "remarks": "Application submitted with verified JPEG documents."
+    }
+  ],
+  "user_documents": {
+    "usr-citizen-01": {
+      "Aadhaar Card": {
+        "status": "Verified",
+        "upload_date": "2026-01-10",
+        "file_name": "aadhaar_card.pdf"
+      },
+      "Income Certificate": {
+        "status": "Verified",
+        "upload_date": "2026-02-14",
+        "file_name": "income_certificate.pdf"
+      },
+      "Land Ownership Document (Khatauni/Khasra)": {
+        "status": "Verified",
+        "upload_date": "2026-03-01",
+        "file_name": "land_record.pdf"
+      },
+      "BPL / Ration Card": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "bpl_/_ration_card_verified.pdf"
+      },
+      "Residence Certificate": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "residence_certificate_verified.pdf"
+      },
+      "Student ID / Bonafide Certificate": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "student_id_/_bonafide_certificate_verified.pdf"
+      },
+      "Marksheet of Last Examination": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "marksheet_of_last_examination_verified.pdf"
+      },
+      "Caste Certificate": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "caste_certificate_verified.pdf"
+      },
+      "Land / Property Rights Document": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "land_/_property_rights_document_verified.pdf"
+      },
+      "Ration Card / BPL Card": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "ration_card_/_bpl_card_verified.pdf"
+      },
+      "Passport-size Photograph": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "passport-size_photograph_verified.pdf"
+      },
+      "Active Bank Passbook": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "active_bank_passbook_verified.pdf"
+      },
+      "Bank Passbook": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "bank_passbook_verified.pdf"
+      }
+    },
+    "usr-admin-01": {
+      "Aadhaar Card": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "aadhaar_card_verified.pdf"
+      },
+      "Residence Certificate": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "residence_certificate_verified.pdf"
+      },
+      "Land / Property Rights Document": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "land_/_property_rights_document_verified.pdf"
+      },
+      "Income Certificate": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "income_certificate_verified.pdf"
+      },
+      "BPL / Ration Card": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "bpl_/_ration_card_verified.pdf"
+      },
+      "Ration Card / BPL Card": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "ration_card_/_bpl_card_verified.pdf"
+      },
+      "Passport-size Photograph": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "passport-size_photograph_verified.pdf"
+      },
+      "Active Bank Passbook": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "active_bank_passbook_verified.pdf"
+      },
+      "Bank Passbook": {
+        "status": "Verified",
+        "upload_date": "2026-07-27",
+        "file_name": "bank_passbook_verified.pdf"
+      }
+    },
+    "usr-61352398": {
+      "Aadhaar Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "aadhaar_card.jpeg",
+        "file_url": "/static/uploads/usr-61352398_aadhaar_card_d5771f.jpeg"
+      },
+      "Death Certificate of Husband": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "death_certificate_of_husband.jpeg",
+        "file_url": "/static/uploads/usr-61352398_death_certificate_of_husband_4f4a4c.jpeg"
+      },
+      "Income Certificate": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "income_certificate.jpeg",
+        "file_url": "/static/uploads/usr-61352398_income_certificate_c2c67d.jpeg"
+      },
+      "BPL Ration Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bpl_ration_card.jpeg",
+        "file_url": "/static/uploads/usr-61352398_bpl_ration_card_f2fa28.jpeg"
+      },
+      "Bank Passbook": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bank_passbook.jpeg",
+        "file_url": "/static/uploads/usr-61352398_bank_passbook_3f122a.jpeg"
+      }
+    },
+    "usr-9c74512f": {
+      "Aadhaar Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "aadhaar_card.jpeg",
+        "file_url": "/static/uploads/usr-9c74512f_aadhaar_card_e42015.jpeg"
+      },
+      "Death Certificate of Husband": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "death_certificate_of_husband.jpeg",
+        "file_url": "/static/uploads/usr-9c74512f_death_certificate_of_husband_61cdb3.jpeg"
+      },
+      "Income Certificate": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "income_certificate.jpeg",
+        "file_url": "/static/uploads/usr-9c74512f_income_certificate_0dda45.jpeg"
+      },
+      "BPL Ration Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bpl_ration_card.jpeg",
+        "file_url": "/static/uploads/usr-9c74512f_bpl_ration_card_56664e.jpeg"
+      },
+      "Bank Passbook": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bank_passbook.jpeg",
+        "file_url": "/static/uploads/usr-9c74512f_bank_passbook_fd3387.jpeg"
+      }
+    },
+    "usr-581c4077": {
+      "Aadhaar Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "aadhaar_card.jpeg",
+        "file_url": "/static/uploads/usr-581c4077_aadhaar_card_2a6592.jpeg"
+      },
+      "Death Certificate of Husband": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "death_certificate_of_husband.jpeg",
+        "file_url": "/static/uploads/usr-581c4077_death_certificate_of_husband_019fa1.jpeg"
+      },
+      "Income Certificate": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "income_certificate.jpeg",
+        "file_url": "/static/uploads/usr-581c4077_income_certificate_c3f74e.jpeg"
+      },
+      "BPL Ration Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bpl_ration_card.jpeg",
+        "file_url": "/static/uploads/usr-581c4077_bpl_ration_card_e5bad4.jpeg"
+      },
+      "Bank Passbook": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bank_passbook.jpeg",
+        "file_url": "/static/uploads/usr-581c4077_bank_passbook_c6aed0.jpeg"
+      }
+    },
+    "usr-72a2176e": {
+      "Aadhaar Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "aadhaar_card.jpeg",
+        "file_url": "/static/uploads/usr-72a2176e_aadhaar_card_af99b7.jpeg"
+      },
+      "Death Certificate of Husband": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "death_certificate_of_husband.jpeg",
+        "file_url": "/static/uploads/usr-72a2176e_death_certificate_of_husband_f6653a.jpeg"
+      },
+      "Income Certificate": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "income_certificate.jpeg",
+        "file_url": "/static/uploads/usr-72a2176e_income_certificate_a2aa5c.jpeg"
+      },
+      "BPL Ration Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bpl_ration_card.jpeg",
+        "file_url": "/static/uploads/usr-72a2176e_bpl_ration_card_c431ff.jpeg"
+      },
+      "Bank Passbook": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bank_passbook.jpeg",
+        "file_url": "/static/uploads/usr-72a2176e_bank_passbook_11ac4d.jpeg"
+      }
+    },
+    "usr-a974c4f9": {
+      "Aadhaar Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "aadhaar_card.jpeg",
+        "file_url": "/static/uploads/usr-a974c4f9_aadhaar_card_861349.jpeg"
+      },
+      "Death Certificate of Husband": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "death_certificate_of_husband.jpeg",
+        "file_url": "/static/uploads/usr-a974c4f9_death_certificate_of_husband_69c35e.jpeg"
+      },
+      "Income Certificate": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "income_certificate.jpeg",
+        "file_url": "/static/uploads/usr-a974c4f9_income_certificate_b7435e.jpeg"
+      },
+      "BPL Ration Card": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bpl_ration_card.jpeg",
+        "file_url": "/static/uploads/usr-a974c4f9_bpl_ration_card_3454e7.jpeg"
+      },
+      "Bank Passbook": {
+        "status": "Uploaded",
+        "upload_date": "2026-07-28",
+        "file_name": "bank_passbook.jpeg",
+        "file_url": "/static/uploads/usr-a974c4f9_bank_passbook_53a22a.jpeg"
+      }
+    }
+  }
+}
