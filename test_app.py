@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import io
+from pathlib import Path
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -18,8 +19,9 @@ def test_full_flow():
     # Register user
     from app.database import db
     # Clean up test user if exists
-    db.data["users"] = [u for u in db.data["users"] if u["email"].lower() != reg_payload["email"].lower()]
-    db.save_data()
+    for u in list(db.data.get("users", [])):
+        if u.get("email", "").lower() == reg_payload["email"].lower():
+            db.delete_user(u["id"])
 
     from fastapi.testclient import TestClient
     from app.main import app
@@ -135,7 +137,76 @@ def test_full_flow():
     assert res.status_code == 200, f"Change password failed: {res.text}"
     print("Change password verified:", res.json()["message"])
 
-    print("\n[SUCCESS] ALL END-TO-END VERIFICATION TESTS PASSED SUCCESSFULLY!")
+    print("--- 9. Testing Admin Portal 10-Screen Endpoints ---")
+    # Admin login
+    admin_login_res = client.post("/api/auth/login", json={"email": "admin@welfare.gov", "password": "admin123"})
+    assert admin_login_res.status_code == 200, f"Admin login failed: {admin_login_res.text}"
+    admin_token = admin_login_res.json()["access_token"]
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # Analytics
+    analytics_res = client.get("/api/admin/analytics", headers=admin_headers)
+    assert analytics_res.status_code == 200
+    print("Admin Analytics verified:", analytics_res.json()["total_users"], "users,", analytics_res.json()["total_schemes"], "schemes")
+
+    # Users list & block toggle
+    users_res = client.get("/api/admin/users", headers=admin_headers)
+    assert users_res.status_code == 200
+    citizen_user = next((u for u in users_res.json() if u["email"] == "ananya.sharma@example.com"), None)
+    assert citizen_user is not None
+
+    block_res = client.put(f"/api/admin/users/{citizen_user['id']}/status", json={"is_blocked": True}, headers=admin_headers)
+    assert block_res.status_code == 200
+    unblock_res = client.put(f"/api/admin/users/{citizen_user['id']}/status", json={"is_blocked": False}, headers=admin_headers)
+    assert unblock_res.status_code == 200
+
+    # Rule Engine update
+    rule_res = client.put(f"/api/admin/schemes/{target_scheme_id}/rules", json={
+        "criteria": {"min_age": 18, "max_age": 60, "max_income": 200000, "widow_status": True},
+        "required_documents": ["Aadhaar Card", "Income Certificate"]
+    }, headers=admin_headers)
+    assert rule_res.status_code == 200
+    print("Rule Engine update verified:", rule_res.json()["message"])
+
+    # Document verification desk
+    doc_res = client.post("/api/admin/documents/verify", json={
+        "user_id": citizen_user["id"],
+        "document_name": "Aadhaar Card",
+        "status": "Verified",
+        "remarks": "Aadhaar card details matched successfully"
+    }, headers=admin_headers)
+    assert doc_res.status_code == 200
+    print("Document verification desk verified:", doc_res.json()["message"])
+
+    # Notifications broadcast
+    notif_res = client.post("/api/admin/notifications", json={
+        "title": "Scholarship Application Open",
+        "message": "New NSP Post-Matric Scholarship is open for registration.",
+        "type": "info"
+    }, headers=admin_headers)
+    assert notif_res.status_code == 200
+
+    # Reports CSV export
+    report_res = client.get("/api/admin/reports/export", headers=admin_headers)
+    assert report_res.status_code == 200
+    assert "Application ID" in report_res.text
+    print("CSV Report download verified!")
+
+    # Supabase status test
+    supa_res = client.get("/api/admin/supabase-status", headers=admin_headers)
+    assert supa_res.status_code == 200
+    print("Supabase connection status verified:", supa_res.json()["connected"])
+
+    print("\n[SUCCESS] ALL 10 ADMIN SCREENS AND FULL END-TO-END TESTS PASSED SUCCESSFULLY!")
+
+def test_dashboard_uses_reusable_text_helper():
+    app_js_path = Path(__file__).resolve().parent / "static" / "js" / "app.js"
+    content = app_js_path.read_text(encoding="utf-8")
+
+    assert "function setElementText(id, txt)" in content
+    assert 'setElementText("dashTotalUsers"' in content
+
 
 if __name__ == "__main__":
     test_full_flow()
+

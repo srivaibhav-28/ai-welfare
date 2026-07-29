@@ -58,6 +58,10 @@ class ApiService {
             method: "POST",
             body: JSON.stringify({ name, email, mobile_number, password, role })
         });
+        if (data && data.access_token) {
+            this.setAuthToken(data.access_token);
+            localStorage.setItem("welfare_user", JSON.stringify(data));
+        }
         return data;
     }
 
@@ -188,4 +192,56 @@ class ApiService {
     static async getAdminAnalytics() {
         return await this.request("/api/admin/analytics");
     }
+
+    static async updateSchemeRules(schemeId, criteria, requiredDocuments = null) {
+        return await this.request(`/api/admin/schemes/${schemeId}/rules`, {
+            method: "PUT",
+            body: JSON.stringify({ criteria, required_documents: requiredDocuments })
+        });
+    }
+
+    static async updateUserStatus(userId, isBlocked) {
+        return await this.request(`/api/admin/users/${userId}/status`, {
+            method: "PUT",
+            body: JSON.stringify({ is_blocked: isBlocked })
+        });
+    }
+
+    static async deleteUser(userId) {
+        return await this.request(`/api/admin/users/${userId}`, {
+            method: "DELETE"
+        });
+    }
+
+    static async verifyDocument(userId, documentName, status, remarks = "") {
+        return await this.request("/api/admin/documents/verify", {
+            method: "POST",
+            body: JSON.stringify({ user_id: userId, document_name: documentName, status, remarks })
+        });
+    }
+
+    static async getAdminNotifications() {
+        return await this.request("/api/admin/notifications");
+    }
+
+    static async sendAdminNotification(title, message, targetUserId = null, type = "info") {
+        return await this.request("/api/admin/notifications", {
+            method: "POST",
+            body: JSON.stringify({ title, message, target_user_id: targetUserId, type })
+        });
+    }
+
+    static async getUserNotifications() {
+        return await this.request("/api/notifications");
+    }
+
+    static async getSupabaseStatus() {
+        return await this.request("/api/admin/supabase-status");
+    }
+
+    static getExportReportsUrl() {
+        const token = this.getAuthToken();
+        return `${API_BASE}/api/admin/reports/export?token=${encodeURIComponent(token)}`;
+    }
 }
+

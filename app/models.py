@@ -86,6 +86,27 @@ class ChatRequest(BaseModel):
 
 class DocumentStatusUpdate(BaseModel):
     document_name: str
-    status: str  # Uploaded, Verified, Missing
+    status: str  # Uploaded, Verified, Missing, Rejected
     file_name: Optional[str] = None
+    remarks: Optional[str] = None
+
+class DocumentVerifyRequest(BaseModel):
+    user_id: str
+    document_name: str
+    status: str  # Verified, Rejected
+    remarks: str = ""
+
+class UserStatusUpdate(BaseModel):
+    is_blocked: bool
+
+class NotificationCreate(BaseModel):
+    title: str
+    message: str
+    target_user_id: Optional[str] = None  # None for broadcast to all users
+    type: str = "info"  # info, success, warning, alert
+
+class SchemeRuleUpdate(BaseModel):
+    criteria: Dict[str, Any]
+    required_documents: Optional[List[str]] = None
+
 
