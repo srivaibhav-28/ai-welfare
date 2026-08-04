@@ -66,13 +66,13 @@ class SupabaseDB:
         url = f"{base_url}?{query}" if query else base_url
         try:
             if method == "GET":
-                return requests.get(url, headers=self.headers, params=params or {}, timeout=10)
+                return requests.get(url, headers=self.headers, params=params or {}, timeout=2)
             if method == "POST":
-                return requests.post(base_url, headers=self.headers, json=json_body, timeout=10)
+                return requests.post(base_url, headers=self.headers, json=json_body, timeout=2)
             if method == "PATCH":
-                return requests.patch(url, headers=self.headers, json=json_body, timeout=10)
+                return requests.patch(url, headers=self.headers, json=json_body, timeout=2)
             if method == "DELETE":
-                return requests.delete(url, headers=self.headers, timeout=10)
+                return requests.delete(url, headers=self.headers, timeout=2)
         except Exception as exc:
             raise RuntimeError(f"Supabase request failed: {exc}") from exc
         raise ValueError(f"Unsupported method: {method}")

@@ -18,10 +18,14 @@ def test_full_flow():
     
     # Register user
     from app.database import db
-    # Clean up test user if exists
+    # Clean up test user and reset scheme rules if modified by previous runs
     for u in list(db.data.get("users", [])):
         if u.get("email", "").lower() == reg_payload["email"].lower():
             db.delete_user(u["id"])
+    for s in db.data.get("schemes", []):
+        if "Widow" in s.get("name", ""):
+            s["required_documents"] = ["Aadhaar Card", "Death Certificate of Husband", "Income Certificate", "Residence Certificate"]
+            db.save_data()
 
     from fastapi.testclient import TestClient
     from app.main import app

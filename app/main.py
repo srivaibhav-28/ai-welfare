@@ -33,7 +33,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -202,17 +202,19 @@ async def upload_document_file(
     clean_doc_name = "".join(c for c in document_name if c.isalnum() or c in (' ', '_')).rstrip().replace(' ', '_').lower()
     safe_name = f"{user['id']}_{clean_doc_name}_{uuid.uuid4().hex[:6]}{ext if ext in allowed_exts else '.jpg'}"
 
-    # Try uploading to Supabase Storage bucket 'scheme-documents'
-    supabase_url = supabase_client.upload_file_to_storage("scheme-documents", safe_name, contents, content_type="image/jpeg")
+    # Save to local storage in static/uploads first for instant response
+    local_path = os.path.join(UPLOADS_DIR, safe_name)
+    with open(local_path, "wb") as f:
+        f.write(contents)
+    file_url = f"/static/uploads/{safe_name}"
 
-    if supabase_url:
-        file_url = supabase_url
-    else:
-        # Fallback to local storage in static/uploads
-        local_path = os.path.join(UPLOADS_DIR, safe_name)
-        with open(local_path, "wb") as f:
-            f.write(contents)
-        file_url = f"/static/uploads/{safe_name}"
+    # Try uploading to Supabase Storage bucket 'scheme-documents'
+    try:
+        supabase_url = supabase_client.upload_file_to_storage("scheme-documents", safe_name, contents, content_type="image/jpeg")
+        if supabase_url:
+            file_url = supabase_url
+    except Exception as exc:
+        print(f"[Supabase Storage upload skipped]: {exc}")
 
     # Update user documents state
     doc_info = {
@@ -345,16 +347,7 @@ async def admin_delete_scheme(scheme_id: str, admin: Dict[str, Any] = Depends(re
         raise HTTPException(status_code=404, detail="Scheme not found")
     return {"message": "Scheme deleted successfully"}
 
-@app.get("/api/admin/users")
-async def admin_get_users(admin: Dict[str, Any] = Depends(require_admin_user)):
-    users = db.get_users()
-    # Mask password hashes
-    safe_users = []
-    for u in users:
-        u_copy = dict(u)
-        u_copy.pop("password_hash", None)
-        safe_users.append(u_copy)
-    return safe_users
+
 
 @app.put("/api/admin/schemes/{scheme_id}/rules")
 async def admin_update_scheme_rules(scheme_id: str, req: SchemeRuleUpdate, admin: Dict[str, Any] = Depends(require_admin_user)):

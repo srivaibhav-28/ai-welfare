@@ -39,7 +39,8 @@ class SupabaseManager:
 
     # Storage bucket helper
     def upload_file_to_storage(self, bucket: str, file_path_in_bucket: str, file_bytes: bytes, content_type: str = "image/jpeg") -> Optional[str]:
-        if not self.is_configured:
+        enable_storage = os.environ.get("ENABLE_SUPABASE_STORAGE", "false").lower() == "true"
+        if not self.is_configured or not enable_storage:
             return None
         
         target_url = f"{self.url}/storage/v1/object/{bucket}/{file_path_in_bucket}"
@@ -50,7 +51,7 @@ class SupabaseManager:
             "x-upsert": "true"
         }
         try:
-            res = requests.post(target_url, headers=headers, data=file_bytes)
+            res = requests.post(target_url, headers=headers, data=file_bytes, timeout=1)
             if res.status_code in [200, 201]:
                 return f"{self.url}/storage/v1/object/public/{bucket}/{file_path_in_bucket}"
             else:

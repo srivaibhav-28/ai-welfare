@@ -356,7 +356,7 @@
                                 </div>
 
                                 <!-- Form -->
-                                <form onsubmit="handleAuthLandingFormSubmit(event)" class="space-y-4 text-left">
+                                <form id="landingAuthForm" onsubmit="handleAuthLandingFormSubmit(event); return false;" class="space-y-4 text-left">
                                     <div id="landingAuthNameGroup" style="display: none;">
                                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name *</label>
                                         <div class="relative">
@@ -621,7 +621,7 @@
                                 </div>
 
                                 <!-- Admin Auth Form -->
-                                <form onsubmit="handleAdminAuthFormSubmit(event)" class="space-y-4 text-left">
+                                <form id="adminAuthForm" onsubmit="handleAdminAuthFormSubmit(event); return false;" class="space-y-4 text-left">
                                     <div id="adminAuthNameGroup" style="display: none;">
                                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name *</label>
                                         <div class="relative">
@@ -1114,7 +1114,7 @@
                                     government
                                     welfare controls.</p>
 
-                                <form id="adminLoginForm" onsubmit="handleAdminLoginSubmit(event)" class="space-y-4">
+                                <form id="adminLoginForm" onsubmit="handleAdminLoginSubmit(event); return false;" class="space-y-4">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-300 mb-1">Admin Email</label>
                                         <input type="email" id="adminLoginEmail" placeholder="admin@welfare.gov"
