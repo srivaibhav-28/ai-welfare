@@ -1425,17 +1425,21 @@
 
                         <!-- SCREEN 5: USER MANAGEMENT -->
                         <div id="adminPanel-users" class="admin-panel-screen space-y-6 hidden">
-                            <div class="pb-4 border-b border-slate-800 flex items-center justify-between">
+                            <div class="pb-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
-                                    <h2 class="text-2xl font-black text-white tracking-tight">Registered Users
-                                        Management
-                                    </h2>
-                                    <p class="text-xs text-slate-400 mt-0.5">Inspect citizen profiles, view eligibility
-                                        attributes, and manage user status.</p>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Registered Users Management</h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Inspect citizen profiles, manage admin access privileges, and isolate user roles.</p>
                                 </div>
-                                <input type="text" id="userSearchInput" onkeyup="filterUserTable()"
-                                    placeholder="Search user by name or email..."
-                                    class="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500 w-64">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                                        <button type="button" id="tabUserRoleAll" onclick="filterUserRole('all')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition shadow-sm">All</button>
+                                        <button type="button" id="tabUserRoleCitizen" onclick="filterUserRole('citizen')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">👥 Citizens</button>
+                                        <button type="button" id="tabUserRoleAdmin" onclick="filterUserRole('admin')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">🛡️ Admins</button>
+                                    </div>
+                                    <input type="text" id="userSearchInput" onkeyup="filterUserTable()"
+                                        placeholder="Search by name or email..."
+                                        class="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500 w-56">
+                                </div>
                             </div>
 
                             <!-- User Table -->

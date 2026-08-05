@@ -30,7 +30,7 @@ class CitizenProfile(BaseModel):
     mobile_number: str = ""
     age: int = Field(default=25, ge=0, le=120)
     gender: str = "Male"
-    marital_status: str = "Single" # Single, Married, Widow, Divorced
+    marital_status: str = "Single"  # Single, Married, Widow, Divorced
     state: str = "Uttar Pradesh"
     district: str = "Varanasi"
     occupation: str = "Farmer"
@@ -73,7 +73,7 @@ class SchemeUpdate(BaseModel):
 
 class ApplicationCreate(BaseModel):
     scheme_id: str
-    uploaded_documents: Optional[Dict[str, str]] = Field(default_factory=dict) # doc_name -> file_path/url
+    uploaded_documents: Optional[Dict[str, str]] = Field(default_factory=dict)
 
 class ApplicationStatusUpdate(BaseModel):
     status: str  # Applied, Under Verification, Approved, Rejected
@@ -108,5 +108,3 @@ class NotificationCreate(BaseModel):
 class SchemeRuleUpdate(BaseModel):
     criteria: Dict[str, Any]
     required_documents: Optional[List[str]] = None
-
-

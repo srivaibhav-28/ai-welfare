@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
-from app.database import db
-from app.engine import EligibilityEngine
+from app.database.supabase_db import db
+from app.services.eligibility_service import EligibilityEngine
 
 class AIChatbot:
     @staticmethod

@@ -1,0 +1,67 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/*.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/api/auth(.*)",
+      "dest": "/api/auth.py"
+    },
+    {
+      "src": "/api/users(.*)",
+      "dest": "/api/users.py"
+    },
+    {
+      "src": "/api/profile(.*)",
+      "dest": "/api/users.py"
+    },
+    {
+      "src": "/api/schemes(.*)",
+      "dest": "/api/schemes.py"
+    },
+    {
+      "src": "/api/evaluate(.*)",
+      "dest": "/api/eligibility.py"
+    },
+    {
+      "src": "/api/chat(.*)",
+      "dest": "/api/eligibility.py"
+    },
+    {
+      "src": "/api/applications(.*)",
+      "dest": "/api/applications.py"
+    },
+    {
+      "src": "/api/upload(.*)",
+      "dest": "/api/documents.py"
+    },
+    {
+      "src": "/api/documents(.*)",
+      "dest": "/api/documents.py"
+    },
+    {
+      "src": "/api/admin/reports(.*)",
+      "dest": "/api/reports.py"
+    },
+    {
+      "src": "/api/admin(.*)",
+      "dest": "/api/admin.py"
+    },
+    {
+      "src": "/api/notifications(.*)",
+      "dest": "/api/admin.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

@@ -2056,14 +2056,31 @@ async function saveSchemeRules() {
 
 // SCREEN 5: USER MANAGEMENT
 let adminUsersList = [];
+let currentSelectedUserRole = "all";
 
 async function loadAdminUsers() {
     try {
         adminUsersList = await ApiService.getAdminUsers();
-        renderAdminUsersTable(adminUsersList);
+        filterUserTable();
     } catch (e) {
         console.error("Error loading admin users:", e);
     }
+}
+
+function filterUserRole(role) {
+    currentSelectedUserRole = role;
+    const btnAll = document.getElementById("tabUserRoleAll");
+    const btnCitizen = document.getElementById("tabUserRoleCitizen");
+    const btnAdmin = document.getElementById("tabUserRoleAdmin");
+
+    const activeClass = "px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition shadow-sm";
+    const inactiveClass = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+
+    if (btnAll) btnAll.className = (role === "all") ? activeClass : inactiveClass;
+    if (btnCitizen) btnCitizen.className = (role === "citizen") ? activeClass : inactiveClass;
+    if (btnAdmin) btnAdmin.className = (role === "admin") ? activeClass : inactiveClass;
+
+    filterUserTable();
 }
 
 function renderAdminUsersTable(users) {
@@ -2071,21 +2088,29 @@ function renderAdminUsersTable(users) {
     if (!tbody) return;
     tbody.innerHTML = "";
 
+    if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 text-xs">No registered users match the selected filter.</td></tr>`;
+        return;
+    }
+
     users.forEach(u => {
         const isBlocked = !!u.is_blocked;
         const tr = document.createElement("tr");
         tr.className = "border-b border-slate-800 hover:bg-slate-800/40 transition text-xs";
         tr.innerHTML = `
             <td class="p-3 font-bold text-white flex items-center gap-2">
-                <div class="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
-                    ${(u.name || 'C').charAt(0).toUpperCase()}
+                <div class="w-7 h-7 rounded-full ${u.role === 'admin' ? 'bg-purple-600' : 'bg-indigo-600'} text-white flex items-center justify-center text-[10px] font-bold">
+                    ${(u.name || 'U').charAt(0).toUpperCase()}
                 </div>
-                ${u.name || 'Citizen'}
+                <div>
+                    <div class="font-bold text-white">${u.name || (u.role === 'admin' ? 'System Administrator' : 'Citizen User')}</div>
+                    <div class="text-[10px] text-slate-400">ID: ${u.id}</div>
+                </div>
             </td>
-            <td class="p-3 text-slate-300">${u.email}</td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-slate-800 text-slate-300'}">${u.role}</span></td>
+            <td class="p-3 text-slate-300 font-medium">${u.email}</td>
+            <td class="p-3"><span class="px-2.5 py-1 rounded text-[10px] font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'}">${u.role === 'admin' ? '🛡️ Administrator' : '👤 Citizen User'}</span></td>
             <td class="p-3 font-bold text-indigo-400">${u.applications_count || 0} Submitted</td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${isBlocked ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}">${isBlocked ? 'Blocked' : 'Active'}</span></td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${isBlocked ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${isBlocked ? 'Blocked' : 'Active'}</span></td>
             <td class="p-3">
                 <div class="flex items-center gap-2">
                     <button onclick="inspectUserProfile('${u.id}')" title="Inspect Profile" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition cursor-pointer">View Profile</button>
@@ -2102,9 +2127,11 @@ function renderAdminUsersTable(users) {
 
 function filterUserTable() {
     const q = (document.getElementById("userSearchInput")?.value || "").toLowerCase();
-    const filtered = adminUsersList.filter(u => 
-        (u.name || "").toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-    );
+    const filtered = adminUsersList.filter(u => {
+        const matchesRole = (currentSelectedUserRole === "all") || (u.role === currentSelectedUserRole);
+        const matchesSearch = (u.name || "").toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+        return matchesRole && matchesSearch;
+    });
     renderAdminUsersTable(filtered);
 }
 
@@ -2140,7 +2167,7 @@ function inspectUserProfile(userId) {
     const p = u.profile || {};
     modalBody.innerHTML = `
         <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
-            <p><strong>Name:</strong> ${u.name || p.name || 'N/A'}</p>
+            <p><strong>Name:</strong> ${u.name || p.name || 'N/A'} <span class="px-2 py-0.5 text-[9px] rounded font-bold uppercase ${u.role === 'admin' ? 'bg-purple-900 text-purple-300' : 'bg-indigo-900 text-indigo-300'}">${u.role}</span></p>
             <p><strong>Email:</strong> ${u.email}</p>
             <p><strong>Age / Gender:</strong> ${p.age || 25} Yrs, ${p.gender || 'Male'}</p>
             <p><strong>State / District:</strong> ${p.district || 'Varanasi'}, ${p.state || 'Uttar Pradesh'}</p>
@@ -2172,6 +2199,50 @@ async function loadAdminApplications() {
     }
 }
 
+async function adminUpdateAppStatus(appId, newStatus) {
+    try {
+        // Update database via API
+        await ApiService.updateApplicationStatus(appId, newStatus, `Status updated to ${newStatus} by System Administrator`);
+        
+        // Update local admin state
+        const itemInAdmin = adminAppsList.find(a => a.id === appId);
+        if (itemInAdmin) {
+            itemInAdmin.status = newStatus;
+        }
+
+        // Update local user state if loaded
+        if (Array.isArray(state.applications)) {
+            const itemInUser = state.applications.find(a => a.id === appId);
+            if (itemInUser) {
+                itemInUser.status = newStatus;
+            }
+        }
+
+        // Broadcast user notification
+        if (itemInAdmin && itemInAdmin.user_id) {
+            try {
+                await ApiService.sendAdminNotification(
+                    `Application Status Update: ${itemInAdmin.scheme_name}`,
+                    `Your application for ${itemInAdmin.scheme_name} (ID: ${appId}) status has been updated to "${newStatus}".`,
+                    itemInAdmin.user_id,
+                    newStatus === "Approved" ? "success" : (newStatus === "Rejected" ? "warning" : "info")
+                );
+            } catch (nErr) {}
+        }
+
+        // Refresh views
+        filterAppTable();
+        if (typeof filterApplicationsTracker === "function") {
+            filterApplicationsTracker();
+        }
+
+        showNotification("Status Updated", `Application ${appId} status updated to "${newStatus}" in Database & User Application Tracker!`, "success");
+    } catch (err) {
+        showNotification("Update Failed", err.message || "Failed to update application status in database.", "error");
+        await loadAdminApplications();
+    }
+}
+
 function renderAdminApplicationsTable(apps) {
     const tbody = document.getElementById("adminApplicationsTableBody");
     if (!tbody) return;
@@ -2197,8 +2268,8 @@ function renderAdminApplicationsTable(apps) {
                 <select onchange="adminUpdateAppStatus('${a.id}', this.value)" class="p-1.5 rounded-lg border border-slate-700 text-xs font-semibold bg-slate-950 text-indigo-300 focus:outline-none cursor-pointer">
                     <option value="Applied" ${a.status === 'Applied' ? 'selected' : ''}>Applied</option>
                     <option value="Under Verification" ${a.status === 'Under Verification' ? 'selected' : ''}>Under Verification</option>
-                    <option value="Approved" ${a.status === 'Approved' ? 'selected' : ''}>Approve</option>
-                    <option value="Rejected" ${a.status === 'Rejected' ? 'selected' : ''}>Reject</option>
+                    <option value="Approved" ${a.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                    <option value="Rejected" ${a.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
                 </select>
             </td>
         `;

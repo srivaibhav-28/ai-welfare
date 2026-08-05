@@ -1,9 +1,5 @@
 const getApiBase = () => {
-    if (window.location.port === "8000") return "";
-    if (window.location.hostname && window.location.hostname !== "") {
-        return `${window.location.protocol}//${window.location.hostname}:8000`;
-    }
-    return "http://127.0.0.1:8000";
+    return "";
 };
 const API_BASE = getApiBase();
 
@@ -46,7 +42,7 @@ class ApiService {
         } catch (error) {
             console.error(`API Error on ${endpoint}:`, error);
             if (error instanceof TypeError && (error.message.includes("fetch") || error.message.includes("NetworkError"))) {
-                const customErr = new Error(`Server Unreachable: Cannot connect to backend server (${API_BASE || 'http://127.0.0.1:8000'}). Please start the server using 'python run.py'.`);
+                const customErr = new Error("Server Unreachable: Cannot connect to backend server.");
                 customErr.isNetworkError = true;
                 throw customErr;
             }
@@ -312,4 +308,3 @@ class ApiService {
         return `${API_BASE}/api/admin/reports/export?token=${encodeURIComponent(token)}`;
     }
 }
-

@@ -1,16 +1,13 @@
 import time
-import uuid
 from typing import Optional, Dict, Any
-from fastapi import HTTPException, Security, Depends
+from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.database import db
+from app.database.supabase_db import db
+from app.config import config
 
-# Simple token generation & verification for robust execution
-SECRET_KEY = "ai_welfare_eligibility_secret_jwt_key"
 security_scheme = HTTPBearer(auto_error=False)
 
 def hash_password(password: str) -> str:
-    # Basic deterministic hash for demo reliability
     return f"hashed_{password}"
 
 def verify_password(plain_password: str, password_hash: str) -> bool:

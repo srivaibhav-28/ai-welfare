@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Environment secrets
+.env
+.env.local
+
+# Database / temporary files
+*.sqlite3
+data_store.json
+static/uploads/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
