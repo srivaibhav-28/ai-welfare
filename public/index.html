@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Government Welfare Eligibility Assistant | Smart Scheme Discovery</title>
+    <meta name="description"
+        content="AI-powered government welfare eligibility assistant. Automatically discover eligible schemes, evaluate requirements, upload JPEG documents, and track applications.">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./static/css/styles.css">
+</head>
+
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+    <!-- USER PORTAL STANDALONE LAYOUT CONTAINER -->
+    <div id="userLayoutPortal" class="flex flex-col min-h-screen w-full">
+        <!-- TOP NAVIGATION BAR -->
+        <header class="sticky top-0 z-40 glass-nav border-b border-slate-800/60 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-3">
+
+                <!-- Logo & Title -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('profile')">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span id="portalHeaderTitle"
+                            class="text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+                            AI Welfare Assistant <span
+                                class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Government
+                                Portal</span>
+                        </span>
+                        <p id="portalHeaderTagline" class="text-[11px] text-slate-400 font-medium hidden sm:block"
+                            data-i18n="tagline">Intelligent Government Scheme Discovery Engine</p>
+                    </div>
+                </div>
+
+                <!-- Central Nav Links (Visible when logged in) -->
+                <nav id="mainNavMenu"
+                    class="hidden md:flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80">
+                    <button data-view="recommendations"
+                        class="nav-link px-4 py-2 rounded-xl text-xs font-semibold text-indigo-400 transition hover:bg-slate-800/80 flex items-center gap-1.5">
+                        <i data-lucide="compass" class="w-4 h-4"></i> <span data-i18n="navRecommendations">Matched
+                            Schemes</span>
+                    </button>
+                    <button data-view="applications"
+                        class="nav-link px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 transition hover:bg-slate-800/80 flex items-center gap-1.5">
+                        <i data-lucide="activity" class="w-4 h-4"></i> <span data-i18n="navApplications">My
+                            Applications</span>
+                    </button>
+                    <button data-view="profile"
+                        class="nav-link px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 transition hover:bg-slate-800/80 flex items-center gap-1.5">
+                        <i data-lucide="user" class="w-4 h-4"></i> <span>Profile</span>
+                    </button>
+                    <button id="navAdminTab" data-view="admin"
+                        class="nav-link px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 transition hover:bg-slate-800/80 flex items-center gap-1.5 hidden">
+                        <i data-lucide="shield" class="w-4 h-4 text-purple-400"></i> <span data-i18n="navAdmin">Admin
+                            Portal</span>
+                    </button>
+                </nav>
+
+                <!-- Right Controls: Language Selector & Auth -->
+                <div class="flex items-center gap-3">
+                    <!-- Multilingual Switcher -->
+                    <div id="navLangContainer"
+                        class="relative flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                        <i data-lucide="languages" class="w-4 h-4 text-indigo-400 mr-2"></i>
+                        <select id="languageSelector"
+                            class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                            <option value="en" class="bg-slate-900 text-white">English</option>
+                            <option value="hi" class="bg-slate-900 text-white">हिन्दी (Hindi)</option>
+                            <option value="te" class="bg-slate-900 text-white">తెలుగు (Telugu)</option>
+                        </select>
+                    </div>
+
+                    <!-- User state container -->
+                    <div id="navUserContainer" class="hidden items-center gap-2">
+                        <div
+                            class="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 rounded-xl px-3 py-1.5">
+                            <div
+                                class="w-6 h-6 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div class="text-left">
+                                <div id="userNameLabel" class="text-xs font-bold text-white leading-tight">Citizen</div>
+                                <div id="userRoleBadge" class="text-[9px] uppercase font-bold text-indigo-400">citizen
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="logout()"
+                            class="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-600/80 transition"
+                            title="Logout">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Auth Button when logged out -->
+                    <div id="navAuthBtnContainer" class="flex items-center gap-2">
+                        <button onclick="switchView('auth-landing')"
+                            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-md flex items-center gap-1.5">
+                            <i data-lucide="log-in" class="w-4 h-4"></i> <span data-i18n="btnLogin">Login /
+                                Register</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- HERO & QUICK ASSESSMENT HEADER -->
+        <section id="heroSection"
+            class="hero-gradient text-white py-10 px-4 sm:px-6 lg:px-8 border-b border-indigo-900/40 relative overflow-hidden hidden">
+            <div class="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="max-w-2xl text-left">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold mb-3">
+                        <i data-lucide="cpu" class="w-4 h-4"></i> AI Welfare Recommendation Engine
+                    </div>
+                    <h1 id="welcomeUserHeading"
+                        class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight mb-2">
+                        Welcome to Citizen Welfare Portal
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-6" data-i18n="heroSubtitle">
+                        Complete your profile questionnaire. Our AI rules engine evaluates your eligibility attributes
+                        to
+                        display ONLY the government schemes you qualify for.
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button onclick="openWizardModal()"
+                            class="gradient-btn px-6 py-3 rounded-2xl text-white font-bold text-xs shadow-xl flex items-center gap-2 cursor-pointer">
+                            <i data-lucide="wand-2" class="w-4 h-4"></i> <span data-i18n="btnStartWizard">⚡ AI
+                                Eligibility
+                                Check</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Card -->
+                <div
+                    class="w-full md:w-80 bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 shadow-2xl backdrop-blur-md">
+                    <h3
+                        class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center justify-between">
+                        <span>Personal Welfare Summary</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div
+                            class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                            <div>
+                                <div id="statEligibleCount" class="text-2xl font-extrabold text-emerald-400">0</div>
+                                <div class="text-[11px] text-slate-400">Eligible Schemes For You</div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-7 h-7 text-emerald-400/80"></i>
+                        </div>
+
+                        <div
+                            class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
+                            <div>
+                                <div id="statAppliedCount" class="text-2xl font-extrabold text-indigo-400">0</div>
+                                <div class="text-[11px] text-slate-400">Submitted Applications</div>
+                            </div>
+                            <i data-lucide="send" class="w-7 h-7 text-indigo-400/80"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAIN APP CONTENT AREA -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- INITIAL LANDING SCREEN: PREMIUM LOGIN & REGISTER GATEWAY -->
+            <section id="view-auth-landing" class="view-section py-0 -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
+                <div class="min-h-[calc(100vh-72px)] flex flex-col lg:flex-row">
+
+                    <!-- LEFT PANEL: BRANDING & FEATURES -->
+                    <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden"
+                        style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4338ca 60%, #6366f1 100%);">
+                        <!-- Animated Background Shapes -->
+                        <div class="absolute inset-0 overflow-hidden">
+                            <div
+                                class="absolute -top-20 -left-20 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse">
+                            </div>
+                            <div class="absolute bottom-10 right-10 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl"
+                                style="animation: pulse 4s infinite;"></div>
+                            <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-blue-500/10 rounded-full blur-2xl"
+                                style="animation: pulse 6s infinite;"></div>
+                            <!-- Grid Pattern Overlay -->
+                            <div class="absolute inset-0 opacity-[0.04]"
+                                style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 32px 32px;">
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="relative z-10 flex flex-col justify-center px-16 py-12 w-full">
+                            <!-- Government Badge -->
+                            <div
+                                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm text-white/90 text-xs font-bold mb-8 w-fit">
+                                <i data-lucide="badge-check" class="w-4 h-4 text-emerald-400"></i>
+                                Government of India — Digital Initiative
+                            </div>
+
+                            <!-- Headline -->
+                            <h1 class="text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15] mb-5">
+                                AI-Powered<br>
+                                <span
+                                    class="bg-gradient-to-r from-indigo-300 via-sky-300 to-emerald-300 bg-clip-text text-transparent">Welfare
+                                    Eligibility</span><br>
+                                Assistant
+                            </h1>
+                            <p class="text-sm text-indigo-200/80 leading-relaxed max-w-md mb-10">
+                                Discover government welfare schemes you're eligible for, upload documents securely, and
+                                track your applications — all powered by intelligent automation.
+                            </p>
+
+                            <!-- Feature Grid -->
+                            <div class="grid grid-cols-2 gap-4 max-w-lg">
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="brain" class="w-5 h-5 text-emerald-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">AI Eligibility Engine</div>
+                                        <div class="text-[11px] text-indigo-300/70 mt-0.5">Smart scheme matching based
+                                            on your profile</div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="file-check-2" class="w-5 h-5 text-sky-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Secure Documents</div>
+                                        <div class="text-[11px] text-indigo-300/70 mt-0.5">JPEG-only verified document
+                                            uploads</div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="activity" class="w-5 h-5 text-amber-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Live Tracking</div>
+                                        <div class="text-[11px] text-indigo-300/70 mt-0.5">Real-time application status
+                                            updates</div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="languages" class="w-5 h-5 text-purple-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Multilingual</div>
+                                        <div class="text-[11px] text-indigo-300/70 mt-0.5">English, Hindi & Telugu
+                                            support</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Trust Badges -->
+                            <div class="flex items-center gap-6 mt-10 pt-8 border-t border-white/10">
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-white">500+</div>
+                                    <div class="text-[10px] text-indigo-300/60 uppercase font-bold tracking-wider">
+                                        Schemes</div>
+                                </div>
+                                <div class="w-px h-8 bg-white/15"></div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-white">10L+</div>
+                                    <div class="text-[10px] text-indigo-300/60 uppercase font-bold tracking-wider">
+                                        Citizens Served</div>
+                                </div>
+                                <div class="w-px h-8 bg-white/15"></div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-white">36</div>
+                                    <div class="text-[10px] text-indigo-300/60 uppercase font-bold tracking-wider">
+                                        States & UTs</div>
+                                </div>
+                                <div class="w-px h-8 bg-white/15"></div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-emerald-400">99.9%</div>
+                                    <div class="text-[10px] text-indigo-300/60 uppercase font-bold tracking-wider">
+                                        Uptime</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT PANEL: LOGIN/REGISTER FORM -->
+                    <div class="flex-1 flex items-center justify-center px-6 py-10 lg:py-0"
+                        style="background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);">
+                        <div class="w-full max-w-md">
+
+                            <!-- Mobile-only Logo -->
+                            <div class="lg:hidden text-center mb-8">
+                                <div
+                                    class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white mx-auto mb-4 shadow-xl">
+                                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                                </div>
+                                <h2 class="text-xl font-black text-slate-900">AI Welfare Assistant</h2>
+                                <p class="text-xs text-slate-500 mt-1">Government Scheme Eligibility Portal</p>
+                            </div>
+
+                            <!-- Form Card -->
+                            <div
+                                class="bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 relative overflow-hidden">
+                                <!-- Decorative Top Accent -->
+                                <div
+                                    class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500">
+                                </div>
+
+                                <!-- Header -->
+                                <div class="text-center mb-6 pt-2">
+                                    <div
+                                        class="hidden lg:flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                                        <i data-lucide="shield-check" class="w-7 h-7"></i>
+                                    </div>
+                                    <h2 id="authLandingTitle" class="text-xl font-black text-slate-900 tracking-tight">
+                                        Welcome Back</h2>
+                                    <p id="authLandingSubtitle" class="text-xs text-slate-500 mt-1.5">Sign in to access
+                                        your welfare portal dashboard</p>
+                                </div>
+
+                                <!-- Auth Tab Toggle -->
+                                <div
+                                    class="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 border border-slate-200/80 mb-6 text-xs font-bold">
+                                    <button type="button" id="tabAuthLogin" onclick="toggleLandingAuthMode('login')"
+                                        class="py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
+                                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Sign In
+                                    </button>
+                                    <button type="button" id="tabAuthRegister"
+                                        onclick="toggleLandingAuthMode('register')"
+                                        class="py-2.5 rounded-xl text-slate-500 hover:text-slate-800 transition-all duration-200 flex items-center justify-center gap-1.5">
+                                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register
+                                    </button>
+                                </div>
+
+                                <!-- Form -->
+                                <form id="landingAuthForm" onsubmit="handleAuthLandingFormSubmit(event); return false;" class="space-y-4 text-left">
+                                    <div id="landingAuthNameGroup" style="display: none;">
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name *</label>
+                                        <div class="relative">
+                                            <i data-lucide="user"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="text" id="landingAuthName" placeholder="Enter your full name"
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <div id="landingAuthMobileGroup" style="display: none;">
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mobile Number
+                                            *</label>
+                                        <div class="relative">
+                                            <i data-lucide="smartphone"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="tel" id="landingAuthMobile"
+                                                placeholder="10-digit mobile number"
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Email Address
+                                            *</label>
+                                        <div class="relative">
+                                            <i data-lucide="mail"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="email" id="landingAuthEmail" placeholder="name@example.com"
+                                                required
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Password *</label>
+                                        <div class="relative">
+                                            <i data-lucide="lock"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="password" id="landingAuthPassword" placeholder="••••••••"
+                                                required
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" id="btnLandingAuthSubmit"
+                                        class="w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]"
+                                        style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);">
+                                        <i data-lucide="log-in" class="w-4 h-4"></i> Sign In to Portal
+                                    </button>
+                                </form>
+
+                                <!-- Divider -->
+                                <div class="flex items-center gap-3 my-5">
+                                    <div class="flex-1 h-px bg-slate-200"></div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quick
+                                        Access</span>
+                                    <div class="flex-1 h-px bg-slate-200"></div>
+                                </div>
+
+                                <!-- Demo Login Button (Citizen Only) -->
+                                <button type="button" onclick="quickDemoLogin('citizen')"
+                                    class="w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs border border-indigo-200/80 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer hover:shadow-md mb-2">
+                                    <i data-lucide="user" class="w-3.5 h-3.5"></i> Citizen Demo Login
+                                </button>
+                                
+                                <button type="button" onclick="switchView('admin-auth')"
+                                    class="w-full py-2.5 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold text-xs border border-slate-200/80 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer hover:shadow-md">
+                                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Admin Login / Register
+                                </button>
+                            </div>
+
+                            <!-- Security Footer -->
+                            <div class="text-center mt-6 space-y-2">
+                                <div
+                                    class="flex items-center justify-center gap-4 text-[10px] text-slate-400 font-medium">
+                                    <span class="flex items-center gap-1"><i data-lucide="lock"
+                                            class="w-3 h-3 text-emerald-500"></i> 256-bit SSL</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="shield-check"
+                                            class="w-3 h-3 text-emerald-500"></i> CERT-In Certified</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="server"
+                                            class="w-3 h-3 text-emerald-500"></i> NIC Hosted</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400 mb-4">© 2026 Government of India. All rights
+                                    reserved.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ADMIN AUTH LANDING SCREEN: SEPARATE LOGIN & REGISTER FOR ADMINS -->
+            <section id="view-admin-auth" class="view-section py-0 -mx-4 sm:-mx-6 lg:-mx-8 -my-8 hidden">
+                <div class="min-h-[calc(100vh-72px)] flex flex-col lg:flex-row">
+
+                    <!-- LEFT PANEL: ADMIN BRANDING -->
+                    <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden"
+                        style="background: linear-gradient(135deg, #1a0533 0%, #2e1065 30%, #5b21b6 60%, #7c3aed 100%);">
+                        <!-- Animated Background -->
+                        <div class="absolute inset-0 overflow-hidden">
+                            <div
+                                class="absolute -top-20 -left-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse">
+                            </div>
+                            <div class="absolute bottom-10 right-10 w-80 h-80 bg-violet-500/15 rounded-full blur-3xl"
+                                style="animation: pulse 4s infinite;"></div>
+                            <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-2xl"
+                                style="animation: pulse 6s infinite;"></div>
+                            <div class="absolute inset-0 opacity-[0.04]"
+                                style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 32px 32px;">
+                            </div>
+                        </div>
+
+                        <!-- Admin Content -->
+                        <div class="relative z-10 flex flex-col justify-center px-16 py-12 w-full">
+                            <!-- Admin Badge -->
+                            <div
+                                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm text-white/90 text-xs font-bold mb-8 w-fit">
+                                <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+                                Restricted Access — Authorized Personnel Only
+                            </div>
+
+                            <!-- Headline -->
+                            <h1 class="text-4xl xl:text-5xl font-black text-white tracking-tight leading-[1.15] mb-5">
+                                Admin<br>
+                                <span
+                                    class="bg-gradient-to-r from-purple-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">Control
+                                    Center</span>
+                            </h1>
+                            <p class="text-sm text-purple-200/80 leading-relaxed max-w-md mb-10">
+                                Manage welfare schemes, verify citizen documents, approve applications, and oversee the
+                                entire platform with powerful administrative tools.
+                            </p>
+
+                            <!-- Admin Feature Grid -->
+                            <div class="grid grid-cols-2 gap-4 max-w-lg">
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="settings-2" class="w-5 h-5 text-amber-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Scheme Management</div>
+                                        <div class="text-[11px] text-purple-300/70 mt-0.5">Create, edit & manage welfare
+                                            schemes</div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="file-search" class="w-5 h-5 text-sky-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Document Verification</div>
+                                        <div class="text-[11px] text-purple-300/70 mt-0.5">Review & approve citizen
+                                            uploads</div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="users" class="w-5 h-5 text-emerald-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">User Management</div>
+                                        <div class="text-[11px] text-purple-300/70 mt-0.5">Monitor & manage citizen
+                                            accounts</div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-rose-400"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-white">Analytics & Reports</div>
+                                        <div class="text-[11px] text-purple-300/70 mt-0.5">Platform insights & export
+                                            data</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Trust Badges -->
+                            <div class="flex items-center gap-6 mt-10 pt-8 border-t border-white/10">
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-white">24/7</div>
+                                    <div class="text-[10px] text-purple-300/60 uppercase font-bold tracking-wider">
+                                        Monitoring</div>
+                                </div>
+                                <div class="w-px h-8 bg-white/15"></div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-white">AES-256</div>
+                                    <div class="text-[10px] text-purple-300/60 uppercase font-bold tracking-wider">
+                                        Encryption</div>
+                                </div>
+                                <div class="w-px h-8 bg-white/15"></div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-white">RBAC</div>
+                                    <div class="text-[10px] text-purple-300/60 uppercase font-bold tracking-wider">
+                                        Access Control</div>
+                                </div>
+                                <div class="w-px h-8 bg-white/15"></div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-black text-amber-400">Audit</div>
+                                    <div class="text-[10px] text-purple-300/60 uppercase font-bold tracking-wider">Trail
+                                        Logged</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT PANEL: ADMIN LOGIN/REGISTER FORM -->
+                    <div class="flex-1 flex items-center justify-center px-6 py-10 lg:py-0"
+                        style="background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);">
+                        <div class="w-full max-w-md">
+
+                            <!-- Mobile-only Logo -->
+                            <div class="lg:hidden text-center mb-8">
+                                <div
+                                    class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center text-white mx-auto mb-4 shadow-xl">
+                                    <i data-lucide="shield" class="w-8 h-8"></i>
+                                </div>
+                                <h2 class="text-xl font-black text-slate-900">Admin Portal</h2>
+                                <p class="text-xs text-slate-500 mt-1">Authorized Access Only</p>
+                            </div>
+
+                            <!-- Admin Form Card -->
+                            <div
+                                class="bg-white rounded-3xl shadow-xl border border-purple-200/60 p-8 relative overflow-hidden">
+                                <!-- Purple Top Accent -->
+                                <div
+                                    class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-500">
+                                </div>
+
+                                <!-- Header -->
+                                <div class="text-center mb-6 pt-2">
+                                    <div
+                                        class="hidden lg:flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-violet-600 items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                                        <i data-lucide="shield" class="w-7 h-7"></i>
+                                    </div>
+                                    <h2 id="adminAuthTitle" class="text-xl font-black text-slate-900 tracking-tight">
+                                        Admin Sign In</h2>
+                                    <p id="adminAuthSubtitle" class="text-xs text-slate-500 mt-1.5">Access the
+                                        administrative control panel</p>
+                                </div>
+
+                                <!-- Admin Auth Tab Toggle -->
+                                <div
+                                    class="grid grid-cols-2 p-1 rounded-2xl bg-purple-50 border border-purple-200/60 mb-6 text-xs font-bold">
+                                    <button type="button" id="tabAdminLogin" onclick="toggleAdminAuthMode('login')"
+                                        class="py-2.5 rounded-xl bg-purple-600 text-white shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
+                                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Sign In
+                                    </button>
+                                    <button type="button" id="tabAdminRegister"
+                                        onclick="toggleAdminAuthMode('register')"
+                                        class="py-2.5 rounded-xl text-purple-500 hover:text-purple-800 transition-all duration-200 flex items-center justify-center gap-1.5">
+                                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register
+                                    </button>
+                                </div>
+
+                                <!-- Admin Auth Form -->
+                                <form id="adminAuthForm" onsubmit="handleAdminAuthFormSubmit(event); return false;" class="space-y-4 text-left">
+                                    <div id="adminAuthNameGroup" style="display: none;">
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name *</label>
+                                        <div class="relative">
+                                            <i data-lucide="user"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="text" id="adminAuthName" placeholder="Enter admin full name"
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <div id="adminAuthMobileGroup" style="display: none;">
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mobile Number
+                                            *</label>
+                                        <div class="relative">
+                                            <i data-lucide="smartphone"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="tel" id="adminAuthMobile" placeholder="10-digit mobile number"
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <div id="adminAuthCodeGroup" style="display: none;">
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Admin Invite Code
+                                            *</label>
+                                        <div class="relative">
+                                            <i data-lucide="key-round"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="text" id="adminAuthCode" placeholder="Enter admin invite code"
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 mt-1">Contact the system administrator for
+                                            your invite code.</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Admin Email
+                                            *</label>
+                                        <div class="relative">
+                                            <i data-lucide="mail"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="email" id="adminAuthEmail" placeholder="admin@welfare.gov"
+                                                required
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Password *</label>
+                                        <div class="relative">
+                                            <i data-lucide="lock"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="password" id="adminAuthPassword" placeholder="••••••••"
+                                                required
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" id="btnAdminAuthSubmit"
+                                        class="w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]"
+                                        style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%);">
+                                        <i data-lucide="log-in" class="w-4 h-4"></i> Admin Sign In
+                                    </button>
+                                </form>
+
+                                <!-- Divider -->
+                                <div class="flex items-center gap-3 my-5">
+                                    <div class="flex-1 h-px bg-purple-200"></div>
+                                    <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Quick
+                                        Access</span>
+                                    <div class="flex-1 h-px bg-purple-200"></div>
+                                </div>
+
+                                <!-- Admin Demo Login -->
+                                <button type="button" onclick="quickDemoLogin('admin')"
+                                    class="w-full py-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-bold transition-all flex items-center justify-center gap-2 mb-3">
+                                    <i data-lucide="zap" class="w-4 h-4 text-purple-500"></i> Admin Demo Login
+                                </button>
+
+                                <button type="button" onclick="switchView('auth-landing')"
+                                    class="w-full py-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold transition-all flex items-center justify-center gap-2">
+                                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Citizen Portal
+                                </button>
+                            </div>
+
+                            <!-- Admin Security Footer -->
+                            <div class="text-center mt-6 space-y-2">
+                                <div
+                                    class="flex items-center justify-center gap-4 text-[10px] text-slate-400 font-medium">
+                                    <span class="flex items-center gap-1"><i data-lucide="lock"
+                                            class="w-3 h-3 text-purple-500"></i> 256-bit SSL</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="shield-check"
+                                            class="w-3 h-3 text-purple-500"></i> MFA Enabled</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="eye"
+                                            class="w-3 h-3 text-purple-500"></i> Audit Logged</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400">© 2026 Government of India. All rights reserved.
+                                </p>
+                                <!-- Back to Citizen Portal Link -->
+                                <button onclick="switchView('auth-landing')"
+                                    class="text-[10px] text-slate-400 hover:text-purple-500 transition-colors mt-2 cursor-pointer underline decoration-dotted underline-offset-2">
+                                    ← Back to Citizen Portal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 1: RECOMMENDATIONS & MATCHED SCHEMES (ONLY ELIGIBLE SCHEMES ARE DISPLAYED) -->
+            <section id="view-recommendations" class="view-section space-y-6 hidden">
+                <div
+                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-bold text-slate-900" data-i18n="recommendedTitle">Personalized
+                                Eligible
+                                Schemes</h2>
+                            <span
+                                class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider">Eligible
+                                Only</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Based on your questionnaire responses, our AI displays
+                            ONLY
+                            government schemes you qualify for.</p>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button onclick="openWizardModal()"
+                            class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Re-evaluate Eligibility
+                        </button>
+                        <div class="relative w-full md:w-64">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="text" id="schemeSearchInput" placeholder="Search eligible schemes..."
+                                class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                    <button onclick="filterCategory('All')" data-category="All"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-sm cursor-pointer transition">All
+                        Categories</button>
+                    <button onclick="filterCategory('Agriculture')" data-category="Agriculture"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">🌾
+                        Agriculture</button>
+                    <button onclick="filterCategory('Healthcare')" data-category="Healthcare"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">🏥
+                        Healthcare</button>
+                    <button onclick="filterCategory('Housing')" data-category="Housing"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">🏠
+                        Housing</button>
+                    <button onclick="filterCategory('Education')" data-category="Education"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">🎓
+                        Education</button>
+                    <button onclick="filterCategory('Pension')" data-category="Pension"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">👵
+                        Pension</button>
+                    <button onclick="filterCategory('Women & Child')" data-category="Women & Child"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">❤️
+                        Women & Child</button>
+                    <button onclick="filterCategory('Employment')" data-category="Employment"
+                        class="category-chip px-4 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer transition">💼
+                        Employment</button>
+                </div>
+
+                <div id="schemesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </section>
+
+            <!-- VIEW 2: MY APPLICATIONS TRACKER -->
+            <section id="view-applications" class="view-section space-y-6 hidden">
+                <div
+                    class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900" data-i18n="trackerTitle">My Scheme Applications
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">Track submitted applications, status timelines,
+                            verification
+                            progress, and official receipts.</p>
+                    </div>
+                    <button onclick="switchView('recommendations')"
+                        class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Apply For More Schemes
+                    </button>
+                </div>
+
+                <!-- APPLICATION TRACKER CONTROL BAR (Search & Status Filters) -->
+                <div
+                    class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <!-- Search Input -->
+                    <div class="relative w-full sm:w-72">
+                        <i data-lucide="search"
+                            class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="appTrackerSearch" oninput="filterApplicationsTracker()"
+                            placeholder="Search application or scheme..."
+                            class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <!-- Status Filter Chips -->
+                    <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                        <button onclick="setAppTrackerFilter('All')" id="appFilter-All"
+                            class="app-filter-chip px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm transition">All</button>
+                        <button onclick="setAppTrackerFilter('Applied')" id="appFilter-Applied"
+                            class="app-filter-chip px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Applied</button>
+                        <button onclick="setAppTrackerFilter('Under Verification')" id="appFilter-Under_Verification"
+                            class="app-filter-chip px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Under
+                            Verification</button>
+                        <button onclick="setAppTrackerFilter('Approved')" id="appFilter-Approved"
+                            class="app-filter-chip px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Approved</button>
+                        <button onclick="setAppTrackerFilter('Rejected')" id="appFilter-Rejected"
+                            class="app-filter-chip px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Rejected</button>
+                    </div>
+                </div>
+
+                <div id="applicationsListContainer" class="space-y-4">
+                </div>
+            </section>
+
+            <!-- VIEW 3: CITIZEN PROFILE & CHANGE PASSWORD -->
+            <section id="view-profile" class="view-section max-w-4xl mx-auto space-y-6 hidden">
+                <!-- Profile Overview Card -->
+                <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-lg">
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-md"
+                                id="profileInitials">
+                                C
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-black text-slate-900" id="profDisplayName">Citizen</h2>
+                                <p class="text-xs text-slate-500" id="profDisplayEmail">citizen@example.com</p>
+                                <span
+                                    class="inline-block mt-1 px-3 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[10px] uppercase border border-indigo-200"
+                                    id="profDisplayRole">Citizen Account</span>
+                            </div>
+                        </div>
+
+                        <button onclick="openWizardModal()"
+                            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Profile & Questionnaire
+                        </button>
+                    </div>
+
+                    <!-- Attributes Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Mobile Number</span>
+                            <div class="text-sm font-bold text-slate-800 mt-0.5" id="profValMobile">Not provided</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Age & Gender</span>
+                            <div class="text-sm font-bold text-slate-800 mt-0.5" id="profValAgeGender">25 Yrs, Male
+                            </div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Marital Status</span>
+                            <div class="text-sm font-bold text-slate-800 mt-0.5" id="profValMarital">Single</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Location</span>
+                            <div class="text-sm font-bold text-slate-800 mt-0.5" id="profValLocation">Varanasi, Uttar
+                                Pradesh</div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Occupation & Income</span>
+                            <div class="text-sm font-bold text-slate-800 mt-0.5" id="profValOccIncome">Farmer
+                                (₹1,50,000/yr)
+                            </div>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Social Category</span>
+                            <div class="text-sm font-bold text-slate-800 mt-0.5" id="profValCategory">General</div>
+                        </div>
+                    </div>
+
+                    <!-- Special Status Badges -->
+                    <div class="mt-6 pt-6 border-t border-slate-100">
+                        <span class="text-xs font-bold text-slate-700 block mb-3">Special Eligibility Attributes:</span>
+                        <div class="flex flex-wrap gap-2" id="profStatusBadges">
+                            <!-- JS injected status pills -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Password Card -->
+                <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-lg">
+                    <h3 class="text-lg font-extrabold text-slate-900 mb-1 flex items-center gap-2">
+                        <i data-lucide="key-round" class="w-5 h-5 text-indigo-600"></i> Change Password
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-6">Ensure your citizen account stays secure by updating your
+                        password regularly.</p>
+
+                    <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-4 max-w-md">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Current Password *</label>
+                            <input type="password" id="changeOldPass" required placeholder="••••••••"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">New Password *</label>
+                            <input type="password" id="changeNewPass" required placeholder="At least 6 characters"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Confirm New Password *</label>
+                            <input type="password" id="changeConfirmPass" required placeholder="Repeat new password"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <button type="submit"
+                            class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+                <p class="font-medium text-slate-300">© 2026 AI Government Welfare Eligibility Assistant. Empowering
+                    Citizens through AI.</p>
+                <p class="text-[11px] text-slate-500">Personalized welfare recommendations, strict JPEG document
+                    verification, and live application tracking.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- DEDICATED STANDALONE ADMIN PORTAL LAYOUT CONTAINER -->
+    <div id="adminLayoutPortal" class="flex flex-col min-h-screen w-full hidden bg-slate-950 text-slate-100">
+        <!-- DEDICATED ADMIN HEADER BAR (NO USER PORTAL LINKS) -->
+        <header class="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 shadow-2xl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-3">
+                <!-- Left: Admin Brand Logo & Title -->
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg font-extrabold text-white tracking-tight">AI Welfare Assistant</span>
+                        <span
+                            class="text-[10px] uppercase font-black tracking-widest px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-xs">ADMIN
+                            PORTAL</span>
+                    </div>
+                </div>
+
+                <!-- Right: Admin Profile & Logout Button (ZERO User Navigation Links) -->
+                <div class="flex items-center gap-4">
+                    <div
+                        class="flex items-center gap-2.5 bg-slate-800/90 border border-slate-700/80 rounded-xl px-3.5 py-1.5 shadow-sm">
+                        <div
+                            class="w-7 h-7 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center shadow">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </div>
+                        <div class="text-left">
+                            <div id="adminProfileName" class="text-xs font-extrabold text-white leading-tight">Admin 👤
+                            </div>
+                            <div class="text-[9px] uppercase font-black text-purple-400">System Administrator</div>
+                        </div>
+                    </div>
+
+                    <button onclick="logout()"
+                        class="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 text-rose-300 hover:text-white font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ADMIN MAIN CONTENT GRID -->
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+            <!-- VIEW 4: ADMIN PORTAL COMMAND CENTER -->
+            <section id="view-admin" class="view-section">
+                <div
+                    class="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden min-h-[750px] flex flex-col md:flex-row text-slate-100">
+
+                    <!-- LEFT FIXED SIDEBAR NAVIGATION -->
+                    <aside
+                        class="w-full md:w-64 bg-slate-950/95 border-r border-slate-800 p-4 flex flex-col justify-between shrink-0">
+                        <div>
+                            <!-- Admin Brand -->
+                            <div class="flex items-center gap-3 pb-4 border-b border-slate-800/80 mb-4">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+                                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-black tracking-tight text-white uppercase">Welfare Portal
+                                    </h3>
+                                    <p class="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Admin
+                                        Control
+                                        Desk</p>
+                                </div>
+                            </div>
+
+                            <!-- 10 Sidebar Navigation Buttons -->
+                            <nav class="space-y-1 text-xs">
+                                <button onclick="switchAdminSubTab('login')" id="adminNav-login"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i>
+                                    <span>1. Admin Login</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('dashboard')" id="adminNav-dashboard"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-white bg-indigo-600/90 font-bold transition">
+                                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo-300"></i>
+                                    <span>2. Dashboard</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('schemes')" id="adminNav-schemes"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i>
+                                    <span>3. Scheme Mgmt</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('rules')" id="adminNav-rules"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="cpu" class="w-4 h-4 text-purple-400"></i>
+                                    <span>4. Eligibility Rules</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('users')" id="adminNav-users"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+                                    <span>5. User Mgmt</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('applications')" id="adminNav-applications"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="file-check-2" class="w-4 h-4 text-cyan-400"></i>
+                                    <span>6. Applications</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('documents')" id="adminNav-documents"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="file-badge-2" class="w-4 h-4 text-pink-400"></i>
+                                    <span>7. Doc Verification</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('reports')" id="adminNav-reports"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-teal-400"></i>
+                                    <span>8. Reports & Analytics</span>
+                                </button>
+
+                                <button onclick="switchAdminSubTab('profile')" id="adminNav-profile"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="user-cog" class="w-4 h-4 text-indigo-400"></i>
+                                    <span>9. Admin Profile</span>
+                                </button>
+                            </nav>
+                        </div>
+
+                        <!-- Supabase Connection Indicator & Exit Button -->
+                        <div class="pt-4 border-t border-slate-800 space-y-3">
+                            <div id="sidebarSupabaseBadge"
+                                class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[10px] flex items-center justify-between">
+                                <span class="flex items-center gap-1.5 text-slate-300 font-bold">
+                                    <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i> Supabase DB
+                                </span>
+                                <span id="supabaseStatusText"
+                                    class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold uppercase">Connected</span>
+                            </div>
+
+                            <button onclick="logout()"
+                                class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-rose-600/90 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Exit / Logout
+                            </button>
+                        </div>
+                    </aside>
+
+                    <!-- RIGHT MAIN CONTENT WORKSPACE -->
+                    <main class="flex-grow p-6 sm:p-8 bg-slate-900 overflow-y-auto space-y-6">
+
+                        <!-- SCREEN 1: ADMIN LOGIN -->
+                        <div id="adminPanel-login" class="admin-panel-screen space-y-6 hidden">
+                            <div
+                                class="max-w-md mx-auto bg-slate-800/80 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-100">
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="lock" class="w-6 h-6"></i>
+                                </div>
+                                <h2 class="text-xl font-extrabold text-white text-center">Administrator Security Access
+                                </h2>
+                                <p class="text-xs text-slate-400 text-center mt-1 mb-6">Authenticate to access
+                                    government
+                                    welfare controls.</p>
+
+                                <form id="adminLoginForm" onsubmit="handleAdminLoginSubmit(event); return false;" class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 mb-1">Admin Email</label>
+                                        <input type="email" id="adminLoginEmail" placeholder="admin@welfare.gov"
+                                            required
+                                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-medium focus:outline-none focus:border-indigo-500 text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 mb-1">Password</label>
+                                        <input type="password" id="adminLoginPass" placeholder="••••••••" required
+                                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-medium focus:outline-none focus:border-indigo-500 text-white">
+                                    </div>
+                                    <button type="submit"
+                                        class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg transition">
+                                        🔑 Authorize Admin Session
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 2: DASHBOARD -->
+                        <div id="adminPanel-dashboard" class="admin-panel-screen space-y-6">
+                            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Executive Welfare
+                                        Dashboard
+                                    </h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Real-time overview of users, schemes,
+                                        applications, and system status.</p>
+                                </div>
+                                <button onclick="refreshAdminDashboard()"
+                                    class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                                    title="Refresh Data">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <!-- 6 Stat Cards -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Users</span>
+                                    <div id="dashTotalUsers" class="text-2xl font-black text-white mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Schemes</span>
+                                    <div id="dashTotalSchemes" class="text-2xl font-black text-indigo-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Apps</span>
+                                    <div id="dashTotalApps" class="text-2xl font-black text-cyan-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Pending</span>
+                                    <div id="dashPendingApps" class="text-2xl font-black text-amber-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Approved</span>
+                                    <div id="dashApprovedApps" class="text-2xl font-black text-emerald-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Rejected</span>
+                                    <div id="dashRejectedApps" class="text-2xl font-black text-rose-400 mt-1">0</div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Section (3 Visualizations) -->
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80 lg:col-span-2">
+                                    <h3 class="text-xs font-bold text-slate-300 mb-3 flex items-center justify-between">
+                                        <span>Applications Trend (Monthly)</span>
+                                        <i data-lucide="trending-up" class="w-4 h-4 text-indigo-400"></i>
+                                    </h3>
+                                    <div class="h-56 relative">
+                                        <canvas id="chartMonthlyApps"></canvas>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
+                                    <h3 class="text-xs font-bold text-slate-300 mb-3 flex items-center justify-between">
+                                        <span>Status Breakdown</span>
+                                        <i data-lucide="pie-chart" class="w-4 h-4 text-purple-400"></i>
+                                    </h3>
+                                    <div class="h-56 relative flex items-center justify-center">
+                                        <canvas id="chartStatusBreakdown"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts and Recent Activity -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
+                                    <h3 class="text-xs font-bold text-slate-300 mb-3">Application Status</h3>
+                                    <div class="h-52 relative">
+                                        <canvas id="chartTopSchemes"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80 space-y-4">
+                                    <h3 class="text-xs font-bold text-slate-300">Recent Applications</h3>
+                                    <div id="dashRecentAppsContainer" class="space-y-2 text-xs">
+                                        <!-- Rendered dynamically via JS -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80">
+                                <h3 class="text-xs font-bold text-slate-300 mb-3">Recent Registered Users</h3>
+                                <div id="dashRecentUsersContainer" class="space-y-2 text-xs">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 3: SCHEME MANAGEMENT -->
+                        <div id="adminPanel-schemes" class="admin-panel-screen space-y-6 hidden">
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Welfare Scheme Management
+                                    </h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Create, edit, delete, and toggle activation
+                                        status for government schemes.</p>
+                                </div>
+                                <button onclick="openAddSchemeModal()"
+                                    class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg transition flex items-center gap-2 cursor-pointer">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Add New Scheme
+                                </button>
+                            </div>
+
+                            <!-- Search & Filter Controls -->
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <input type="text" id="schemeSearchInput" onkeyup="filterSchemeTable()"
+                                    placeholder="Search scheme by name or department..."
+                                    class="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 flex-grow">
+                                <select id="schemeCategoryFilter" onchange="filterSchemeTable()"
+                                    class="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none">
+                                    <option value="All">All Departments / Categories</option>
+                                    <option value="Agriculture">Agriculture</option>
+                                    <option value="Healthcare">Healthcare</option>
+                                    <option value="Housing">Housing</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Pension">Pension</option>
+                                    <option value="Employment">Employment</option>
+                                </select>
+                            </div>
+
+                            <!-- Schemes Table -->
+                            <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80 overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase">
+                                            <th class="p-3">Scheme Name</th>
+                                            <th class="p-3">Department</th>
+                                            <th class="p-3">Financial Benefits</th>
+                                            <th class="p-3">Deadline</th>
+                                            <th class="p-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminSchemesTableBody"
+                                        class="divide-y divide-slate-800 text-xs text-slate-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 4: ELIGIBILITY RULE MANAGEMENT -->
+                        <div id="adminPanel-rules" class="admin-panel-screen space-y-6 hidden">
+                            <div class="pb-4 border-b border-slate-800">
+                                <h2 class="text-2xl font-black text-white tracking-tight">AI Eligibility Rule Engine
+                                    Management</h2>
+                                <p class="text-xs text-slate-400 mt-0.5">Define dynamic eligibility thresholds for
+                                    schemes.
+                                    The AI Engine consumes these rules to score citizen eligibility.</p>
+                            </div>
+
+                            <!-- Rule Editor Container -->
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <!-- Scheme Selector & Rule Form -->
+                                <div
+                                    class="lg:col-span-2 bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 space-y-5">
+                                    <div>
+                                        <label class="block text-xs font-bold text-indigo-400 mb-1">Select Welfare
+                                            Scheme to
+                                            Edit Rules</label>
+                                        <select id="ruleSchemeSelect" onchange="loadSchemeRulesForEdit()"
+                                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-white focus:outline-none focus:border-indigo-500">
+                                            <!-- JS options -->
+                                        </select>
+                                    </div>
+
+                                    <div id="ruleEditorForm" class="space-y-4">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-300 mb-1">Minimum Age
+                                                    (Years)</label>
+                                                <input type="number" id="ruleMinAge" min="0" max="120"
+                                                    placeholder="e.g. 18"
+                                                    class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-300 mb-1">Maximum Age
+                                                    (Years)</label>
+                                                <input type="number" id="ruleMaxAge" min="0" max="120"
+                                                    placeholder="e.g. 25"
+                                                    class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-300 mb-1">Maximum Annual
+                                                Family
+                                                Income (₹)</label>
+                                            <input type="number" id="ruleMaxIncome" min="0" step="10000"
+                                                placeholder="e.g. 200000"
+                                                class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-300 mb-1">Target Gender
+                                                    Restriction</label>
+                                                <select id="ruleGender"
+                                                    class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                                    <option value="">All Genders</option>
+                                                    <option value="Female">Female Only</option>
+                                                    <option value="Male">Male Only</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-300 mb-1">State
+                                                    Restriction</label>
+                                                <input type="text" id="ruleState"
+                                                    placeholder="All or State Name (e.g. Uttar Pradesh)"
+                                                    class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                            </div>
+                                        </div>
+
+                                        <!-- Checkboxes for Special Flags -->
+                                        <div class="pt-2">
+                                            <label class="block text-xs font-bold text-slate-300 mb-2">Mandatory Citizen
+                                                Category Attributes</label>
+                                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                                                <label
+                                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                                                    <input type="checkbox" id="ruleStudent"
+                                                        class="rounded text-indigo-600">
+                                                    <span>Student = Yes</span>
+                                                </label>
+                                                <label
+                                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                                                    <input type="checkbox" id="ruleFarmer"
+                                                        class="rounded text-indigo-600">
+                                                    <span>Farmer = Yes</span>
+                                                </label>
+                                                <label
+                                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                                                    <input type="checkbox" id="ruleBPL" class="rounded text-indigo-600">
+                                                    <span>BPL Card = Yes</span>
+                                                </label>
+                                                <label
+                                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                                                    <input type="checkbox" id="ruleDisability"
+                                                        class="rounded text-indigo-600">
+                                                    <span>Disability = Yes</span>
+                                                </label>
+                                                <label
+                                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                                                    <input type="checkbox" id="ruleSenior"
+                                                        class="rounded text-indigo-600">
+                                                    <span>Senior = Yes</span>
+                                                </label>
+                                                <label
+                                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                                                    <input type="checkbox" id="ruleWidow"
+                                                        class="rounded text-indigo-600">
+                                                    <span>Widow = Yes</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Required Documents -->
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-300 mb-1">Required JPEG
+                                                Documents (Comma-separated)</label>
+                                            <input type="text" id="ruleRequiredDocs"
+                                                placeholder="Aadhaar Card, Income Certificate, Student ID"
+                                                class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                        </div>
+
+                                        <button onclick="saveSchemeRules()"
+                                            class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition flex items-center gap-2 cursor-pointer">
+                                            <i data-lucide="save" class="w-4 h-4"></i> Save Rule Configuration
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Live AI Rule Summary Card -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 space-y-4">
+                                    <h3
+                                        class="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                                        <i data-lucide="cpu" class="w-4 h-4"></i> AI Rule Summary Output
+                                    </h3>
+                                    <div id="ruleSummaryCard"
+                                        class="p-4 rounded-xl bg-slate-900 border border-slate-700 font-mono text-xs text-emerald-300 space-y-2 leading-relaxed">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 5: USER MANAGEMENT -->
+                        <div id="adminPanel-users" class="admin-panel-screen space-y-6 hidden">
+                            <div class="pb-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Registered Users Management</h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Inspect citizen profiles, manage admin access privileges, and isolate user roles.</p>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                                        <button type="button" id="tabUserRoleAll" onclick="filterUserRole('all')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition shadow-sm">All</button>
+                                        <button type="button" id="tabUserRoleCitizen" onclick="filterUserRole('citizen')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">👥 Citizens</button>
+                                        <button type="button" id="tabUserRoleAdmin" onclick="filterUserRole('admin')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">🛡️ Admins</button>
+                                    </div>
+                                    <input type="text" id="userSearchInput" onkeyup="filterUserTable()"
+                                        placeholder="Search by name or email..."
+                                        class="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500 w-56">
+                                </div>
+                            </div>
+
+                            <!-- User Table -->
+                            <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80 overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase">
+                                            <th class="p-3">User Name</th>
+                                            <th class="p-3">Email</th>
+                                            <th class="p-3">Role</th>
+                                            <th class="p-3">Applications</th>
+                                            <th class="p-3">Status</th>
+                                            <th class="p-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminUsersTableBody"
+                                        class="divide-y divide-slate-800 text-xs text-slate-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 6: APPLICATION MANAGEMENT -->
+                        <div id="adminPanel-applications" class="admin-panel-screen space-y-6 hidden">
+                            <div
+                                class="pb-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Scheme Applications
+                                        Processing
+                                    </h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Review citizen submissions, approve,
+                                        reject, or
+                                        request document updates.</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <select id="appStatusFilter" onchange="filterAppTable()"
+                                        class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none">
+                                        <option value="All">All Statuses</option>
+                                        <option value="Applied">Applied</option>
+                                        <option value="Under Verification">Under Verification</option>
+                                        <option value="Approved">Approved</option>
+                                        <option value="Rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80 overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase">
+                                            <th class="p-3">App ID</th>
+                                            <th class="p-3">Applicant</th>
+                                            <th class="p-3">Scheme Name</th>
+                                            <th class="p-3">Applied Date</th>
+                                            <th class="p-3">Status</th>
+                                            <th class="p-3">Action Desk</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminApplicationsTableBody"
+                                        class="divide-y divide-slate-800 text-xs text-slate-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 7: DOCUMENT VERIFICATION -->
+                        <div id="adminPanel-documents" class="admin-panel-screen space-y-6 hidden">
+                            <div
+                                class="pb-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">JPEG Document Verification
+                                        Portal
+                                    </h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">User Document Folders: Verify uploaded JPEG
+                                        certificates (Aadhaar.jpg, IncomeCertificate.jpg, BankPassbook.jpg) organized by
+                                        citizen name.</p>
+                                </div>
+                                <!-- Search Bar for User Folders -->
+                                <div class="relative w-full sm:w-64">
+                                    <i data-lucide="search"
+                                        class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="adminDocUserSearch" oninput="filterAdminUserDocFolders()"
+                                        placeholder="Search user folder or email..."
+                                        class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-medium text-white focus:outline-none focus:border-indigo-500">
+                                </div>
+                            </div>
+
+                            <div id="adminDocVerificationQueue" class="space-y-6">
+                                <!-- Rendered dynamically as User Folder Cards via JS -->
+                            </div>
+                        </div>
+
+                        <!-- SCREEN: NOTIFICATIONS -->
+                        <div id="adminPanel-notifications" class="admin-panel-screen space-y-6 hidden">
+                            <div class="pb-4 border-b border-slate-800">
+                                <h2 class="text-2xl font-black text-white tracking-tight">System Broadcast Notifications
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-0.5">Send targeted announcements and notifications
+                                    to
+                                    portal users.</p>
+                            </div>
+                            <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 max-w-xl">
+                                <form id="adminBroadcastForm" onsubmit="handleSendNotification(event)"
+                                    class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 mb-1">Notification
+                                            Title</label>
+                                        <input type="text" id="notifTitleInput" required
+                                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 mb-1">Message</label>
+                                        <textarea id="notifMessageInput" required
+                                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white h-24"></textarea>
+                                    </div>
+                                    <button type="submit"
+                                        class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition">Broadcast
+                                        Notification</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 8: REPORTS & ANALYTICS -->
+                        <div id="adminPanel-reports" class="admin-panel-screen space-y-6 hidden">
+                            <div
+                                class="pb-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Reports & Analytical
+                                        Insights
+                                    </h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Evaluate scheme approval rates, user
+                                        growth,
+                                        and download application reports.</p>
+                                </div>
+                                <button onclick="downloadCSVReport()"
+                                    class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition flex items-center gap-2 cursor-pointer">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Export CSV Report
+                                </button>
+                            </div>
+
+                            <!-- KPI Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Overall Approval
+                                        Rate</span>
+                                    <div id="reportApprovalRate" class="text-3xl font-black text-emerald-400 mt-1">0%
+                                    </div>
+                                </div>
+                                <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Total Applications
+                                        Processed</span>
+                                    <div id="reportTotalApps" class="text-3xl font-black text-white mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-xs font-bold text-slate-400 uppercase">Scheme Reach Category
+                                        Count</span>
+                                    <div id="reportCategoryCount" class="text-3xl font-black text-indigo-400 mt-1">0
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 9: ADMIN PROFILE -->
+                        <div id="adminPanel-profile" class="admin-panel-screen space-y-6 hidden">
+                            <div class="pb-4 border-b border-slate-800">
+                                <h2 class="text-2xl font-black text-white tracking-tight">Admin Profile</h2>
+                                <p class="text-xs text-slate-400 mt-0.5">View admin account details and system
+                                    connection
+                                    status.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Admin Details & Password Form -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 space-y-4">
+                                    <h3 class="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                                        <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i> Account Details
+                                    </h3>
+                                    <div class="space-y-2 text-xs text-slate-300">
+                                        <p><strong>Name:</strong> <span id="adminProfileName">System
+                                                Administrator</span>
+                                        </p>
+                                        <p><strong>Email:</strong> <span id="adminProfileEmail">admin@welfare.gov</span>
+                                        </p>
+                                        <p><strong>Role:</strong> <span
+                                                class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold uppercase">Administrator</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Supabase Database Status Monitor Card -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700/80 space-y-4">
+                                    <h3
+                                        class="text-xs font-bold text-slate-300 uppercase flex items-center justify-between">
+                                        <span class="flex items-center gap-2"><i data-lucide="database"
+                                                class="w-4 h-4 text-emerald-400"></i> Supabase Database Monitor</span>
+                                        <span id="supabaseMonitorBadge"
+                                            class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase">Active</span>
+                                    </h3>
+
+                                    <div id="supabaseMonitorDetails"
+                                        class="p-4 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono text-slate-300 space-y-2">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+
+                                    <button onclick="checkSupabaseConnection()"
+                                        class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition flex items-center gap-2">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Test Supabase DB Connection
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- FLOATING CHATBOT DRAWER -->
+    <div id="chatDrawer"
+        class="chat-drawer fixed bottom-6 right-6 z-50 w-96 max-w-[92vw] bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden hidden">
+        <div class="bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                    <i data-lucide="bot" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-white">AI Scheme Assistant</h3>
+                    <span class="text-[10px] text-emerald-400 flex items-center gap-1"><span
+                            class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online Help</span>
+                </div>
+            </div>
+            <button id="btnCloseChat" class="text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div id="chatMessagesContainer" class="p-4 h-80 overflow-y-auto space-y-3 bg-slate-50/50">
+            <div class="flex justify-start">
+                <div class="chat-message-bot max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-sm">
+                    Namaste! I am your AI Welfare Assistant. Ask me anything about PM-Kisan, Ayushman Bharat, PMAY
+                    housing, required documents, or application status!
+                </div>
+            </div>
+        </div>
+
+        <form id="chatForm" class="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+            <input type="text" id="chatInput" placeholder="Ask about government schemes..."
+                class="flex-grow px-3.5 py-2.5 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button type="submit" class="p-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- FLOATING CHAT BUTTON -->
+    <button id="btnToggleChat"
+        class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xl flex items-center justify-center transition-transform hover:scale-110 cursor-pointer hidden">
+        <i data-lucide="message-square" class="w-6 h-6"></i>
+    </button>
+
+    <!-- MULTI-STEP AI ELIGIBILITY QUESTIONNAIRE WIZARD MODAL -->
+    <div id="wizardModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900">AI Scheme Eligibility Questionnaire</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Complete these questions to discover only the government
+                        schemes you qualify for.</p>
+                </div>
+                <button onclick="closeWizardModal()"
+                    class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Stepper Progress Header (4 Steps) -->
+            <div class="flex items-center justify-between mb-8 px-2 sm:px-4">
+                <div class="flex items-center gap-1.5">
+                    <div class="wizard-badge wizard-step-active">1</div>
+                    <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Personal</span>
+                </div>
+                <div class="h-0.5 w-8 sm:w-12 bg-slate-200"></div>
+                <div class="flex items-center gap-1.5">
+                    <div class="wizard-badge wizard-step-pending">2</div>
+                    <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Location & Ed</span>
+                </div>
+                <div class="h-0.5 w-8 sm:w-12 bg-slate-200"></div>
+                <div class="flex items-center gap-1.5">
+                    <div class="wizard-badge wizard-step-pending">3</div>
+                    <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Socio-Econ</span>
+                </div>
+                <div class="h-0.5 w-8 sm:w-12 bg-slate-200"></div>
+                <div class="flex items-center gap-1.5">
+                    <div class="wizard-badge wizard-step-pending">4</div>
+                    <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Status & Docs</span>
+                </div>
+            </div>
+
+            <!-- Wizard Form -->
+            <div id="wizardForm" class="space-y-6">
+                <!-- STEP 1: Personal Details -->
+                <div class="wizard-step-panel space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                            <input type="text" name="name" id="wizName" required
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Mobile Number *</label>
+                            <input type="tel" name="mobile_number" id="wizMobile" required
+                                placeholder="10-digit mobile number"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Age (Years) *</label>
+                            <input type="number" name="age" id="wizAge" value="25" min="1" max="120" required
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Gender *</label>
+                            <select name="gender" id="wizGender"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                                <option value="Male" selected>Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Transgender">Transgender / Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Marital Status *</label>
+                            <select name="marital_status" id="wizMarital"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                                <option value="Single" selected>Single</option>
+                                <option value="Married">Married</option>
+                                <option value="Widow">Widow</option>
+                                <option value="Divorced">Divorced</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Location & Education -->
+                <div class="wizard-step-panel space-y-4 hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">State *</label>
+                            <input type="text" name="state" id="wizState" value="Uttar Pradesh" required
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">District *</label>
+                            <input type="text" name="district" id="wizDistrict" value="Varanasi" required
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Area Category *</label>
+                            <select name="rural_urban" id="wizRuralUrban"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                                <option value="Rural" selected>Rural (Village)</option>
+                                <option value="Urban">Urban (City / Town)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Highest Education Level *</label>
+                        <select name="education" id="wizEducation"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                            <option value="Illiterate">No Formal Education / Illiterate</option>
+                            <option value="Primary">Primary Schooling (Class 1-5)</option>
+                            <option value="Secondary" selected>Secondary / 10th Pass</option>
+                            <option value="Higher Secondary">Higher Secondary / 12th Pass</option>
+                            <option value="Graduate">Graduate / Diploma</option>
+                            <option value="PostGraduate">Post Graduate / Doctorate</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Occupation & Socio-Economic -->
+                <div class="wizard-step-panel space-y-4 hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Primary Occupation *</label>
+                            <select name="occupation" id="wizOccupation"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                                <option value="Farmer" selected>Farmer / Agriculture</option>
+                                <option value="Student">Student</option>
+                                <option value="Street Vendor">Street Vendor / Shopkeeper</option>
+                                <option value="Daily Wager">Daily Wage Worker / Laborer</option>
+                                <option value="Self-Employed">Self-Employed / Micro-Business</option>
+                                <option value="Salaried">Salaried Employee</option>
+                                <option value="Unemployed">Unemployed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Annual Family Income (₹)
+                                *</label>
+                            <input type="number" name="annual_income" id="wizIncome" value="150000" min="0" step="10000"
+                                required
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Social Category (Caste) *</label>
+                        <select name="caste_category" id="wizCaste"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500">
+                            <option value="General" selected>General Category</option>
+                            <option value="OBC">OBC (Other Backward Class)</option>
+                            <option value="SC">SC (Scheduled Caste)</option>
+                            <option value="ST">ST (Scheduled Tribe)</option>
+                            <option value="EWS">EWS (Economically Weaker Section)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Special Status & Documents Availability -->
+                <div class="wizard-step-panel space-y-3 hidden">
+                    <div class="text-xs font-bold text-slate-700 mb-2">Check all special eligibility status flags that
+                        apply to you:</div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+                            <input type="checkbox" name="farmer_status" id="wizFarmer"
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-semibold text-slate-800">Landholding Farmer</span>
+                        </label>
+
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+                            <input type="checkbox" name="student_status" id="wizStudent"
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-semibold text-slate-800">Active Student</span>
+                        </label>
+
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+                            <input type="checkbox" name="disability_status" id="wizDisability"
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-semibold text-slate-800">Disability (40%+)</span>
+                        </label>
+
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+                            <input type="checkbox" name="senior_citizen_status" id="wizSenior"
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-semibold text-slate-800">Senior Citizen (60+)</span>
+                        </label>
+
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+                            <input type="checkbox" name="widow_status" id="wizWidow"
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-semibold text-slate-800">Widow Beneficiary</span>
+                        </label>
+
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-indigo-50/50 transition">
+                            <input type="checkbox" name="bpl_status" id="wizBPL"
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-semibold text-slate-800">BPL Card Holder</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-indigo-50/50 border border-indigo-100 cursor-pointer">
+                            <input type="checkbox" name="aadhaar_available" id="wizAadhaar" checked
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-bold text-indigo-900">Aadhaar Card Available</span>
+                        </label>
+
+                        <label
+                            class="flex items-center gap-3 p-3 rounded-xl bg-indigo-50/50 border border-indigo-100 cursor-pointer">
+                            <input type="checkbox" name="bank_account_available" id="wizBank" checked
+                                class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-xs font-bold text-indigo-900">Active Bank Account</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Footer Wizard Buttons -->
+                <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+                    <button type="button" id="btnWizardPrev"
+                        class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition hidden">Previous
+                        Step</button>
+                    <div></div>
+                    <button type="button" id="btnWizardNext"
+                        class="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition shadow-md">Next
+                        Step</button>
+                    <button type="button" id="btnWizardSubmit" onclick="submitWizard()"
+                        class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 hidden">
+                        🤖 Evaluate My Eligibility
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION & STRICT JPEG DOCUMENT UPLOAD MODAL -->
+    <div id="applyModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <div>
+                    <span
+                        class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase">Application
+                        Portal</span>
+                    <h3 id="applyModalSchemeTitle" class="text-xl font-extrabold text-slate-900 mt-1">Apply for Scheme
+                    </h3>
+                </div>
+                <button onclick="closeApplyModal()"
+                    class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Upload Requirements Notice -->
+            <div
+                class="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 mb-5 text-xs text-amber-900 flex items-start gap-2.5">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+                <div>
+                    <strong>Document Upload Requirement:</strong> All required documents must be uploaded strictly in
+                    <strong>JPEG format (.jpg / .jpeg)</strong> before submitting your application.
+                </div>
+            </div>
+
+            <!-- Document Upload Slots Container -->
+            <div id="applyDocumentsContainer" class="space-y-4 mb-6">
+                <!-- JS dynamically renders upload rows per required document -->
+            </div>
+
+            <!-- Submit Button Container -->
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button type="button" onclick="closeApplyModal()"
+                    class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50">Cancel</button>
+                <button type="button" id="btnSubmitApplication" onclick="submitApplicationWithDocs()" disabled
+                    class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i> Submit Application
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCHEME DETAIL MODAL -->
+    <div id="schemeDetailModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div id="schemeDetailContent"
+            class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <!-- Dynamic JS inject -->
+        </div>
+    </div>
+
+    <!-- APPLICATION DETAIL & ACKNOWLEDGEMENT RECEIPT MODAL -->
+    <div id="applicationDetailModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div id="applicationDetailContent"
+            class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <!-- Dynamic JS inject -->
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="font-medium text-slate-300">© 2026 AI Government Welfare Eligibility Assistant. Empowering
+                Citizens through AI.</p>
+            <p class="text-[11px] text-slate-500">Personalized welfare recommendations, strict JPEG document
+                verification, and live application tracking.</p>
+        </div>
+    </footer>
+
+    <!-- ADMIN MODAL 1: ADD/EDIT SCHEME -->
+    <div id="addSchemeModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                <h3 id="addSchemeModalTitle" class="text-xl font-extrabold text-slate-900">Add New Welfare Scheme</h3>
+                <button onclick="closeAddSchemeModal()"
+                    class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="addSchemeForm" onsubmit="handleSaveScheme(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="editSchemeId">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Scheme Name *</label>
+                    <input type="text" id="schemeFormName" required placeholder="e.g. PM Scholarship Scheme"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Department / Category *</label>
+                        <select id="schemeFormCategory"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <option value="Agriculture">Agriculture</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Education">Education</option>
+                            <option value="Pension">Pension</option>
+                            <option value="Employment">Employment</option>
+                            <option value="Women & Child">Women & Child</option>
+                            <option value="Disability Assistance">Disability Assistance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Application Deadline *</label>
+                        <input type="text" id="schemeFormLastDate" placeholder="e.g. 31-12-2026 or Open"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Description *</label>
+                    <textarea id="schemeFormDescription" rows="2" required placeholder="Detailed scheme overview..."
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs"></textarea>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Financial Benefits *</label>
+                    <input type="text" id="schemeFormBenefits" required
+                        placeholder="e.g. ₹6,000 per annum cash transfer"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Official Portal URL</label>
+                    <input type="url" id="schemeFormLink" placeholder="https://..."
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeAddSchemeModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold">Cancel</button>
+                    <button type="submit"
+                        class="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md">Save
+                        Scheme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL 2: BROADCAST NOTIFICATION -->
+    <div id="broadcastModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 class="text-lg font-extrabold text-slate-900">Broadcast Notification</h3>
+                <button onclick="closeBroadcastModal()"
+                    class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSendBroadcast(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Notification Title *</label>
+                    <input type="text" id="notifTitle" required placeholder="e.g. New Scholarship Scheme Open"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Message Body *</label>
+                    <textarea id="notifMessage" rows="3" required placeholder="Important update for applicants..."
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs"></textarea>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Notification Type</label>
+                    <select id="notifType"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                        <option value="info">Info / General Update</option>
+                        <option value="success">Success / Approval</option>
+                        <option value="warning">Warning / Action Required</option>
+                        <option value="alert">Alert / Rejection</option>
+                    </select>
+                </div>
+                <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                    <button type="button" onclick="closeBroadcastModal()"
+                        class="px-4 py-2 rounded-xl border border-slate-200">Cancel</button>
+                    <button type="submit"
+                        class="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-md">Broadcast Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL 3: DOCUMENT IMAGE PREVIEW & VERIFICATION -->
+    <div id="docPreviewModal"
+        class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative text-white space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <span
+                        class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase">Document
+                        Inspector</span>
+                    <h3 id="docPreviewTitle" class="text-lg font-bold text-white mt-1">Uploaded Document Preview</h3>
+                </div>
+                <button onclick="closeDocPreviewModal()"
+                    class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div
+                class="bg-slate-950 rounded-2xl p-3 flex items-center justify-center min-h-[250px] border border-slate-800 overflow-hidden">
+                <img id="docPreviewImage" src="" alt="Document Preview"
+                    class="max-h-[350px] max-w-full object-contain rounded-xl shadow-lg">
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Verification Remarks / Feedback</label>
+                    <input type="text" id="docPreviewRemarks"
+                        placeholder="Enter remarks (e.g. Aadhaar clear & valid, or photo blurred)"
+                        class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="actionVerifyDocument('Rejected')"
+                        class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Reject Document
+                    </button>
+                    <button type="button" onclick="actionVerifyDocument('Verified')"
+                        class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> Accept & Verify Document
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL 4: USER PROFILE INSPECTOR -->
+    <div id="userProfileModal"
+        class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-white space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="userProfileModalTitle" class="text-lg font-bold text-white">Citizen Profile Inspector</h3>
+                <button onclick="closeUserProfileModal()"
+                    class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="userProfileModalBody" class="space-y-3 text-xs text-slate-300">
+                <!-- JS populated -->
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="closeUserProfileModal()"
+                    class="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 font-bold">Close Inspector</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JS Scripts -->
+    <script src="./static/js/i18n.js"></script>
+    <script src="./static/js/api.js"></script>
+    <script src="./static/js/app.js"></script>
+</body>
+
+</html>

@@ -58,8 +58,10 @@ CREATE TABLE IF NOT EXISTS user_documents (
 CREATE INDEX IF NOT EXISTS idx_applications_user_id ON applications(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON user_documents(user_id);
 
--- Disable Row-Level Security (RLS) so API queries can read, insert, update, and delete rows
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE schemes DISABLE ROW LEVEL SECURITY;
-ALTER TABLE applications DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_documents DISABLE ROW LEVEL SECURITY;
+-- Keep Row-Level Security enabled. The Vercel backend uses the Supabase
+-- Service Role key server-side, which bypasses RLS without exposing database
+-- access to browsers or anonymous users.
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schemes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_documents ENABLE ROW LEVEL SECURITY;

@@ -21,6 +21,8 @@ app.add_middleware(
 
 @app.post("/api/auth/register", response_model=TokenResponse)
 async def register_user(req: UserRegister):
+    if req.role != "citizen":
+        raise HTTPException(status_code=403, detail="Admin accounts must be created by an existing administrator")
     existing = db.get_user_by_email(req.email)
     if existing:
         raise HTTPException(status_code=400, detail="User with this email already exists")
