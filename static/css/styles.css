@@ -97,69 +97,70 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     letter-spacing: -0.02em;
 }
 
-/* OVERRIDE TAILWIND UTILITIES WITH INDIAN FLAG SAFFRON, GREEN & CHAKRA NAVY */
-.bg-indigo-600,
-.bg-indigo-700,
-.hover\:bg-indigo-700:hover,
-.bg-purple-600,
-.bg-purple-700,
-.bg-amber-600,
-.bg-amber-700 {
-    background-color: var(--saffron-400) !important;
+/* FORCE OVERRIDE ALL TAILWIND DYNAMIC CDN CLASSES FOR INDIAN FLAG THEME */
+html body .bg-indigo-600,
+html body .bg-indigo-700,
+html body .hover\:bg-indigo-700:hover,
+html body .bg-purple-600,
+html body .bg-purple-700,
+html body .bg-amber-600,
+html body .bg-amber-700 {
+    background-color: #ff9933 !important;
 }
 
-.bg-gradient-to-tr.from-indigo-600.to-purple-600,
-.bg-gradient-to-tr.from-purple-600.to-indigo-600,
-.bg-gradient-to-tr.from-amber-600.to-amber-700,
-.bg-gradient-to-r.from-indigo-600,
-.bg-gradient-to-r.from-purple-600 {
-    background: var(--saffron-btn-gradient) !important;
+html body .bg-gradient-to-tr.from-indigo-600.to-purple-600,
+html body .bg-gradient-to-tr.from-purple-600.to-indigo-600,
+html body .bg-gradient-to-tr.from-amber-600.to-amber-700,
+html body .bg-gradient-to-r.from-indigo-600,
+html body .bg-gradient-to-r.from-purple-600 {
+    background: linear-gradient(180deg, #ff9933 0%, #e67300 100%) !important;
 }
 
-.text-indigo-400,
-.text-indigo-300,
-.text-purple-400,
-.text-purple-300,
-.text-amber-400,
-.text-amber-300 {
-    color: var(--saffron-300) !important;
+html body .text-indigo-400,
+html body .text-indigo-300,
+html body .text-purple-400,
+html body .text-purple-300,
+html body .text-amber-400,
+html body .text-amber-300 {
+    color: #ffb366 !important;
 }
 
-.text-indigo-600,
-.text-indigo-700,
-.text-purple-600,
-.text-purple-700,
-.text-amber-700,
-.text-amber-800 {
-    color: var(--saffron-700) !important;
+html body .text-indigo-600,
+html body .text-indigo-700,
+html body .text-purple-600,
+html body .text-purple-700,
+html body .text-amber-700,
+html body .text-amber-800 {
+    color: #cc5c00 !important;
 }
 
-.border-indigo-500,
-.border-indigo-600,
-.border-purple-500,
-.border-amber-500 {
-    border-color: var(--saffron-400) !important;
+html body .border-indigo-500,
+html body .border-indigo-600,
+html body .border-purple-500,
+html body .border-amber-500 {
+    border-color: #ff9933 !important;
 }
 
-.bg-indigo-50,
-.bg-purple-50,
-.bg-amber-50 {
-    background-color: var(--saffron-50) !important;
+html body .bg-indigo-50,
+html body .bg-purple-50,
+html body .bg-amber-50 {
+    background-color: #fff5eb !important;
 }
 
-.border-indigo-200,
-.border-purple-200,
-.border-amber-200 {
-    border-color: var(--saffron-200) !important;
+html body .border-indigo-100,
+html body .border-indigo-200,
+html body .border-purple-200,
+html body .border-amber-200 {
+    border-color: #ffcc99 !important;
 }
 
-.focus\:ring-indigo-500:focus,
-.focus\:ring-indigo-500\/30:focus {
+html body .focus\:ring-indigo-500:focus,
+html body .focus\:ring-indigo-500\/30:focus {
     --tw-ring-color: rgba(255, 153, 51, 0.35) !important;
 }
 
-.focus\:border-indigo-500:focus {
-    border-color: var(--saffron-400) !important;
+html body .focus\:border-indigo-500:focus {
+    border-color: #ff9933 !important;
 }
 
 /* Ashoka Chakra Navy Header Navigation Bar */
