@@ -1,6 +1,6 @@
 /* ==========================================================================
-   AI Government Welfare Assistant - Modern Indian Government Design System
-   Theme: Deep Navy Header, Warm Saffron/Gold Accent Buttons & Emerald Badges
+   AI Government Welfare Assistant - Official Indian Flag Design System
+   Colors: Saffron (#FF9933), Pure White (#FFFFFF), India Green (#138808), Ashoka Chakra Navy (#000080)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap');
@@ -10,32 +10,36 @@
     --font-heading: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', -apple-system, sans-serif;
     
-    /* Deep Indian Navy Base Palette */
-    --navy-950: #030a16;
-    --navy-900: #06152d;
-    --navy-800: #0b1d3a;
-    --navy-700: #11284b;
-    --navy-600: #1a365d;
-    --navy-500: #2b4c7e;
+    /* Official Indian Flag Saffron Palette */
+    --saffron-50: #fff5eb;
+    --saffron-100: #ffe6cc;
+    --saffron-200: #ffcc99;
+    --saffron-300: #ffb366;
+    --saffron-400: #ff9933; /* Official Flag Saffron */
+    --saffron-500: #ff8000;
+    --saffron-600: #e67300;
+    --saffron-700: #cc5c00;
+    --saffron-800: #994400;
     
-    /* Warm Saffron & Gold Accents */
-    --saffron-400: #fbbf24;
-    --saffron-500: #f59e0b;
-    --saffron-600: #d97706;
-    --saffron-700: #b45309;
-    --saffron-800: #92400e;
-    --saffron-light: #fffbe6;
-    --saffron-border: #fde68a;
+    /* Official Indian Flag India Green Palette */
+    --flag-green-50: #e6f7e6;
+    --flag-green-100: #ccf0cc;
+    --flag-green-200: #99e699;
+    --flag-green-300: #66d966;
+    --flag-green-400: #33cc33;
+    --flag-green-500: #138808; /* Official Flag India Green */
+    --flag-green-600: #0e6b06;
+    --flag-green-700: #0a4f04;
     
-    /* Vivid Emerald Green Status Palette */
-    --emerald-400: #34d399;
-    --emerald-500: #10b981;
-    --emerald-600: #059669;
-    --emerald-700: #047857;
-    --emerald-light: #ecfdf5;
-    --emerald-border: #a7f3d0;
+    /* Official Ashoka Chakra Navy Blue Palette */
+    --chakra-navy-950: #000033;
+    --chakra-navy-900: #000066;
+    --chakra-navy-800: #000080; /* Official Ashoka Chakra Navy */
+    --chakra-navy-700: #000099;
+    --chakra-navy-600: #0000cc;
+    --chakra-navy-500: #1a1acc;
     
-    /* Neutral Slate Surface Tokens */
+    /* Neutral Surfaces */
     --slate-50: #f8fafc;
     --slate-100: #f1f5f9;
     --slate-200: #e2e8f0;
@@ -47,11 +51,11 @@
     --slate-800: #1e293b;
     --slate-900: #0f172a;
     
-    /* Gradients */
-    --saffron-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
-    --saffron-btn-gradient: linear-gradient(180deg, #d97706 0%, #b45309 100%);
-    --navy-gradient: linear-gradient(135deg, #030a16 0%, #06152d 50%, #11284b 100%);
-    --tricolor-accent: linear-gradient(90deg, #11284b 0%, #d97706 50%, #059669 100%);
+    /* Official Flag Gradients */
+    --saffron-btn-gradient: linear-gradient(180deg, #ff9933 0%, #e67300 100%);
+    --navy-header-gradient: linear-gradient(135deg, #000033 0%, #000066 50%, #000080 100%);
+    --indian-tricolor-gradient: linear-gradient(90deg, #ff9933 0%, #ffffff 50%, #138808 100%);
+    --tricolor-stripe: linear-gradient(90deg, #ff9933 33.3%, #ffffff 33.3%, #ffffff 66.6%, #138808 66.6%);
     
     /* Card Surface & Shadows */
     --card-surface: #ffffff;
@@ -60,12 +64,12 @@
     --radius-lg: 16px;
     --radius-xl: 24px;
     
-    --shadow-xs: 0 1px 2px 0 rgba(6, 21, 45, 0.04);
-    --shadow-sm: 0 1px 3px 0 rgba(6, 21, 45, 0.08), 0 1px 2px -1px rgba(6, 21, 45, 0.04);
-    --shadow-md: 0 4px 6px -1px rgba(6, 21, 45, 0.06), 0 2px 4px -2px rgba(6, 21, 45, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(6, 21, 45, 0.08), 0 4px 6px -4px rgba(6, 21, 45, 0.03);
-    --shadow-xl: 0 20px 25px -5px rgba(6, 21, 45, 0.12), 0 8px 10px -6px rgba(6, 21, 45, 0.04);
-    --shadow-saffron: 0 4px 14px 0 rgba(217, 119, 6, 0.35);
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 80, 0.04);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 80, 0.08), 0 1px 2px -1px rgba(0, 0, 80, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 80, 0.06), 0 2px 4px -2px rgba(0, 0, 80, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 80, 0.08), 0 4px 6px -4px rgba(0, 0, 80, 0.03);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 80, 0.12), 0 8px 10px -6px rgba(0, 0, 80, 0.04);
+    --shadow-saffron: 0 4px 14px 0 rgba(255, 153, 51, 0.4);
 }
 
 /* Base Setup */
@@ -93,17 +97,20 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     letter-spacing: -0.02em;
 }
 
-/* OVERRIDE TAILWIND INDIGO & PURPLE UTILITIES FOR MODERN INDIAN GOVERNMENT THEME */
+/* OVERRIDE TAILWIND UTILITIES WITH INDIAN FLAG SAFFRON, GREEN & CHAKRA NAVY */
 .bg-indigo-600,
 .bg-indigo-700,
 .hover\:bg-indigo-700:hover,
 .bg-purple-600,
-.bg-purple-700 {
-    background-color: var(--saffron-600) !important;
+.bg-purple-700,
+.bg-amber-600,
+.bg-amber-700 {
+    background-color: var(--saffron-400) !important;
 }
 
 .bg-gradient-to-tr.from-indigo-600.to-purple-600,
 .bg-gradient-to-tr.from-purple-600.to-indigo-600,
+.bg-gradient-to-tr.from-amber-600.to-amber-700,
 .bg-gradient-to-r.from-indigo-600,
 .bg-gradient-to-r.from-purple-600 {
     background: var(--saffron-btn-gradient) !important;
@@ -112,49 +119,56 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .text-indigo-400,
 .text-indigo-300,
 .text-purple-400,
-.text-purple-300 {
-    color: var(--saffron-400) !important;
+.text-purple-300,
+.text-amber-400,
+.text-amber-300 {
+    color: var(--saffron-300) !important;
 }
 
 .text-indigo-600,
 .text-indigo-700,
 .text-purple-600,
-.text-purple-700 {
-    color: var(--saffron-600) !important;
+.text-purple-700,
+.text-amber-700,
+.text-amber-800 {
+    color: var(--saffron-700) !important;
 }
 
 .border-indigo-500,
 .border-indigo-600,
-.border-purple-500 {
-    border-color: var(--saffron-600) !important;
+.border-purple-500,
+.border-amber-500 {
+    border-color: var(--saffron-400) !important;
 }
 
 .bg-indigo-50,
-.bg-purple-50 {
-    background-color: var(--saffron-light) !important;
+.bg-purple-50,
+.bg-amber-50 {
+    background-color: var(--saffron-50) !important;
 }
 
 .border-indigo-200,
-.border-purple-200 {
-    border-color: var(--saffron-border) !important;
+.border-purple-200,
+.border-amber-200 {
+    border-color: var(--saffron-200) !important;
 }
 
 .focus\:ring-indigo-500:focus,
 .focus\:ring-indigo-500\/30:focus {
-    --tw-ring-color: rgba(217, 119, 6, 0.3) !important;
+    --tw-ring-color: rgba(255, 153, 51, 0.35) !important;
 }
 
 .focus\:border-indigo-500:focus {
-    border-color: var(--saffron-600) !important;
+    border-color: var(--saffron-400) !important;
 }
 
-/* Deep Navy Header Navigation Bar */
+/* Ashoka Chakra Navy Header Navigation Bar */
 .glass-nav {
-    background: rgba(6, 21, 45, 0.96) !important;
+    background: rgba(0, 0, 64, 0.96) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 2px solid var(--saffron-600) !important;
-    box-shadow: 0 4px 20px rgba(3, 10, 22, 0.25);
+    border-bottom: 3px solid var(--saffron-400) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 80, 0.3);
 }
 
 .glass-panel {
@@ -172,22 +186,22 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 
 .nav-link:hover {
     color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 .nav-link.active-tab {
-    background-color: var(--saffron-600) !important;
+    background-color: var(--saffron-400) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+    box-shadow: 0 2px 10px rgba(255, 153, 51, 0.45);
     font-weight: 700;
 }
 
-/* Hero Section - Government Deep Navy & Gold Accent */
+/* Hero Section - Official Ashoka Chakra Navy & Saffron Text */
 .hero-gradient {
-    background: var(--navy-gradient) !important;
+    background: var(--navy-header-gradient) !important;
     position: relative;
     overflow: hidden;
-    border-bottom: 3px solid var(--saffron-600);
+    border-bottom: 3px solid var(--saffron-400);
 }
 
 .hero-gradient::before {
@@ -197,40 +211,40 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     right: 0;
     bottom: 0;
     left: 0;
-    background-image: radial-gradient(rgba(217, 119, 6, 0.08) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(255, 153, 51, 0.12) 1px, transparent 1px);
     background-size: 24px 24px;
     pointer-events: none;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .gradient-text {
-    background: var(--saffron-gradient) !important;
+    background: linear-gradient(135deg, #ff9933 0%, #ffb366 50%, #33cc33 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
 }
 
 .hero-title-gradient {
-    background: linear-gradient(180deg, #ffffff 0%, #fef3c7 100%) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #fff5eb 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
 }
 
-/* Warm Saffron Action Buttons */
+/* Official Saffron Buttons */
 .gradient-btn {
     background: var(--saffron-btn-gradient) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: var(--shadow-saffron);
     transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gradient-btn:hover {
-    background: linear-gradient(180deg, #b45309 0%, #92400e 100%) !important;
+    background: linear-gradient(180deg, #e67300 0%, #cc5c00 100%) !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px 0 rgba(217, 119, 6, 0.45);
+    box-shadow: 0 6px 18px 0 rgba(255, 153, 51, 0.5);
 }
 
 .gradient-btn:active {
@@ -238,7 +252,7 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     box-shadow: var(--shadow-xs);
 }
 
-/* Scheme Cards - Tricolor Accent & Deep Navy Shadows */
+/* Scheme Cards - Official Tricolor Accent Stripe */
 .scheme-card {
     background: var(--card-surface);
     border-radius: var(--radius-lg);
@@ -255,40 +269,40 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: var(--tricolor-accent);
-    opacity: 0.85;
+    height: 4px;
+    background: var(--indian-tricolor-gradient);
+    opacity: 0.9;
     transition: opacity 0.2s ease;
 }
 
 .scheme-card:hover {
-    border-color: var(--saffron-500);
+    border-color: var(--saffron-400);
     transform: translateY(-3px);
-    box-shadow: 0 12px 24px -4px rgba(6, 21, 45, 0.12), 0 4px 6px -2px rgba(217, 119, 6, 0.08);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 80, 0.15), 0 4px 6px -2px rgba(255, 153, 51, 0.12);
 }
 
 .scheme-card:hover::before {
     opacity: 1;
 }
 
-/* Status Badges - High-Contrast Emerald & Warm Gold */
+/* Status Badges - India Green & Saffron */
 .match-badge-high {
-    background-color: var(--emerald-light) !important;
-    color: var(--emerald-700) !important;
-    border: 1px solid var(--emerald-border) !important;
+    background-color: var(--flag-green-50) !important;
+    color: var(--flag-green-600) !important;
+    border: 1px solid var(--flag-green-200) !important;
     font-weight: 700 !important;
 }
 
 .match-badge-medium {
-    background-color: var(--saffron-light) !important;
+    background-color: var(--saffron-50) !important;
     color: var(--saffron-700) !important;
-    border: 1px solid var(--saffron-border) !important;
+    border: 1px solid var(--saffron-200) !important;
     font-weight: 700 !important;
 }
 
 .match-badge-low {
     background-color: var(--slate-100) !important;
-    color: var(--slate-700) !important;
+    color: var(--chakra-navy-800) !important;
     border: 1px solid var(--slate-300) !important;
     font-weight: 600 !important;
 }
@@ -304,13 +318,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 }
 
 .upload-dropzone:hover, .upload-dropzone.drag-over {
-    border-color: var(--saffron-600);
-    background-color: var(--saffron-light);
+    border-color: var(--saffron-400);
+    background-color: var(--saffron-50);
 }
 
 .upload-dropzone.uploaded {
-    border-color: var(--emerald-500);
-    background-color: var(--emerald-light);
+    border-color: var(--flag-green-500);
+    background-color: var(--flag-green-50);
     border-style: solid;
 }
 
@@ -334,20 +348,20 @@ input[type="password"]:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--saffron-600);
-    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+    border-color: var(--saffron-400);
+    box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.25);
 }
 
 /* Wizard Stepper Progress */
 .wizard-step-active {
-    background-color: var(--saffron-600) !important;
+    background-color: var(--saffron-400) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25) !important;
+    box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.3) !important;
     font-weight: 700 !important;
 }
 
 .wizard-step-completed {
-    background-color: var(--emerald-600) !important;
+    background-color: var(--flag-green-500) !important;
     color: #ffffff !important;
 }
 
@@ -382,11 +396,11 @@ textarea:focus {
 }
 
 .chat-message-user {
-    background: var(--navy-800) !important;
+    background: var(--chakra-navy-800) !important;
     color: #ffffff !important;
     border-radius: var(--radius-md) var(--radius-md) 2px var(--radius-md);
     box-shadow: var(--shadow-xs);
-    border-left: 3px solid var(--saffron-500);
+    border-left: 4px solid var(--saffron-400);
 }
 
 .chat-message-bot {
@@ -404,14 +418,14 @@ table {
 }
 
 th {
-    background-color: var(--navy-900) !important;
-    color: var(--slate-100) !important;
+    background-color: var(--chakra-navy-800) !important;
+    color: #ffffff !important;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
     padding: 0.75rem 1rem;
-    border-bottom: 2px solid var(--saffron-600) !important;
+    border-bottom: 3px solid var(--saffron-400) !important;
 }
 
 td {
@@ -421,7 +435,7 @@ td {
 }
 
 tr:hover td {
-    background-color: var(--saffron-light);
+    background-color: var(--saffron-50);
 }
 
 /* Admin Sidebar Active States */
@@ -432,14 +446,14 @@ tr:hover td {
 }
 
 .admin-sidebar-link.active {
-    background-color: var(--saffron-600) !important;
+    background-color: var(--saffron-400) !important;
     color: #ffffff !important;
     font-weight: 700;
     box-shadow: var(--shadow-sm);
 }
 
 .admin-sidebar-link:not(.active):hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.1);
     color: #ffffff;
 }
 
@@ -448,14 +462,14 @@ tr:hover td {
     border: 1px solid var(--slate-200);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    border-top: 3px solid var(--navy-700);
+    border-top: 4px solid var(--chakra-navy-800);
     transition: all 0.2s ease;
 }
 
 .admin-kpi-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    border-top-color: var(--saffron-600);
+    border-top-color: var(--saffron-400);
 }
 
 /* Scrollbar */
@@ -474,7 +488,7 @@ tr:hover td {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--saffron-600);
+    background: var(--saffron-400);
 }
 
 /* Micro Animations */
@@ -493,7 +507,7 @@ tr:hover td {
 }
 
 .shimmer-loading {
-    background: linear-gradient(90deg, #f1f5f9 25%, #fef3c7 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, #f1f5f9 25%, #ffe6cc 50%, #f1f5f9 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
