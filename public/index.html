@@ -18,13 +18,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="./static/css/styles.css?v=3.0">
+    <link rel="stylesheet" href="./static/css/styles.css?v=4.0">
 </head>
 
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
 
     <!-- USER PORTAL STANDALONE LAYOUT CONTAINER -->
     <div id="userLayoutPortal" class="flex flex-col min-h-screen w-full">
+        <!-- OFFICIAL GOVERNMENT OF INDIA TOP ANNOUNCEMENT BAR -->
+        <div class="goi-top-bar w-full py-1.5 px-4 sm:px-8 text-[11px] font-bold text-white flex items-center justify-between z-50">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>भारत सरकार | Government of India — National Public Welfare Portal</span>
+            </div>
+            <div class="hidden md:flex items-center gap-4 text-[10px] text-amber-200">
+                <span>Direct Benefit Transfer (DBT) Enabled</span>
+                <span>•</span>
+                <span>Aadhaar Security Verified</span>
+            </div>
+        </div>
+
         <!-- TOP NAVIGATION BAR -->
         <header class="sticky top-0 z-40 glass-nav border-b border-slate-800/60 shadow-lg">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between py-3">

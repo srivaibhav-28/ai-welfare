@@ -1,6 +1,7 @@
 /* ==========================================================================
-   AI Government Welfare Assistant - Official Indian Flag Design System
-   Colors: Saffron (#FF9933), Pure White (#FFFFFF), India Green (#138808), Ashoka Chakra Navy (#000080)
+   AI Government Welfare Assistant - National Government of India Portal Theme
+   Authentic GoI Design System: Saffron (#FF9933), India Green (#138808), 
+   Oxford Navy (#002147), Gold Accent (#F59E0B), Pure White (#FFFFFF)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap');
@@ -10,69 +11,61 @@
     --font-heading: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-body: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', -apple-system, sans-serif;
     
-    /* Official Indian Flag Saffron Palette */
-    --saffron-50: #fff5eb;
-    --saffron-100: #ffe6cc;
-    --saffron-200: #ffcc99;
-    --saffron-300: #ffb366;
-    --saffron-400: #ff9933; /* Official Flag Saffron */
-    --saffron-500: #ff8000;
-    --saffron-600: #e67300;
-    --saffron-700: #cc5c00;
-    --saffron-800: #994400;
+    /* Official Government of India & Flag Colors */
+    --flag-saffron: #FF9933;
+    --flag-saffron-dark: #E65100;
+    --flag-saffron-light: #FFF3E0;
+    --flag-saffron-border: #FFE0B2;
     
-    /* Official Indian Flag India Green Palette */
-    --flag-green-50: #e6f7e6;
-    --flag-green-100: #ccf0cc;
-    --flag-green-200: #99e699;
-    --flag-green-300: #66d966;
-    --flag-green-400: #33cc33;
-    --flag-green-500: #138808; /* Official Flag India Green */
-    --flag-green-600: #0e6b06;
-    --flag-green-700: #0a4f04;
+    --flag-green: #138808;
+    --flag-green-dark: #1B5E20;
+    --flag-green-light: #E8F5E9;
+    --flag-green-border: #C8E6C9;
     
-    /* Official Ashoka Chakra Navy Blue Palette */
-    --chakra-navy-950: #000033;
-    --chakra-navy-900: #000066;
-    --chakra-navy-800: #000080; /* Official Ashoka Chakra Navy */
-    --chakra-navy-700: #000099;
-    --chakra-navy-600: #0000cc;
-    --chakra-navy-500: #1a1acc;
+    --goi-navy-950: #001026;
+    --goi-navy-900: #002147; /* Official Oxford / GoI Navy */
+    --goi-navy-800: #0B2545;
+    --goi-navy-700: #134074;
+    --goi-navy-600: #1D4E89;
+    
+    --goi-gold: #F59E0B;
+    --goi-gold-light: #FFFBEB;
+    --goi-gold-border: #FDE68A;
     
     /* Neutral Surfaces */
-    --slate-50: #f8fafc;
-    --slate-100: #f1f5f9;
-    --slate-200: #e2e8f0;
-    --slate-300: #cbd5e1;
-    --slate-400: #94a3b8;
-    --slate-500: #64748b;
+    --slate-50: #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-300: #CBD5E1;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
     --slate-600: #475569;
     --slate-700: #334155;
-    --slate-800: #1e293b;
-    --slate-900: #0f172a;
+    --slate-800: #1E293B;
+    --slate-900: #0F172A;
     
-    /* Official Flag Gradients */
-    --saffron-btn-gradient: linear-gradient(180deg, #ff9933 0%, #e67300 100%);
-    --navy-header-gradient: linear-gradient(135deg, #000033 0%, #000066 50%, #000080 100%);
-    --indian-tricolor-gradient: linear-gradient(90deg, #ff9933 0%, #ffffff 50%, #138808 100%);
-    --tricolor-stripe: linear-gradient(90deg, #ff9933 33.3%, #ffffff 33.3%, #ffffff 66.6%, #138808 66.6%);
+    /* Official Portal Gradients */
+    --saffron-btn-gradient: linear-gradient(180deg, #FF9933 0%, #E65100 100%);
+    --goi-navy-gradient: linear-gradient(135deg, #001026 0%, #002147 50%, #0B2545 100%);
+    --tricolor-stripe: linear-gradient(90deg, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%);
+    --tricolor-blend: linear-gradient(90deg, #FF9933 0%, #F59E0B 35%, #FFFFFF 50%, #33CC33 65%, #138808 100%);
     
-    /* Card Surface & Shadows */
-    --card-surface: #ffffff;
+    /* Surfaces & Shadows */
+    --card-surface: #FFFFFF;
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 24px;
     
-    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 80, 0.04);
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 80, 0.08), 0 1px 2px -1px rgba(0, 0, 80, 0.04);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 80, 0.06), 0 2px 4px -2px rgba(0, 0, 80, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 80, 0.08), 0 4px 6px -4px rgba(0, 0, 80, 0.03);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 80, 0.12), 0 8px 10px -6px rgba(0, 0, 80, 0.04);
-    --shadow-saffron: 0 4px 14px 0 rgba(255, 153, 51, 0.4);
+    --shadow-xs: 0 1px 2px 0 rgba(0, 33, 71, 0.04);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 33, 71, 0.08), 0 1px 2px -1px rgba(0, 33, 71, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 33, 71, 0.06), 0 2px 4px -2px rgba(0, 33, 71, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 33, 71, 0.08), 0 4px 6px -4px rgba(0, 33, 71, 0.03);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 33, 71, 0.12), 0 8px 10px -6px rgba(0, 33, 71, 0.04);
+    --shadow-saffron: 0 4px 14px 0 rgba(230, 81, 0, 0.35);
 }
 
-/* Base Setup */
+/* Base Document Setup */
 *, ::before, ::after {
     box-sizing: border-box;
 }
@@ -97,7 +90,14 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     letter-spacing: -0.02em;
 }
 
-/* FORCE OVERRIDE ALL TAILWIND DYNAMIC CDN CLASSES FOR INDIAN FLAG THEME */
+/* OFFICIAL GOVERNMENT OF INDIA TOP ANNOUNCEMENT BAR */
+.goi-top-bar {
+    background: #001026 !important;
+    border-top: 4px solid var(--flag-saffron) !important;
+    border-bottom: 1px solid rgba(255, 153, 51, 0.25) !important;
+}
+
+/* HIGH SPECIFICITY TAILWIND OVERRIDE RULES FOR GOVERNMENT PORTAL THEME */
 html body .bg-indigo-600,
 html body .bg-indigo-700,
 html body .hover\:bg-indigo-700:hover,
@@ -105,7 +105,7 @@ html body .bg-purple-600,
 html body .bg-purple-700,
 html body .bg-amber-600,
 html body .bg-amber-700 {
-    background-color: #ff9933 !important;
+    background-color: var(--flag-saffron) !important;
 }
 
 html body .bg-gradient-to-tr.from-indigo-600.to-purple-600,
@@ -113,7 +113,7 @@ html body .bg-gradient-to-tr.from-purple-600.to-indigo-600,
 html body .bg-gradient-to-tr.from-amber-600.to-amber-700,
 html body .bg-gradient-to-r.from-indigo-600,
 html body .bg-gradient-to-r.from-purple-600 {
-    background: linear-gradient(180deg, #ff9933 0%, #e67300 100%) !important;
+    background: var(--saffron-btn-gradient) !important;
 }
 
 html body .text-indigo-400,
@@ -122,7 +122,7 @@ html body .text-purple-400,
 html body .text-purple-300,
 html body .text-amber-400,
 html body .text-amber-300 {
-    color: #ffb366 !important;
+    color: #FFB74D !important;
 }
 
 html body .text-indigo-600,
@@ -131,45 +131,45 @@ html body .text-purple-600,
 html body .text-purple-700,
 html body .text-amber-700,
 html body .text-amber-800 {
-    color: #cc5c00 !important;
+    color: var(--flag-saffron-dark) !important;
 }
 
 html body .border-indigo-500,
 html body .border-indigo-600,
 html body .border-purple-500,
 html body .border-amber-500 {
-    border-color: #ff9933 !important;
+    border-color: var(--flag-saffron) !important;
 }
 
 html body .bg-indigo-50,
 html body .bg-purple-50,
 html body .bg-amber-50 {
-    background-color: #fff5eb !important;
+    background-color: var(--flag-saffron-light) !important;
 }
 
 html body .border-indigo-100,
 html body .border-indigo-200,
 html body .border-purple-200,
 html body .border-amber-200 {
-    border-color: #ffcc99 !important;
+    border-color: var(--flag-saffron-border) !important;
 }
 
 html body .focus\:ring-indigo-500:focus,
 html body .focus\:ring-indigo-500\/30:focus {
-    --tw-ring-color: rgba(255, 153, 51, 0.35) !important;
+    --tw-ring-color: rgba(230, 81, 0, 0.3) !important;
 }
 
 html body .focus\:border-indigo-500:focus {
-    border-color: #ff9933 !important;
+    border-color: var(--flag-saffron-dark) !important;
 }
 
-/* Ashoka Chakra Navy Header Navigation Bar */
+/* Official GoI Navy Navigation Header */
 .glass-nav {
-    background: rgba(0, 0, 64, 0.96) !important;
+    background: rgba(0, 33, 71, 0.97) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-bottom: 3px solid var(--saffron-400) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 80, 0.3);
+    border-bottom: 3px solid var(--flag-saffron) !important;
+    box-shadow: 0 4px 20px rgba(0, 16, 38, 0.35);
 }
 
 .glass-panel {
@@ -191,18 +191,18 @@ html body .focus\:border-indigo-500:focus {
 }
 
 .nav-link.active-tab {
-    background-color: var(--saffron-400) !important;
+    background-color: var(--flag-saffron) !important;
     color: #ffffff !important;
-    box-shadow: 0 2px 10px rgba(255, 153, 51, 0.45);
+    box-shadow: 0 2px 10px rgba(230, 81, 0, 0.4);
     font-weight: 700;
 }
 
-/* Hero Section - Official Ashoka Chakra Navy & Saffron Text */
+/* Hero Section - Official Government Oxford Navy & Saffron Highlights */
 .hero-gradient {
-    background: var(--navy-header-gradient) !important;
+    background: var(--goi-navy-gradient) !important;
     position: relative;
     overflow: hidden;
-    border-bottom: 3px solid var(--saffron-400);
+    border-bottom: 3px solid var(--flag-saffron);
 }
 
 .hero-gradient::before {
@@ -219,20 +219,20 @@ html body .focus\:border-indigo-500:focus {
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #ff9933 0%, #ffb366 50%, #33cc33 100%) !important;
+    background: linear-gradient(135deg, #FF9933 0%, #FFB74D 50%, #33CC33 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
 }
 
 .hero-title-gradient {
-    background: linear-gradient(180deg, #ffffff 0%, #fff5eb 100%) !important;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF3E0 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
 }
 
-/* Official Saffron Buttons */
+/* Official Action Buttons */
 .gradient-btn {
     background: var(--saffron-btn-gradient) !important;
     color: #ffffff !important;
@@ -243,9 +243,9 @@ html body .focus\:border-indigo-500:focus {
 }
 
 .gradient-btn:hover {
-    background: linear-gradient(180deg, #e67300 0%, #cc5c00 100%) !important;
+    background: linear-gradient(180deg, #E65100 0%, #BF360C 100%) !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px 0 rgba(255, 153, 51, 0.5);
+    box-shadow: 0 6px 18px 0 rgba(230, 81, 0, 0.5);
 }
 
 .gradient-btn:active {
@@ -253,7 +253,7 @@ html body .focus\:border-indigo-500:focus {
     box-shadow: var(--shadow-xs);
 }
 
-/* Scheme Cards - Official Tricolor Accent Stripe */
+/* Scheme Cards - Ministry Card Style with Tricolor Accent */
 .scheme-card {
     background: var(--card-surface);
     border-radius: var(--radius-lg);
@@ -271,15 +271,15 @@ html body .focus\:border-indigo-500:focus {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--indian-tricolor-gradient);
-    opacity: 0.9;
+    background: var(--tricolor-blend);
+    opacity: 0.95;
     transition: opacity 0.2s ease;
 }
 
 .scheme-card:hover {
-    border-color: var(--saffron-400);
+    border-color: var(--flag-saffron);
     transform: translateY(-3px);
-    box-shadow: 0 12px 24px -4px rgba(0, 0, 80, 0.15), 0 4px 6px -2px rgba(255, 153, 51, 0.12);
+    box-shadow: 0 12px 24px -4px rgba(0, 33, 71, 0.15), 0 4px 6px -2px rgba(230, 81, 0, 0.12);
 }
 
 .scheme-card:hover::before {
@@ -288,22 +288,22 @@ html body .focus\:border-indigo-500:focus {
 
 /* Status Badges - India Green & Saffron */
 .match-badge-high {
-    background-color: var(--flag-green-50) !important;
-    color: var(--flag-green-600) !important;
-    border: 1px solid var(--flag-green-200) !important;
+    background-color: var(--flag-green-light) !important;
+    color: var(--flag-green-dark) !important;
+    border: 1px solid var(--flag-green-border) !important;
     font-weight: 700 !important;
 }
 
 .match-badge-medium {
-    background-color: var(--saffron-50) !important;
-    color: var(--saffron-700) !important;
-    border: 1px solid var(--saffron-200) !important;
+    background-color: var(--flag-saffron-light) !important;
+    color: var(--flag-saffron-dark) !important;
+    border: 1px solid var(--flag-saffron-border) !important;
     font-weight: 700 !important;
 }
 
 .match-badge-low {
     background-color: var(--slate-100) !important;
-    color: var(--chakra-navy-800) !important;
+    color: var(--goi-navy-900) !important;
     border: 1px solid var(--slate-300) !important;
     font-weight: 600 !important;
 }
@@ -319,13 +319,13 @@ html body .focus\:border-indigo-500:focus {
 }
 
 .upload-dropzone:hover, .upload-dropzone.drag-over {
-    border-color: var(--saffron-400);
-    background-color: var(--saffron-50);
+    border-color: var(--flag-saffron);
+    background-color: var(--flag-saffron-light);
 }
 
 .upload-dropzone.uploaded {
-    border-color: var(--flag-green-500);
-    background-color: var(--flag-green-50);
+    border-color: var(--flag-green);
+    background-color: var(--flag-green-light);
     border-style: solid;
 }
 
@@ -349,20 +349,20 @@ input[type="password"]:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--saffron-400);
-    box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.25);
+    border-color: var(--flag-saffron);
+    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.25);
 }
 
 /* Wizard Stepper Progress */
 .wizard-step-active {
-    background-color: var(--saffron-400) !important;
+    background-color: var(--flag-saffron) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.3) !important;
     font-weight: 700 !important;
 }
 
 .wizard-step-completed {
-    background-color: var(--flag-green-500) !important;
+    background-color: var(--flag-green) !important;
     color: #ffffff !important;
 }
 
@@ -397,11 +397,11 @@ textarea:focus {
 }
 
 .chat-message-user {
-    background: var(--chakra-navy-800) !important;
+    background: var(--goi-navy-900) !important;
     color: #ffffff !important;
     border-radius: var(--radius-md) var(--radius-md) 2px var(--radius-md);
     box-shadow: var(--shadow-xs);
-    border-left: 4px solid var(--saffron-400);
+    border-left: 4px solid var(--flag-saffron);
 }
 
 .chat-message-bot {
@@ -419,14 +419,14 @@ table {
 }
 
 th {
-    background-color: var(--chakra-navy-800) !important;
+    background-color: var(--goi-navy-900) !important;
     color: #ffffff !important;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
     padding: 0.75rem 1rem;
-    border-bottom: 3px solid var(--saffron-400) !important;
+    border-bottom: 3px solid var(--flag-saffron) !important;
 }
 
 td {
@@ -436,7 +436,7 @@ td {
 }
 
 tr:hover td {
-    background-color: var(--saffron-50);
+    background-color: var(--flag-saffron-light);
 }
 
 /* Admin Sidebar Active States */
@@ -447,7 +447,7 @@ tr:hover td {
 }
 
 .admin-sidebar-link.active {
-    background-color: var(--saffron-400) !important;
+    background-color: var(--flag-saffron) !important;
     color: #ffffff !important;
     font-weight: 700;
     box-shadow: var(--shadow-sm);
@@ -463,14 +463,14 @@ tr:hover td {
     border: 1px solid var(--slate-200);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    border-top: 4px solid var(--chakra-navy-800);
+    border-top: 4px solid var(--goi-navy-900);
     transition: all 0.2s ease;
 }
 
 .admin-kpi-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    border-top-color: var(--saffron-400);
+    border-top-color: var(--flag-saffron);
 }
 
 /* Scrollbar */
@@ -489,7 +489,7 @@ tr:hover td {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--saffron-400);
+    background: var(--flag-saffron);
 }
 
 /* Micro Animations */
@@ -508,7 +508,7 @@ tr:hover td {
 }
 
 .shimmer-loading {
-    background: linear-gradient(90deg, #f1f5f9 25%, #ffe6cc 50%, #f1f5f9 75%);
+    background: linear-gradient(90deg, #F8FAFC 25%, #FFE0B2 50%, #F8FAFC 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
