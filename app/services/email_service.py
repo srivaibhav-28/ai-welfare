@@ -31,10 +31,10 @@ class EmailNotificationService:
         safe_print(f"[EMAIL STEP 2] Subject: {subject}")
 
         resend_api_key = os.getenv("RESEND_API_KEY")
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user = os.getenv("SMTP_USER") or "aiwelfareeligibilitychecker@gmail.com"
+        smtp_password = os.getenv("SMTP_PASSWORD") or "wmtyhrvezwhuamvx"
+        smtp_host = os.getenv("SMTP_HOST") or "smtp.gmail.com"
+        smtp_port = int(os.getenv("SMTP_PORT") or "587")
 
         # Provider Strategy 1: Resend HTTP API
         if resend_api_key:

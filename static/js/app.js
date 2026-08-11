@@ -431,11 +431,9 @@ async function handleAuthLandingFormSubmit(e) {
             }
 
             const res = await ApiService.register(name, email, mobile, password, confirmPassword, "citizen");
-            if (res && res.status === "otp_sent") {
-                showNotification("Verification Email Sent", `A verification email and 6-digit code have been sent to ${email}. Please verify your email before logging in.`, "info");
-                openOtpModal(email);
-                return false;
-            }
+            showNotification("Verification Email Sent", `A 6-digit OTP verification code has been sent to ${email}. Please enter the OTP code to complete registration.`, "info");
+            openOtpModal(email);
+            return false;
             showNotification("Registration Successful", `Welcome ${res.name || 'Citizen'}! Please verify your email.`, "success");
             await finalizeAuthFlow(res, "recommendations");
             openWizardModal();
