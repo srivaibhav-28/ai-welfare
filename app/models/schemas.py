@@ -7,6 +7,7 @@ class UserRegister(BaseModel):
     mobile_number: str = ""
     password: str
     confirm_password: Optional[str] = None
+    confirm: Optional[str] = None
     role: str = "citizen"
     invite_code: Optional[str] = None
 

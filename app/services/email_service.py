@@ -90,8 +90,11 @@ class EmailNotificationService:
                 server.starttls()
                 server.ehlo()
                 server.login(smtp_user, smtp_password)
+                safe_print("SMTP Login Success")
                 server.sendmail(smtp_user, [to_email], msg.as_string())
                 server.quit()
+                safe_print("Email Sent")
+                safe_print(f"Recipient: {to_email}")
                 safe_print(f"[EMAIL SUCCESS] Delivered to {to_email} via SMTP ({smtp_host})")
                 safe_print("=" * 80)
                 return True, f"Delivered via Gmail SMTP ({smtp_host})"

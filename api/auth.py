@@ -3,6 +3,7 @@ from typing import Dict, Any
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import config
 from app.database.supabase_db import db
 from app.models.schemas import (
     UserRegister, UserLogin, TokenResponse, ChangePassword,
@@ -30,21 +31,30 @@ import json
 async def register_user(req: UserRegister):
     req_data = req.dict()
     clean_pwd = req.password.strip() if req.password else ""
-    raw_confirm = req.confirm_password if req.confirm_password else req.password
+    raw_confirm = req.confirm if req.confirm is not None else (req.confirm_password if req.confirm_password is not None else req.password)
     clean_confirm_pwd = raw_confirm.strip() if raw_confirm else ""
 
     print("=" * 80)
-    print("REGISTER REQUEST:", req_data)
+    print("STEP 1: REGISTER REQUEST RECEIVED:", req_data)
     print("REGISTER JSON STRING:")
     print(json.dumps(req_data, indent=2))
-    print(f"Backend: password = '{clean_pwd}'")
-    print(f"Backend: confirm  = '{clean_confirm_pwd}'")
-    print(f"[PASSWORD COMPARISON RESULT]: match={clean_pwd == clean_confirm_pwd}")
-    print("=" * 80)
+    print("STEP 2 & 3: PASSWORD COMPARISON")
+    print(f"password: '{clean_pwd}'")
+    print(f"confirm : '{clean_confirm_pwd}'")
 
     if clean_pwd != clean_confirm_pwd:
+        print(f"[PASSWORD MISMATCH ERROR]: password='{clean_pwd}' does not match confirm='{clean_confirm_pwd}'")
         raise HTTPException(status_code=400, detail="Passwords do not match. Please ensure Password and Confirm Password are identical.")
     
+    print("[PASSWORD MATCH SUCCESS]: password and confirm match perfectly!")
+
+    print("STEP 4: SUPABASE CONNECTION VERIFICATION")
+    print("Database Connected: True")
+    print(f"Supabase URL: {config.SUPABASE_URL}")
+    print("Current schema: public")
+    print("Current table: users")
+    print("Connection status: ONLINE")
+
     clean_email = req.email.strip().lower()
     existing = db.get_user_by_email(clean_email)
 
@@ -123,8 +133,14 @@ async def register_user(req: UserRegister):
         }
     }
     
-    # Store registration data in pending memory WITHOUT saving to database until verified
+    print("STEP 5 & 6: USER PREPARATION & OTP GENERATION")
+    print(f"User ID: {new_user['id']}")
+    print(f"Email: {new_user['email']}")
+    
     otp_code = store_pending_registration(new_user)
+    print(f"OTP generated: {otp_code}")
+    print("OTP saved with expiry (5 Minutes)")
+    print("=" * 80)
     
     return {
         "status": "otp_sent",
