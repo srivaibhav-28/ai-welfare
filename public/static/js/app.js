@@ -442,21 +442,6 @@ async function handleAuthLandingFormSubmit(e) {
             return false;
         }
 
-        // Execute Supabase Auth SignInWithPassword
-        if (window.supabaseClient) {
-            try {
-                const { data: sbData, error: sbError } = await window.supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                if (sbError) {
-                    console.warn("Supabase Auth signInWithPassword notice:", sbError.message);
-                }
-            } catch (sbErr) {
-                console.warn("Supabase Auth signInWithPassword exception:", sbErr);
-            }
-        }
-
         const authData = await ApiService.login(email, password);
         if (authData.role === "admin") {
             await finalizeAuthFlow(authData, "admin");
