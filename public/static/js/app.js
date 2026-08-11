@@ -430,22 +430,6 @@ async function handleAuthLandingFormSubmit(e) {
                 return false;
             }
 
-            // Execute Supabase Auth SignUp
-            if (window.supabaseClient) {
-                try {
-                    await window.supabaseClient.auth.signUp({
-                        email: email,
-                        password: password,
-                        options: {
-                            data: { name, mobile_number: mobile, role: "citizen" },
-                            emailRedirectTo: window.location.origin
-                        }
-                    });
-                } catch (sbErr) {
-                    console.warn("Supabase Auth signUp notice:", sbErr);
-                }
-            }
-
             const res = await ApiService.register(name, email, mobile, password, confirmPassword, "citizen");
             if (res && res.status === "otp_sent") {
                 showNotification("Verification Email Sent", `A verification email and 6-digit code have been sent to ${email}. Please verify your email before logging in.`, "info");
