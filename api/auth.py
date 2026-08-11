@@ -26,13 +26,18 @@ app.add_middleware(
 
 @app.post("/api/auth/register")
 async def register_user(req: UserRegister):
-    confirm_pwd = req.confirm_password if req.confirm_password else req.password
+    clean_pwd = req.password.strip() if req.password else ""
+    raw_confirm = req.confirm_password if req.confirm_password else req.password
+    clean_confirm_pwd = raw_confirm.strip() if raw_confirm else ""
+
     print("=" * 80)
-    print(f"[BACKEND REGISTRATION PAYLOAD RECEIVED]: name='{req.name}', email='{req.email}', mobile_number='{req.mobile_number}', role='{req.role}'")
-    print(f"[PASSWORD AUDIT]: password_len={len(req.password)}, confirm_password_len={len(confirm_pwd)}, match={req.password == confirm_pwd}")
+    print(f"[BACKEND REQUEST BODY RECEIVED]: {req.dict()}")
+    print(f"Backend: password = '{clean_pwd}'")
+    print(f"Backend: confirm  = '{clean_confirm_pwd}'")
+    print(f"[PASSWORD COMPARISON RESULT]: match={clean_pwd == clean_confirm_pwd}")
     print("=" * 80)
 
-    if req.password != confirm_pwd:
+    if clean_pwd != clean_confirm_pwd:
         raise HTTPException(status_code=400, detail="Passwords do not match. Please ensure Password and Confirm Password are identical.")
     
     clean_email = req.email.strip().lower()

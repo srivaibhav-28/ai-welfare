@@ -118,9 +118,27 @@ class ApiService {
 
     static async register(name, email, mobile_number, password, confirm_password = null, role = "citizen") {
         try {
-            const finalConfirmPassword = confirm_password || password;
-            const payload = { name, email, mobile_number, password, confirm_password: finalConfirmPassword, role };
-            console.log("[API REGISTRATION PAYLOAD]", payload);
+            const cleanPassword = (password || "").trim();
+            const cleanConfirmPassword = (confirm_password || password || "").trim();
+
+            console.log("================================================================================");
+            console.log("[FRONTEND REGISTRATION PAYLOAD BEFORE API CALL]:");
+            console.log("  * name           =", (name || "").trim());
+            console.log("  * email          =", (email || "").trim());
+            console.log("  * mobile_number  =", (mobile_number || "").trim());
+            console.log("  * password       =", cleanPassword);
+            console.log("  * confirm        =", cleanConfirmPassword);
+            console.log("  * role           =", role);
+            console.log("================================================================================");
+
+            const payload = {
+                name: (name || "").trim(),
+                email: (email || "").trim(),
+                mobile_number: (mobile_number || "").trim(),
+                password: cleanPassword,
+                confirm_password: cleanConfirmPassword,
+                role: role
+            };
 
             const data = await this.request("/api/auth/register", {
                 method: "POST",
