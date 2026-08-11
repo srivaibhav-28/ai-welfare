@@ -24,14 +24,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import json
+
 @app.post("/api/auth/register")
 async def register_user(req: UserRegister):
+    req_data = req.dict()
     clean_pwd = req.password.strip() if req.password else ""
     raw_confirm = req.confirm_password if req.confirm_password else req.password
     clean_confirm_pwd = raw_confirm.strip() if raw_confirm else ""
 
     print("=" * 80)
-    print(f"[BACKEND REQUEST BODY RECEIVED]: {req.dict()}")
+    print("REGISTER REQUEST:", req_data)
+    print("REGISTER JSON STRING:")
+    print(json.dumps(req_data, indent=2))
     print(f"Backend: password = '{clean_pwd}'")
     print(f"Backend: confirm  = '{clean_confirm_pwd}'")
     print(f"[PASSWORD COMPARISON RESULT]: match={clean_pwd == clean_confirm_pwd}")

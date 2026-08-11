@@ -121,16 +121,6 @@ class ApiService {
             const cleanPassword = (password || "").trim();
             const cleanConfirmPassword = (confirm_password || password || "").trim();
 
-            console.log("================================================================================");
-            console.log("[FRONTEND REGISTRATION PAYLOAD BEFORE API CALL]:");
-            console.log("  * name           =", (name || "").trim());
-            console.log("  * email          =", (email || "").trim());
-            console.log("  * mobile_number  =", (mobile_number || "").trim());
-            console.log("  * password       =", cleanPassword);
-            console.log("  * confirm        =", cleanConfirmPassword);
-            console.log("  * role           =", role);
-            console.log("================================================================================");
-
             const payload = {
                 name: (name || "").trim(),
                 email: (email || "").trim(),
@@ -139,6 +129,10 @@ class ApiService {
                 confirm_password: cleanConfirmPassword,
                 role: role
             };
+
+            console.log("[API REGISTRATION PAYLOAD]");
+            if (console.table) console.table(payload);
+            console.log(JSON.stringify(payload, null, 2));
 
             const data = await this.request("/api/auth/register", {
                 method: "POST",
