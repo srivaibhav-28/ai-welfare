@@ -6,7 +6,9 @@ class UserRegister(BaseModel):
     email: str
     mobile_number: str = ""
     password: str
+    confirm_password: Optional[str] = None
     role: str = "citizen"
+    invite_code: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str
@@ -24,6 +26,24 @@ class TokenResponse(BaseModel):
     email: str
     mobile_number: str = ""
     role: str
+    is_verified: bool = True
+    picture: Optional[str] = None
+    is_first_time: bool = False
+    has_completed_profile: bool = False
+
+class OTPVerifyRequest(BaseModel):
+    email: str
+    otp: str
+
+class OTPResendRequest(BaseModel):
+    email: str
+
+class GoogleAuthRequest(BaseModel):
+    email: str
+    name: str
+    google_id: Optional[str] = None
+    picture: Optional[str] = None
+    role: str = "citizen"
 
 class CitizenProfile(BaseModel):
     name: str = ""
@@ -108,3 +128,12 @@ class NotificationCreate(BaseModel):
 class SchemeRuleUpdate(BaseModel):
     criteria: Dict[str, Any]
     required_documents: Optional[List[str]] = None
+
+class AppOtpInitiateRequest(BaseModel):
+    scheme_id: str
+    uploaded_documents: Optional[Dict[str, str]] = None
+
+class AppOtpVerifyRequest(BaseModel):
+    scheme_id: str
+    otp: str
+    uploaded_documents: Optional[Dict[str, str]] = None

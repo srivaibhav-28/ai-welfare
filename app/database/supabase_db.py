@@ -1,5 +1,7 @@
 import os
 import json
+import uuid
+import datetime
 from typing import Dict, List, Any, Optional
 import requests
 from app.config import config
@@ -226,10 +228,20 @@ INITIAL_SCHEMES = [
 INITIAL_USERS = [
     {
         "id": "usr-admin-01",
+        "email": "admin@aiwelfare.gov",
+        "password_hash": "Admin@123",
+        "name": "System Administrator",
+        "role": "admin",
+        "is_verified": True,
+        "profile": {}
+    },
+    {
+        "id": "usr-admin-02",
         "email": "admin@welfare.gov",
         "password_hash": "admin123",
         "name": "System Administrator",
         "role": "admin",
+        "is_verified": True,
         "profile": {}
     },
     {
@@ -238,6 +250,7 @@ INITIAL_USERS = [
         "password_hash": "password123",
         "name": "Rajesh Kumar",
         "role": "citizen",
+        "is_verified": True,
         "profile": {
             "name": "Rajesh Kumar",
             "age": 42,
@@ -450,6 +463,11 @@ class SupabaseDatabase:
     def update_user_status(self, user_id: str, is_blocked: bool) -> Optional[Dict[str, Any]]:
         return self.update_row("users", {"id": user_id}, {"is_blocked": is_blocked})
 
+    def verify_user(self, user_id: str) -> Optional[Dict[str, Any]]:
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).isoformat()
+        return self.update_row("users", {"id": user_id}, {"is_verified": True, "verified_at": now_iso})
+
     def delete_user(self, user_id: str) -> bool:
         self.delete_rows("users", {"id": user_id})
         self.delete_rows("user_documents", {"user_id": user_id})
@@ -542,5 +560,30 @@ class SupabaseDatabase:
 
     def add_notification(self, notif_data: Dict[str, Any]):
         return self.insert_row("notifications", notif_data)
+
+    def get_audit_logs(self) -> List[Dict[str, Any]]:
+        logs = self.fetch_rows("audit_logs")
+        if not logs:
+            logs = getattr(self, "_in_memory_audit_logs", [])
+        return logs
+
+    def add_audit_log(self, action: str, performed_by: str, details: str = "", ip_address: str = "127.0.0.1"):
+        log_entry = {
+            "id": f"log-{uuid.uuid4().hex[:6]}",
+            "action": action,
+            "performed_by": performed_by,
+            "details": details,
+            "ip_address": ip_address,
+            "created_at": datetime.datetime.now().isoformat()
+        }
+        if not hasattr(self, "_in_memory_audit_logs"):
+            self._in_memory_audit_logs = []
+        self._in_memory_audit_logs.insert(0, log_entry)
+        if self.is_supabase_configured:
+            try:
+                self.insert_row("audit_logs", log_entry)
+            except Exception:
+                pass
+        return log_entry
 
 db = SupabaseDatabase()

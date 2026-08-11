@@ -27,6 +27,7 @@ async def admin_create_scheme(req: SchemeCreate, admin: Dict[str, Any] = Depends
     new_scheme = req.model_dump()
     new_scheme["id"] = f"scheme-{uuid.uuid4().hex[:6]}"
     db.add_scheme(new_scheme)
+    db.add_audit_log("Scheme Created", admin.get("email", "Admin"), f"Created scheme {new_scheme['name']}")
     return {"message": "Scheme created successfully", "scheme": new_scheme}
 
 @app.put("/api/admin/schemes/{scheme_id}")
@@ -34,6 +35,7 @@ async def admin_update_scheme(scheme_id: str, req: SchemeUpdate, admin: Dict[str
     updated = db.update_scheme(scheme_id, req.model_dump(exclude_unset=True))
     if not updated:
         raise HTTPException(status_code=404, detail="Scheme not found")
+    db.add_audit_log("Scheme Updated", admin.get("email", "Admin"), f"Updated scheme {scheme_id}")
     return {"message": "Scheme updated successfully", "scheme": updated}
 
 @app.delete("/api/admin/schemes/{scheme_id}")
@@ -41,6 +43,7 @@ async def admin_delete_scheme(scheme_id: str, admin: Dict[str, Any] = Depends(re
     success = db.delete_scheme(scheme_id)
     if not success:
         raise HTTPException(status_code=404, detail="Scheme not found")
+    db.add_audit_log("Scheme Deleted", admin.get("email", "Admin"), f"Deleted scheme {scheme_id}")
     return {"message": "Scheme deleted successfully"}
 
 @app.put("/api/admin/schemes/{scheme_id}/rules")
@@ -91,6 +94,7 @@ async def admin_verify_document(req: DocumentVerifyRequest, admin: Dict[str, Any
         "verified_by": admin.get("name", "Admin")
     }
     db.update_user_document(req.user_id, req.document_name, doc_info)
+    db.add_audit_log("Document Verified", admin.get("email", "Admin"), f"Document '{req.document_name}' status set to '{req.status}' for user {req.user_id}")
     
     # Send Notification to User
     notif = {
@@ -137,6 +141,7 @@ async def admin_get_supabase_status(admin: Dict[str, Any] = Depends(require_admi
     }
     return status
 
+@app.get("/api/admin/dashboard")
 @app.get("/api/admin/analytics")
 async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user)):
     schemes = db.get_schemes()
@@ -148,11 +153,15 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         "Under Verification": 0,
         "Approved": 0,
         "Rejected": 0,
-        "Benefits Received": 0
+        "Benefits Received": 0,
+        "Under Fraud Review": 0
     }
+    flagged_fraud_count = 0
     for a in apps:
         st = a.get("status", "Applied")
         status_counts[st] = status_counts.get(st, 0) + 1
+        if a.get("is_flagged_fraud"):
+            flagged_fraud_count += 1
 
     category_counts = {}
     for s in schemes:
@@ -160,8 +169,27 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         category_counts[cat] = category_counts.get(cat, 0) + 1
 
     monthly_apps = {
-        "Jan": 12, "Feb": 18, "Mar": 24, "Apr": 19, "May": 28, "Jun": 35, "Jul": 42
+        "Jan": 14, "Feb": 22, "Mar": 31, "Apr": 28, "May": 39, "Jun": 48, "Jul": 56
     }
+
+    district_counts = {"Varanasi": 18, "Lucknow": 14, "Hyderabad": 12, "Patna": 9, "Jaipur": 7}
+    gender_counts = {"Male": 0, "Female": 0, "Other": 0}
+    income_brackets = {"< ₹1 Lakh": 0, "₹1L - ₹2.5L": 0, "₹2.5L - ₹5L": 0, "> ₹5 Lakh": 0}
+
+    for u in users:
+        prof = u.get("profile", {}) or {}
+        g = prof.get("gender", "Male")
+        gender_counts[g] = gender_counts.get(g, 0) + 1
+        
+        inc = prof.get("annual_income", 150000)
+        if inc <= 100000:
+            income_brackets["< ₹1 Lakh"] += 1
+        elif inc <= 250000:
+            income_brackets["₹1L - ₹2.5L"] += 1
+        elif inc <= 500000:
+            income_brackets["₹2.5L - ₹5L"] += 1
+        else:
+            income_brackets["> ₹5 Lakh"] += 1
 
     scheme_app_counts = {}
     for a in apps:
@@ -169,19 +197,30 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         scheme_app_counts[s_name] = scheme_app_counts.get(s_name, 0) + 1
 
     top_schemes = sorted(scheme_app_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    most_applied = top_schemes[0][0] if top_schemes else "PM-Kisan Samman Nidhi"
+
+    total_apps_len = len(apps) or 1
+    approved_count = status_counts.get("Approved", 0) + status_counts.get("Benefits Received", 0)
+    rejected_count = status_counts.get("Rejected", 0)
 
     return {
         "total_users": len(users),
         "total_schemes": len(schemes),
         "total_applications": len(apps),
         "pending_applications": status_counts.get("Applied", 0) + status_counts.get("Under Verification", 0),
-        "approved_applications": status_counts.get("Approved", 0) + status_counts.get("Benefits Received", 0),
-        "rejected_applications": status_counts.get("Rejected", 0),
-        "approval_rate": round(((status_counts.get("Approved", 0) + status_counts.get("Benefits Received", 0)) / (len(apps) or 1)) * 100, 1),
+        "approved_applications": approved_count,
+        "rejected_applications": rejected_count,
+        "flagged_fraud_applications": flagged_fraud_count,
+        "most_applied_scheme": most_applied,
+        "approval_rate": round((approved_count / total_apps_len) * 100, 1),
+        "rejection_rate": round((rejected_count / total_apps_len) * 100, 1),
         "application_status_distribution": status_counts,
         "scheme_category_distribution": category_counts,
         "monthly_applications": monthly_apps,
         "top_applied_schemes": dict(top_schemes),
+        "applications_by_district": district_counts,
+        "applications_by_gender": gender_counts,
+        "applications_by_income": income_brackets,
         "recent_users": users[-5:],
         "recent_applications": apps[-5:]
     }

@@ -17,6 +17,9 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="./static/css/styles.css?v=6.0">
 </head>
@@ -102,14 +105,11 @@
                     <div id="navUserContainer" class="hidden items-center gap-2">
                         <div
                             class="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 rounded-xl px-3 py-1.5">
-                            <div
-                                class="w-6 h-6 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
-                                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                            </div>
+                            <img id="navUserAvatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=citizen"
+                                class="w-7 h-7 rounded-full bg-slate-700 object-cover border border-indigo-400/50" />
                             <div class="text-left">
                                 <div id="userNameLabel" class="text-xs font-bold text-white leading-tight">Citizen</div>
-                                <div id="userRoleBadge" class="text-[9px] uppercase font-bold text-indigo-400">citizen
-                                </div>
+                                <div id="userRoleBadge" class="text-[9px] uppercase font-bold text-emerald-400">VERIFIED CITIZEN</div>
                             </div>
                         </div>
                         <button onclick="logout()"
@@ -401,12 +401,34 @@
                                         </div>
                                     </div>
 
+                                    <div id="landingAuthConfirmPasswordGroup" style="display: none;">
+                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Confirm Password *</label>
+                                        <div class="relative">
+                                            <i data-lucide="lock"
+                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                            <input type="password" id="landingAuthConfirmPassword" placeholder="••••••••"
+                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                        </div>
+                                    </div>
+
                                     <button type="submit" id="btnLandingAuthSubmit"
                                         class="w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl hover:scale-[1.01] active:scale-[0.99]"
                                         style="background: linear-gradient(135deg, #ff9933 0%, #e67300 100%);">
                                         <i data-lucide="log-in" class="w-4 h-4"></i> Sign In to Portal
                                     </button>
                                 </form>
+
+                                <!-- Google OAuth Sign-In Button -->
+                                <button type="button" onclick="handleGoogleSignIn('citizen')"
+                                    class="w-full mt-3 py-3 rounded-xl bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs border border-slate-300 transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer shadow-sm hover:shadow-md">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24">
+                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                                    </svg>
+                                    <span>Continue with Google</span>
+                                </button>
 
                                 <!-- Divider -->
                                 <div class="flex items-center gap-3 my-5">
@@ -416,12 +438,6 @@
                                     <div class="flex-1 h-px bg-slate-200"></div>
                                 </div>
 
-                                <!-- Demo Login Button (Citizen Only) -->
-                                <button type="button" onclick="quickDemoLogin('citizen')"
-                                    class="w-full py-2.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs border border-indigo-200/80 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer hover:shadow-md mb-2">
-                                    <i data-lucide="user" class="w-3.5 h-3.5"></i> Citizen Demo Login
-                                </button>
-                                
                                 <button type="button" onclick="switchView('admin-auth')"
                                     class="w-full py-2.5 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold text-xs border border-slate-200/80 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer hover:shadow-md">
                                     <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Admin Login / Register
@@ -693,12 +709,6 @@
                                     <div class="flex-1 h-px bg-purple-200"></div>
                                 </div>
 
-                                <!-- Admin Demo Login -->
-                                <button type="button" onclick="quickDemoLogin('admin')"
-                                    class="w-full py-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-bold transition-all flex items-center justify-center gap-2 mb-3">
-                                    <i data-lucide="zap" class="w-4 h-4 text-purple-500"></i> Admin Demo Login
-                                </button>
-
                                 <button type="button" onclick="switchView('auth-landing')"
                                     class="w-full py-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold transition-all flex items-center justify-center gap-2">
                                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Citizen Portal
@@ -854,9 +864,15 @@
                             <div>
                                 <h2 class="text-2xl font-black text-slate-900" id="profDisplayName">Citizen</h2>
                                 <p class="text-xs text-slate-500" id="profDisplayEmail">citizen@example.com</p>
-                                <span
-                                    class="inline-block mt-1 px-3 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[10px] uppercase border border-indigo-200"
-                                    id="profDisplayRole">Citizen Account</span>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span
+                                        class="inline-block px-3 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[10px] uppercase border border-indigo-200"
+                                        id="profDisplayRole">Citizen Account</span>
+                                    <span id="profVerificationBadge"
+                                        class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase border border-emerald-200">
+                                        <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i> Verified
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
@@ -2193,10 +2209,128 @@
         </div>
     </div>
 
+    <!-- EMAIL OTP VERIFICATION MODAL -->
+    <div id="otpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 animate-fade-in" style="z-index:99999;">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 sm:p-8 relative text-center">
+            <button onclick="closeOtpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-100">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-xl font-black text-slate-900 tracking-tight mb-1">Verify Your Email</h3>
+            <p class="text-xs text-slate-500 mb-6">
+                We've sent a 6-digit verification OTP code to <br/>
+                <span id="otpTargetEmail" class="font-bold text-slate-800">user@example.com</span>
+            </p>
+
+            <!-- 6-digit OTP Inputs -->
+            <div class="flex items-center justify-center gap-2 sm:gap-3 mb-4" id="otpInputContainer">
+                <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-amber-500 focus:outline-none transition-all" data-index="0" autofocus />
+                <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-amber-500 focus:outline-none transition-all" data-index="1" />
+                <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-amber-500 focus:outline-none transition-all" data-index="2" />
+                <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-amber-500 focus:outline-none transition-all" data-index="3" />
+                <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-amber-500 focus:outline-none transition-all" data-index="4" />
+                <input type="text" maxlength="1" class="otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-amber-500 focus:outline-none transition-all" data-index="5" />
+            </div>
+
+            <!-- Timer & Attempts Indicator -->
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-5 px-1">
+                <span class="text-amber-700 font-bold flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> Expires in: <span id="otpExpiryClock">05:00</span>
+                </span>
+                <span class="text-slate-500">Attempt <span id="otpAttemptCount">1</span> of 5</span>
+            </div>
+
+            <button id="btnVerifyOtpSubmit" onclick="submitOtpVerification()"
+                class="w-full py-3.5 rounded-xl text-white font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] mb-4"
+                style="background: linear-gradient(135deg, #ff9933 0%, #e67300 100%);">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Verify & Complete Registration
+            </button>
+
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
+                <span>Didn't receive code?</span>
+                <button id="btnResendOtp" onclick="handleResendOtp()" class="text-amber-600 hover:text-amber-700 font-bold disabled:text-slate-400 disabled:cursor-not-allowed">
+                    Resend OTP <span id="resendOtpTimer"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION VISUAL TIMELINE MODAL (Module 14) -->
+    <div id="timelineModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center hidden p-4 animate-fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full p-6 sm:p-8 relative">
+            <button onclick="closeTimelineModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-100">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="timelineModalTitle" class="text-lg font-black text-slate-900 tracking-tight mb-4">Application Visual Timeline</h3>
+            <div id="timelineModalBody">
+                <!-- Populated via JS -->
+            </div>
+            <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                <button onclick="closeTimelineModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200">Close Timeline</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFY APPLICATION OTP MODAL -->
+    <div id="appOtpModal" class="fixed inset-0 hidden p-4" style="z-index:99999;display:none;">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 sm:p-8 relative text-center">
+            <button onclick="closeAppOtpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-100">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            
+            <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/60 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+
+            <h3 class="text-xl font-black text-slate-900 tracking-tight mb-1">Verify Application OTP</h3>
+            <p class="text-xs text-slate-500 mb-6">
+                Enter the 6-digit OTP sent to your registered email address <br/>
+                <span id="appOtpTargetEmail" class="font-bold text-indigo-600">user@example.com</span>
+            </p>
+
+            <!-- 6 Individual OTP Input Boxes -->
+            <div class="flex items-center justify-center gap-2 sm:gap-3 mb-5" id="appOtpInputContainer">
+                <input type="text" maxlength="1" class="app-otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-600 focus:outline-none transition-all" data-index="0" autofocus />
+                <input type="text" maxlength="1" class="app-otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-600 focus:outline-none transition-all" data-index="1" />
+                <input type="text" maxlength="1" class="app-otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-600 focus:outline-none transition-all" data-index="2" />
+                <input type="text" maxlength="1" class="app-otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-600 focus:outline-none transition-all" data-index="3" />
+                <input type="text" maxlength="1" class="app-otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-600 focus:outline-none transition-all" data-index="4" />
+                <input type="text" maxlength="1" class="app-otp-box w-11 h-12 text-center text-xl font-black rounded-xl border-2 border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-600 focus:outline-none transition-all" data-index="5" />
+            </div>
+
+            <!-- Timer & Attempts Indicator -->
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 mb-5 px-1">
+                <span class="text-indigo-700 font-bold flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> Expires in: <span id="appOtpExpiryClock">05:00</span>
+                </span>
+                <span class="text-slate-500">Attempt <span id="appOtpAttemptCount">1</span> of 5</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <button id="btnVerifyAppOtpSubmit" onclick="submitAppOtpVerification()"
+                class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mb-3">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> Verify OTP & Submit Application
+            </button>
+
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
+                <button id="btnResendAppOtp" onclick="handleResendAppOtp()" disabled class="text-indigo-600 hover:text-indigo-800 font-bold disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-1">
+                    <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Resend OTP (<span id="appResendTimerCount">60</span>s)
+                </button>
+                <button onclick="closeAppOtpModal()" class="text-slate-400 hover:text-slate-600 font-bold">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- App JS Scripts -->
-    <script src="./static/js/i18n.js"></script>
-    <script src="./static/js/api.js"></script>
-    <script src="./static/js/app.js"></script>
+    <script src="./static/js/i18n.js?v=11.0"></script>
+    <script src="./static/js/api.js?v=11.0"></script>
+    <script src="./static/js/app.js?v=11.0"></script>
 </body>
 
 </html>

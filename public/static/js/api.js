@@ -5,7 +5,17 @@ const API_BASE = getApiBase();
 
 class ApiService {
     static getAuthToken() {
-        return localStorage.getItem("welfare_token") || "";
+        let token = localStorage.getItem("welfare_token");
+        if (!token) {
+            const userStr = localStorage.getItem("welfare_user");
+            if (userStr) {
+                try {
+                    const u = JSON.parse(userStr);
+                    token = u.access_token || u.id;
+                } catch(e) {}
+            }
+        }
+        return token || null;
     }
 
     static setAuthToken(token) {
@@ -35,8 +45,23 @@ class ApiService {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, options);
             if (!res.ok) {
-                const err = await res.json().catch(() => ({ detail: "API Error" }));
-                throw new Error(err.detail || "Server error occurred");
+                let errorMsg = `Server error (${res.status})`;
+                try {
+                    const errData = await res.json();
+                    if (typeof errData.detail === "string") {
+                        errorMsg = errData.detail;
+                    } else if (Array.isArray(errData.detail)) {
+                        errorMsg = errData.detail.map(e => e.msg || JSON.stringify(e)).join("; ");
+                    } else if (errData.message) {
+                        errorMsg = errData.message;
+                    } else {
+                        errorMsg = JSON.stringify(errData);
+                    }
+                } catch (e) {
+                    const text = await res.text().catch(() => "");
+                    if (text) errorMsg = text;
+                }
+                throw new Error(errorMsg);
             }
             return await res.json();
         } catch (error) {
@@ -91,11 +116,15 @@ class ApiService {
         }
     }
 
-    static async register(name, email, mobile_number, password, role = "citizen") {
+    static async register(name, email, mobile_number, password, confirm_password = null, role = "citizen") {
         try {
+            const finalConfirmPassword = confirm_password || password;
+            const payload = { name, email, mobile_number, password, confirm_password: finalConfirmPassword, role };
+            console.log("[API REGISTRATION PAYLOAD]", payload);
+
             const data = await this.request("/api/auth/register", {
                 method: "POST",
-                body: JSON.stringify({ name, email, mobile_number, password, role })
+                body: JSON.stringify(payload)
             });
             if (data && data.access_token) {
                 this.setAuthToken(data.access_token);
@@ -129,6 +158,56 @@ class ApiService {
         }
     }
 
+    static async verifyOtp(email, otp) {
+        const data = await this.request("/api/auth/verify-otp", {
+            method: "POST",
+            body: JSON.stringify({ email, otp })
+        });
+        if (data && data.access_token) {
+            this.setAuthToken(data.access_token);
+            localStorage.setItem("welfare_user", JSON.stringify(data));
+        }
+        return data;
+    }
+
+    static async adminLogin(email, password) {
+        const data = await this.request("/api/admin/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password })
+        });
+        if (data && data.access_token) {
+            this.setAuthToken(data.access_token);
+            localStorage.setItem("welfare_user", JSON.stringify(data));
+        }
+        return data;
+    }
+
+    static async sendOtp(email) {
+        return await this.request("/api/auth/send-otp", {
+            method: "POST",
+            body: JSON.stringify({ email })
+        });
+    }
+
+    static async resendOtp(email) {
+        return await this.request("/api/auth/resend-otp", {
+            method: "POST",
+            body: JSON.stringify({ email })
+        });
+    }
+
+    static async googleLogin(email, name, role = "citizen", picture = null) {
+        const data = await this.request("/api/auth/google", {
+            method: "POST",
+            body: JSON.stringify({ email, name, role, picture })
+        });
+        if (data && data.access_token) {
+            this.setAuthToken(data.access_token);
+            localStorage.setItem("welfare_user", JSON.stringify(data));
+        }
+        return data;
+    }
+
     static async changePassword(oldPassword, newPassword) {
         return await this.request("/api/auth/change-password", {
             method: "POST",
@@ -155,6 +234,10 @@ class ApiService {
     // Schemes & Evaluation
     static async getSchemes() {
         return await this.request("/api/schemes");
+    }
+
+    static async searchSchemes(query) {
+        return await this.request(`/api/schemes/search?q=${encodeURIComponent(query)}`);
     }
 
     static async evaluateProfile(profileData) {
@@ -206,8 +289,33 @@ class ApiService {
         return await this.request("/api/applications");
     }
 
+    static async initiateAppOtp(schemeId, uploadedDocuments = {}) {
+        return await this.request("/api/applications/initiate-otp", {
+            method: "POST",
+            body: JSON.stringify({ scheme_id: schemeId, uploaded_documents: uploadedDocuments })
+        });
+    }
+
+    static async verifyAndSubmitAppOtp(schemeId, otp, uploadedDocuments = {}) {
+        return await this.request("/api/applications/verify-submit-otp", {
+            method: "POST",
+            body: JSON.stringify({ scheme_id: schemeId, otp, uploaded_documents: uploadedDocuments })
+        });
+    }
+
+    static async resendAppOtp(schemeId) {
+        return await this.request("/api/applications/resend-app-otp", {
+            method: "POST",
+            body: JSON.stringify({ scheme_id: schemeId })
+        });
+    }
+
     static async applyForScheme(schemeId, uploadedDocuments = {}) {
-        return await this.request("/api/applications/apply", {
+        return await this.initiateAppOtp(schemeId, uploadedDocuments);
+    }
+
+    static async directApply(schemeId, uploadedDocuments = {}) {
+        return await this.request("/api/applications/direct-apply", {
             method: "POST",
             body: JSON.stringify({ scheme_id: schemeId, uploaded_documents: uploadedDocuments })
         });
