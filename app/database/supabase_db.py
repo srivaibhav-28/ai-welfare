@@ -297,6 +297,11 @@ class SupabaseDatabase:
         ]
 
     @property
+    def is_production(self) -> bool:
+        env = (os.environ.get("ENVIRONMENT") or os.environ.get("VERCEL_ENV") or "").lower()
+        return bool(os.environ.get("VERCEL") == "1" or env in ["production", "prod", "preview"])
+
+    @property
     def is_supabase_configured(self) -> bool:
         return bool(config.SUPABASE_URL and config.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -317,10 +322,15 @@ class SupabaseDatabase:
         print("SUPABASE_ANON_KEY exists:", bool(config.SUPABASE_ANON_KEY))
         print("SUPABASE_ANON_KEY length:", len(config.SUPABASE_ANON_KEY or ""))
         print("is_supabase_configured:", self.is_supabase_configured)
+        print("is_production:", self.is_production)
         print("table:", table)
         print("filters:", filters)
 
         if not self.is_supabase_configured:
+            if self.is_production:
+                err_msg = "Production Database Error: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in Vercel environment."
+                print(f"[PRODUCTION ERROR] {err_msg}")
+                raise RuntimeError(err_msg)
             print("USING IN-MEMORY DATABASE")
             return self.fetch_rows_in_memory(table, filters)
 
@@ -338,10 +348,18 @@ class SupabaseDatabase:
             print("BODY:", res.text[:500])
             if res.status_code == 200:
                 return res.json()
+            
+            err_msg = f"Supabase REST API Error (Status {res.status_code}): {res.text[:500]}"
+            if self.is_production:
+                print(f"[PRODUCTION REST ERROR] {err_msg}")
+                raise RuntimeError(err_msg)
         except Exception as e:
-            print("SUPABASE REQUEST EXCEPTION")
-            print(type(e).__name__)
-            print(str(e))
+            if isinstance(e, RuntimeError):
+                raise
+            err_msg = f"Supabase Request Exception ({type(e).__name__}): {str(e)}"
+            print(f"[PRODUCTION EXCEPTION ERROR] {err_msg}")
+            if self.is_production:
+                raise RuntimeError(err_msg) from e
 
         print("USING IN-MEMORY DATABASE (POST-FETCH FALLBACK)")
         print("=================================================\n")
@@ -436,9 +454,9 @@ class SupabaseDatabase:
     # High level domain operations
     def get_users(self) -> List[Dict[str, Any]]:
         users = self.fetch_rows("users")
-        if not users:
+        if not users and not self.is_production:
             users = self._in_memory_users
-        return users
+        return users or []
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         rows = self.fetch_rows("users", {"email": email.strip().lower()})
@@ -447,18 +465,20 @@ class SupabaseDatabase:
             if email.lower() == "admin@welfare.gov" and not u.get("password_hash"):
                 u["password_hash"] = "admin123"
             return u
-        for u in self._in_memory_users:
-            if u.get("email", "").lower() == email.lower():
-                return u
+        if not self.is_production:
+            for u in self._in_memory_users:
+                if u.get("email", "").lower() == email.lower():
+                    return u
         return None
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         rows = self.fetch_rows("users", {"id": user_id})
         if rows:
             return rows[0]
-        for u in self._in_memory_users:
-            if u.get("id") == user_id:
-                return u
+        if not self.is_production:
+            for u in self._in_memory_users:
+                if u.get("id") == user_id:
+                    return u
         return None
 
     def add_user(self, user: Dict[str, Any]):
