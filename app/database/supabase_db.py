@@ -311,26 +311,7 @@ class SupabaseDatabase:
     # REST helper methods
     def fetch_rows(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         if not self.is_supabase_configured:
-            if table == "users":
-                return self._in_memory_users
-            elif table == "schemes":
-                return self._in_memory_schemes
-            elif table == "applications":
-                if filters and "user_id" in filters:
-                    return [a for a in self._in_memory_applications if a.get("user_id") == filters["user_id"]]
-                return self._in_memory_applications
-            elif table == "user_documents":
-                if filters and "user_id" in filters:
-                    u_docs = self._in_memory_documents.get(filters["user_id"], {})
-                    return [{"document_name": k, **v} for k, v in u_docs.items()]
-                all_docs = []
-                for uid, docs in self._in_memory_documents.items():
-                    for k, v in docs.items():
-                        all_docs.append({"user_id": uid, "document_name": k, **v})
-                return all_docs
-            elif table == "notifications":
-                return self._in_memory_notifications
-            return []
+            return self.fetch_rows_in_memory(table, filters)
 
         url = f"{config.SUPABASE_URL}/rest/v1/{table}?select=*"
         if filters:
@@ -348,6 +329,11 @@ class SupabaseDatabase:
 
     def fetch_rows_in_memory(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         if table == "users":
+            if filters:
+                res = list(self._in_memory_users)
+                for k, v in filters.items():
+                    res = [u for u in res if str(u.get(k, "")).lower() == str(v).lower()]
+                return res
             return self._in_memory_users
         elif table == "schemes":
             return self._in_memory_schemes
@@ -435,17 +421,22 @@ class SupabaseDatabase:
         return users
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        users = self.get_users()
-        for u in users:
+        rows = self.fetch_rows("users", {"email": email.strip().lower()})
+        if rows:
+            u = rows[0]
+            if email.lower() == "admin@welfare.gov" and not u.get("password_hash"):
+                u["password_hash"] = "admin123"
+            return u
+        for u in self._in_memory_users:
             if u.get("email", "").lower() == email.lower():
-                if email.lower() == "admin@welfare.gov" and not u.get("password_hash"):
-                    u["password_hash"] = "admin123"
                 return u
         return None
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        users = self.get_users()
-        for u in users:
+        rows = self.fetch_rows("users", {"id": user_id})
+        if rows:
+            return rows[0]
+        for u in self._in_memory_users:
             if u.get("id") == user_id:
                 return u
         return None
