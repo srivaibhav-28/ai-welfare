@@ -154,6 +154,23 @@ function persistAuthSession(authData) {
     updateAuthUI();
 }
 
+function isProfileCompleted(p) {
+    if (!p) return false;
+    const aNum = String(p.aadhaar_number || "").trim();
+    const dob = String(p.dob || "").trim();
+    const dist = String(p.district || "").trim();
+    const pin = String(p.pincode || "").trim();
+    const bank = String(p.bank_account_number || "").trim();
+
+    const isValidAadhaar = aNum.length === 12 && /^\d+$/.test(aNum);
+    const isValidPincode = pin.length === 6 && /^\d+$/.test(pin);
+    const hasDob = dob.length > 0;
+    const hasDist = dist.length > 0;
+    const hasBank = bank.length > 0;
+
+    return Boolean(p.profile_completed === true && isValidAadhaar && isValidPincode && hasDob && hasDist && hasBank);
+}
+
 async function finalizeAuthFlow(authData, defaultView = "recommendations") {
     persistAuthSession(authData);
     showNotification("Welcome", `Signed in as ${authData.name || 'User'}`, "success");
@@ -162,9 +179,10 @@ async function finalizeAuthFlow(authData, defaultView = "recommendations") {
         switchView("admin");
     } else {
         await loadUserData();
-        switchView(defaultView);
-        if (!state.currentProfile || !state.currentProfile.age) {
-            openWizardModal();
+        if (isProfileCompleted(state.currentProfile)) {
+            switchView("recommendations");
+        } else {
+            switchView("profile-completion");
         }
     }
 }
@@ -245,7 +263,7 @@ function switchView(viewId) {
 
     // MANDATORY PROFILE ROUTE GUARD (For citizens with incomplete profile)
     if (!isAdmin && state.currentUser && state.currentUser.role === "citizen") {
-        const isCompleted = state.currentProfile?.profile_completed || (state.currentProfile?.district && state.currentProfile?.occupation);
+        const isCompleted = isProfileCompleted(state.currentProfile);
         if (!isCompleted && viewId !== "profile-completion" && viewId !== "auth-landing") {
             if (userPortal) userPortal.classList.remove("hidden");
             if (adminPortal) adminPortal.classList.add("hidden");
@@ -3588,6 +3606,36 @@ function populateProfileCompletionForm() {
 
 async function handleProfileCompletionSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
+    
+    const aadhaarVal = (document.getElementById("profAadhaar")?.value || "").trim();
+    const dobVal = (document.getElementById("profDob")?.value || "").trim();
+    const districtVal = (document.getElementById("profDistrict")?.value || "").trim();
+    const pincodeVal = (document.getElementById("profPincode")?.value || "").trim();
+    const bankVal = (document.getElementById("profBankAcc")?.value || "").trim();
+
+    // Field Validation
+    const errors = [];
+    if (!aadhaarVal || aadhaarVal.length !== 12 || !/^\d+$/.test(aadhaarVal)) {
+        errors.push("Aadhaar Number must be exactly 12 numeric digits.");
+    }
+    if (!dobVal) {
+        errors.push("Date of Birth is required.");
+    }
+    if (!districtVal) {
+        errors.push("District is required.");
+    }
+    if (!pincodeVal || pincodeVal.length !== 6 || !/^\d+$/.test(pincodeVal)) {
+        errors.push("Pincode must be exactly 6 numeric digits.");
+    }
+    if (!bankVal) {
+        errors.push("Bank Account Number is required.");
+    }
+
+    if (errors.length > 0) {
+        showNotification("Validation Required", errors.join(" "), "error");
+        return false;
+    }
+
     const btn = document.getElementById("btnSaveProfile");
     if (btn) {
         btn.disabled = true;
@@ -3598,20 +3646,20 @@ async function handleProfileCompletionSubmit(e) {
         const payload = {
             name: document.getElementById("profName")?.value || "",
             mobile_number: document.getElementById("profMobile")?.value || "",
-            aadhaar_number: document.getElementById("profAadhaar")?.value || "",
-            dob: document.getElementById("profDob")?.value || "",
+            aadhaar_number: aadhaarVal,
+            dob: dobVal,
             gender: document.getElementById("profGender")?.value || "Male",
             marital_status: document.getElementById("profMarital")?.value || "Single",
             state: document.getElementById("profState")?.value || "Uttar Pradesh",
-            district: document.getElementById("profDistrict")?.value || "Varanasi",
+            district: districtVal,
             mandal: document.getElementById("profMandal")?.value || "Sadar",
             village: document.getElementById("profVillage")?.value || "Shivpur",
-            pincode: document.getElementById("profPincode")?.value || "221001",
+            pincode: pincodeVal,
             rural_urban: document.getElementById("profRuralUrban")?.value || "Rural",
             occupation: document.getElementById("profOccupation")?.value || "Farmer",
             annual_income: parseFloat(document.getElementById("profAnnualIncome")?.value || 150000),
             family_income: parseFloat(document.getElementById("profFamilyIncome")?.value || 180000),
-            bank_account_number: document.getElementById("profBankAcc")?.value || "",
+            bank_account_number: bankVal,
             ifsc_code: document.getElementById("profIfsc")?.value || "",
             education: document.getElementById("profEducation")?.value || "Secondary",
             caste_category: document.getElementById("profCaste")?.value || "General",
@@ -3630,10 +3678,14 @@ async function handleProfileCompletionSubmit(e) {
 
         const res = await ApiService.updateProfile(payload);
         state.currentProfile = res.profile || payload;
-        showNotification("Profile Completed", "Your profile has been saved successfully!", "success");
         
-        await loadUserData();
-        switchView("recommendations");
+        if (res.profile_completed || isProfileCompleted(state.currentProfile)) {
+            showNotification("Profile Completed", "Your profile has been saved successfully! Redirecting to Eligibility Questionnaire...", "success");
+            await loadUserData();
+            openWizardModal();
+        } else {
+            showNotification("Draft Saved", "Profile saved as draft. Please complete all required fields to activate full profile.", "warning");
+        }
     } catch (err) {
         showNotification("Profile Error", err.message || "Failed to save profile", "error");
     } finally {

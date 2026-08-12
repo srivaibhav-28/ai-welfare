@@ -112,12 +112,18 @@ async def register_user(req: UserRegister):
         "profile": {
             "name": req.name.strip(),
             "mobile_number": req.mobile_number.strip(),
+            "aadhaar_number": "",
+            "dob": "",
+            "pincode": "",
+            "bank_account_number": "",
+            "ifsc_code": "",
+            "profile_completed": False,
             "age": 25,
             "gender": "Male",
             "marital_status": "Single",
             "state": "Uttar Pradesh",
             "district": "Varanasi",
-            "occupation": "Self-Employed",
+            "occupation": "Farmer",
             "annual_income": 150000,
             "education": "Secondary",
             "caste_category": "General",
@@ -160,6 +166,10 @@ async def verify_otp(req: OTPVerifyRequest):
     db.add_user(verified_user_data)
     
     token = create_access_token({"sub": verified_user_data["id"]})
+    from api.users import check_profile_completion
+    prof = verified_user_data.get("profile", {}) or {}
+    has_comp = check_profile_completion(prof)
+
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -168,7 +178,8 @@ async def verify_otp(req: OTPVerifyRequest):
         "email": verified_user_data["email"],
         "mobile_number": verified_user_data.get("mobile_number", ""),
         "role": verified_user_data["role"],
-        "is_verified": True
+        "is_verified": True,
+        "has_completed_profile": has_comp
     }
 
 @app.post("/api/auth/resend-otp")
@@ -269,6 +280,10 @@ async def login_user(req: UserLogin):
         )
 
     token = create_access_token({"sub": user["id"]})
+    from api.users import check_profile_completion
+    prof = user.get("profile", {}) or {}
+    has_comp = check_profile_completion(prof)
+
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -277,7 +292,8 @@ async def login_user(req: UserLogin):
         "email": user["email"],
         "mobile_number": user.get("mobile_number") or "",
         "role": user.get("role", "citizen"),
-        "is_verified": True
+        "is_verified": True,
+        "has_completed_profile": has_comp
     }
 
 @app.post("/api/admin/login", response_model=TokenResponse)
