@@ -134,10 +134,13 @@ class ApiService {
             if (console.table) console.table(payload);
             console.log(JSON.stringify(payload, null, 2));
 
+            console.log("REGISTER FETCH START");
             const data = await this.request("/api/auth/register", {
                 method: "POST",
                 body: JSON.stringify(payload)
             });
+            console.log("REGISTER RESPONSE", data);
+
             if (data && data.access_token) {
                 this.setAuthToken(data.access_token);
                 localStorage.setItem("welfare_user", JSON.stringify(data));

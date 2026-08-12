@@ -440,6 +440,7 @@ async function handleAdminAuthFormSubmit(e) {
 
 async function handleAuthLandingFormSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
+    if (state.isSubmittingAuth) return false;
 
     const emailEl = document.getElementById("landingAuthEmail");
     const passEl = document.getElementById("landingAuthPassword");
@@ -460,8 +461,13 @@ async function handleAuthLandingFormSubmit(e) {
         return false;
     }
 
+    const btn = document.getElementById("btnLandingAuthSubmit");
     try {
+        state.isSubmittingAuth = true;
+        if (btn) btn.disabled = true;
+
         if (isRegister) {
+            console.log("REGISTER CLICK");
             if (!name || !mobile) {
                 showNotification("Validation Error", "Please provide your Name and Mobile Number for registration.", "error");
                 return false;
@@ -474,10 +480,6 @@ async function handleAuthLandingFormSubmit(e) {
             const res = await ApiService.register(name, email, mobile, password, confirmPassword, "citizen");
             showNotification("Verification Email Sent", `A 6-digit OTP verification code has been sent to ${email}. Please enter the OTP code to complete registration.`, "info");
             openOtpModal(email);
-            return false;
-            showNotification("Registration Successful", `Welcome ${res.name || 'Citizen'}! Please verify your email.`, "success");
-            await finalizeAuthFlow(res, "recommendations");
-            openWizardModal();
             return false;
         }
 
@@ -495,6 +497,9 @@ async function handleAuthLandingFormSubmit(e) {
         }
         const errorTitle = isRegister ? "Registration Failed" : "Authentication Failed";
         showNotification(errorTitle, err.message || "Invalid credentials or request failed.", "error");
+    } finally {
+        state.isSubmittingAuth = false;
+        if (btn) btn.disabled = false;
     }
     return false;
 }
