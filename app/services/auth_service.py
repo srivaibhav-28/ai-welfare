@@ -56,18 +56,15 @@ def get_current_user(request: Request = None, credentials: Optional[HTTPAuthoriz
             user = db.get_user_by_email(user_id)
         if user:
             return user
+        raise HTTPException(
+            status_code=401,
+            detail=f"Authenticated user not found: {user_id}"
+        )
 
-    users = db.get_users()
-    if users:
-        citizen_users = [u for u in users if u.get("role") != "admin"]
-        return citizen_users[0] if citizen_users else users[0]
-
-    return {
-        "id": "usr-default-citizen",
-        "email": "citizen@welfare.gov.in",
-        "name": "Citizen Applicant",
-        "role": "citizen"
-    }
+    raise HTTPException(
+        status_code=401,
+        detail="Authentication required"
+    )
 
 import random
 
