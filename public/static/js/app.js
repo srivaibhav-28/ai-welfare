@@ -3556,12 +3556,16 @@ async function loadUserData() {
             const evalRes = await ApiService.evaluateProfile(prof);
             state.recommendations = evalRes.evaluations || evalRes.eligible_schemes || [];
             state.hasEvaluatedQuestionnaire = true;
-            renderRecommendations();
+            if (typeof renderRecommendations === "function") {
+                renderRecommendations();
+            }
         }
 
         const apps = await ApiService.getApplications();
         state.applications = apps || [];
-        renderApplicationsTable();
+        if (typeof renderApplicationsTable === "function") {
+            renderApplicationsTable();
+        }
     } catch (e) {
         console.warn("Failed loading user data:", e);
     }
