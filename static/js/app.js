@@ -3579,26 +3579,30 @@ function populateProfileCompletionForm() {
         if (item) item.checked = Boolean(val);
     };
 
+    // Auto-fill ONLY Name and Mobile Number for brand new citizens
     setVal("profName", p.name || state.currentUser.name || "");
     setVal("profMobile", p.mobile_number || state.currentUser.mobile_number || "");
-    setVal("profAadhaar", p.aadhaar_number || "");
-    setVal("profDob", p.dob || "1998-05-15");
-    setVal("profGender", p.gender || "Male");
-    setVal("profMarital", p.marital_status || "Single");
-    setVal("profState", p.state || "Uttar Pradesh");
-    setVal("profDistrict", p.district || "Varanasi");
-    setVal("profMandal", p.mandal || "Sadar");
-    setVal("profVillage", p.village || "Shivpur");
-    setVal("profPincode", p.pincode || "221001");
-    setVal("profRuralUrban", p.rural_urban || "Rural");
-    setVal("profOccupation", p.occupation || "Farmer");
-    setVal("profAnnualIncome", p.annual_income || 150000);
-    setVal("profFamilyIncome", p.family_income || 180000);
-    setVal("profBankAcc", p.bank_account_number || "");
-    setVal("profIfsc", p.ifsc_code || "SBIN0001234");
-    setVal("profEducation", p.education || "Secondary");
-    setVal("profCaste", p.caste_category || "General");
 
+    // All other fields load saved user data if present, otherwise remain empty / default "-- Select --"
+    setVal("profAadhaar", p.aadhaar_number || "");
+    setVal("profDob", p.dob || "");
+    setVal("profGender", p.gender || "");
+    setVal("profMarital", p.marital_status || "");
+    setVal("profState", p.state || "");
+    setVal("profDistrict", p.district || "");
+    setVal("profMandal", p.mandal || "");
+    setVal("profVillage", p.village || "");
+    setVal("profPincode", p.pincode || "");
+    setVal("profRuralUrban", p.rural_urban || "");
+    setVal("profOccupation", p.occupation || "");
+    setVal("profAnnualIncome", (p.annual_income !== undefined && p.annual_income !== null && p.annual_income !== 0) ? p.annual_income : "");
+    setVal("profFamilyIncome", (p.family_income !== undefined && p.family_income !== null && p.family_income !== 0) ? p.family_income : "");
+    setVal("profBankAcc", p.bank_account_number || "");
+    setVal("profIfsc", p.ifsc_code || "");
+    setVal("profEducation", p.education || "");
+    setVal("profCaste", p.caste_category || "");
+
+    // Checkboxes load saved boolean state; default false for new users
     setCheck("profFarmer", p.farmer_status);
     setCheck("profStudent", p.student_status);
     setCheck("profDisability", p.disability_status);

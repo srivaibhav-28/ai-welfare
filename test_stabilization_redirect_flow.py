@@ -48,7 +48,17 @@ def run_stabilization_full_regression():
     assert r_prof.status_code == 200
     prof_data = r_prof.json()
     assert prof_data.get("profile_completed") is False, "Newly registered user must start with profile_completed = False!"
-    print("[PASS] Newly registered user correctly has profile_completed = FALSE (Must complete profile first)")
+    assert prof_data.get("name") == "Stabilization User", "New user name must match registered name!"
+    assert prof_data.get("mobile_number") == "9876543210", "New user mobile must match registered mobile!"
+    assert prof_data.get("aadhaar_number", "") == "", "Aadhaar must be empty for new user!"
+    assert prof_data.get("dob", "") == "", "DOB must be empty for new user!"
+    assert prof_data.get("state", "") == "", "State must be empty for new user!"
+    assert prof_data.get("district", "") == "", "District must be empty for new user!"
+    assert prof_data.get("pincode", "") == "", "Pincode must be empty for new user!"
+    assert prof_data.get("bank_account_number", "") == "", "Bank account must be empty for new user!"
+    assert prof_data.get("ifsc_code", "") == "", "IFSC code must be empty for new user!"
+    assert prof_data.get("annual_income", 0) == 0, "Annual income must be 0 for new user!"
+    print("[PASS] Newly registered user has ONLY name/mobile prefilled and ZERO demo/fallback values")
 
     # Step 4: Test Incomplete Profile Submission (Validation Error Check)
     print("\n4. Testing Incomplete Profile Submission Validation...")
