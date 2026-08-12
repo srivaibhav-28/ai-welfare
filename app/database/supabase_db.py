@@ -310,21 +310,41 @@ class SupabaseDatabase:
 
     # REST helper methods
     def fetch_rows(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        print("\n========== SUPABASE RUNTIME DIAGNOSTICS ==========")
+        print("SUPABASE_URL exists:", bool(config.SUPABASE_URL))
+        print("SUPABASE_SERVICE_ROLE_KEY exists:", bool(config.SUPABASE_SERVICE_ROLE_KEY))
+        print("SUPABASE_SERVICE_ROLE_KEY length:", len(config.SUPABASE_SERVICE_ROLE_KEY or ""))
+        print("SUPABASE_ANON_KEY exists:", bool(config.SUPABASE_ANON_KEY))
+        print("SUPABASE_ANON_KEY length:", len(config.SUPABASE_ANON_KEY or ""))
+        print("is_supabase_configured:", self.is_supabase_configured)
+        print("table:", table)
+        print("filters:", filters)
+
         if not self.is_supabase_configured:
+            print("USING IN-MEMORY DATABASE")
             return self.fetch_rows_in_memory(table, filters)
 
         url = f"{config.SUPABASE_URL}/rest/v1/{table}?select=*"
         if filters:
             for k, v in filters.items():
                 url += f"&{k}=eq.{v}"
+
+        print("USING SUPABASE REST")
+        print("REQUEST URL:", url)
+
         try:
             res = requests.get(url, headers=self._headers(), timeout=5)
+            print("STATUS:", res.status_code)
+            print("BODY:", res.text[:500])
             if res.status_code == 200:
                 return res.json()
         except Exception as e:
-            print(f"[Supabase DB Fetch Error - {table}]: {e}")
+            print("SUPABASE REQUEST EXCEPTION")
+            print(type(e).__name__)
+            print(str(e))
 
-        # Fallback to in-memory if query fails
+        print("USING IN-MEMORY DATABASE (POST-FETCH FALLBACK)")
+        print("=================================================\n")
         return self.fetch_rows_in_memory(table, filters)
 
     def fetch_rows_in_memory(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
