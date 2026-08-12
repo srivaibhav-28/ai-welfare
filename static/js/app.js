@@ -35,11 +35,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (savedUser && savedToken) {
         try {
-            state.currentUser = JSON.parse(savedUser);
+            const parsedUser = JSON.parse(savedUser);
+            if (!parsedUser || typeof parsedUser !== "object" || !parsedUser.role) {
+                console.warn("Invalid session user data found, clearing session.");
+                logout();
+                return;
+            }
+            state.currentUser = parsedUser;
             ApiService.setAuthToken(savedToken);
             updateAuthUI();
             await loadUserData();
-            if (state.currentUser.role === "admin") {
+            if (state.currentUser && state.currentUser.role === "admin") {
                 switchView("admin");
             } else {
                 switchView("recommendations");

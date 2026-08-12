@@ -7,6 +7,8 @@ from typing import Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
+import traceback
+
 load_dotenv()
 
 def safe_print(*args, **kwargs):
@@ -23,22 +25,35 @@ class EmailNotificationService:
     @staticmethod
     def send_email(to_email: str, subject: str, body_html: str, body_text: str = "") -> Tuple[bool, str]:
         """
-        Email Notification Service with Resend API + SMTP + Console Fallback.
+        Email Notification Service with Gmail SMTP + Resend API + Fallback.
         Returns (success: bool, detail: str).
         """
+        load_dotenv(override=True)
         safe_print("=" * 80)
-        safe_print(f"[EMAIL STEP 1] Executing Email Dispatch to: {to_email}")
-        safe_print(f"[EMAIL STEP 2] Subject: {subject}")
+        safe_print(f"[EMAIL STEP 1] Registration/Notification Email Request Received")
+        safe_print(f"Recipient: {to_email}")
+        safe_print(f"Subject: {subject}")
 
+        safe_print("[INSTRUMENTATION] Before loading environment variables...")
+        load_dotenv(override=True)
         resend_api_key = os.getenv("RESEND_API_KEY")
         smtp_user = os.getenv("SMTP_USER") or "aiwelfareeligibilitychecker@gmail.com"
         smtp_password = os.getenv("SMTP_PASSWORD") or "wmtyhrvezwhuamvx"
         smtp_host = os.getenv("SMTP_HOST") or "smtp.gmail.com"
         smtp_port = int(os.getenv("SMTP_PORT") or "587")
 
+        masked_pass = (smtp_password[:2] + '*' * (len(smtp_password) - 4) + smtp_password[-2:]) if len(smtp_password) > 4 else "****"
+        safe_print("[INSTRUMENTATION] After loading environment variables:")
+        safe_print(f"  RESEND_API_KEY present: {bool(resend_api_key)}")
+        safe_print(f"  SMTP_USER: {smtp_user}")
+        safe_print(f"  SMTP_HOST: {smtp_host}")
+        safe_print(f"  SMTP_PORT: {smtp_port}")
+        safe_print(f"  SMTP_PASSWORD (masked): {masked_pass}")
+
         # Provider Strategy 1: Resend HTTP API
+        safe_print("[INSTRUMENTATION] Evaluating provider selection...")
         if resend_api_key:
-            safe_print(f"[EMAIL STEP 3] Provider Selected: Resend HTTP API")
+            safe_print(f"[INSTRUMENTATION] Provider Selected: Resend HTTP API")
             try:
                 from_email = os.getenv("RESEND_FROM_EMAIL", "Welfare Portal <onboarding@resend.dev>")
                 res = requests.post(
@@ -56,7 +71,7 @@ class EmailNotificationService:
                     },
                     timeout=12
                 )
-                safe_print(f"[EMAIL STEP 4] Resend API Response Status: {res.status_code}")
+                safe_print(f"[INSTRUMENTATION] Resend API Response Status: {res.status_code}")
                 if res.status_code in [200, 201]:
                     msg_id = res.json().get('id', 'resend-ok')
                     safe_print(f"[EMAIL SUCCESS] Delivered to {to_email} via Resend API | ID: {msg_id}")
@@ -69,15 +84,16 @@ class EmailNotificationService:
                     return False, f"Resend API Error ({res.status_code}): {err_msg}"
             except Exception as e:
                 safe_print(f"[EMAIL EXCEPTION] Resend API Call Failed: {e}")
+                safe_print(traceback.format_exc())
                 return False, f"Resend API Exception: {str(e)}"
 
         # Provider Strategy 2: SMTP (Gmail / Custom SMTP Server)
         if smtp_user and smtp_password:
-            safe_print(f"[EMAIL STEP 3] Provider Selected: SMTP ({smtp_host}:{smtp_port})")
+            safe_print(f"[INSTRUMENTATION] Provider Selected: Gmail SMTP ({smtp_host}:{smtp_port})")
             try:
                 msg = MIMEMultipart("alternative")
                 msg["Subject"] = subject
-                msg["From"] = os.getenv("SMTP_FROM_EMAIL", smtp_user)
+                msg["From"] = os.getenv("SMTP_FROM_EMAIL", f"AI Welfare Portal <{smtp_user}>")
                 msg["To"] = to_email
 
                 part1 = MIMEText(body_text or body_html, "plain")
@@ -85,32 +101,56 @@ class EmailNotificationService:
                 msg.attach(part1)
                 msg.attach(part2)
 
+                safe_print(f"[INSTRUMENTATION] Before SMTP connection (smtplib.SMTP({smtp_host}, {smtp_port}))...")
                 server = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
+                safe_print(f"[INSTRUMENTATION] After SMTP connection established successfully.")
+
+                safe_print("[INSTRUMENTATION] Before starttls()...")
                 server.ehlo()
                 server.starttls()
                 server.ehlo()
-                server.login(smtp_user, smtp_password)
-                safe_print("SMTP Login Success")
-                server.sendmail(smtp_user, [to_email], msg.as_string())
-                server.quit()
-                safe_print("Email Sent")
-                safe_print(f"Recipient: {to_email}")
+                safe_print("[INSTRUMENTATION] After starttls() completed successfully.")
+
+                safe_print(f"[INSTRUMENTATION] Before login() for user: {smtp_user}...")
+                login_code, login_msg = server.login(smtp_user, smtp_password)
+                safe_print(f"[INSTRUMENTATION] After login() completed successfully -> Code: {login_code} | Msg: {login_msg.decode('utf-8', errors='ignore') if isinstance(login_msg, bytes) else login_msg}")
+
+                safe_print(f"[INSTRUMENTATION] Before sendmail() to {to_email}...")
+                refused = server.sendmail(smtp_user, [to_email], msg.as_string())
+                safe_print(f"[INSTRUMENTATION] After sendmail() completed -> Refused dict: {refused}")
+                if refused:
+                    safe_print(f"[EMAIL FAILURE] Gmail SMTP refused recipients: {refused}")
+                    server.quit()
+                    safe_print("=" * 80)
+                    return False, f"Gmail SMTP refused recipient: {refused}"
+
+                safe_print(f"[INSTRUMENTATION] Before quit()...")
+                quit_code, quit_msg = server.quit()
+                safe_print(f"[INSTRUMENTATION] After quit() completed -> Code: {quit_code} | Msg: {quit_msg.decode('utf-8', errors='ignore') if isinstance(quit_msg, bytes) else quit_msg}")
+
+                safe_print(f"Email sent successfully to {to_email}")
                 safe_print(f"[EMAIL SUCCESS] Delivered to {to_email} via SMTP ({smtp_host})")
                 safe_print("=" * 80)
                 return True, f"Delivered via Gmail SMTP ({smtp_host})"
             except smtplib.SMTPAuthenticationError as e:
                 err = f"Gmail SMTP Authentication Failed: Invalid email or App Password. Detail: {e}"
                 safe_print(f"[EMAIL FAILURE] {err}")
+                safe_print("[EMAIL EXCEPTION] Full Traceback:")
+                safe_print(traceback.format_exc())
                 safe_print("=" * 80)
                 return False, err
             except smtplib.SMTPException as e:
                 err = f"Gmail SMTP Error: {e}"
                 safe_print(f"[EMAIL FAILURE] {err}")
+                safe_print("[EMAIL EXCEPTION] Full Traceback:")
+                safe_print(traceback.format_exc())
                 safe_print("=" * 80)
                 return False, err
             except Exception as e:
                 err = f"SMTP Connection/Send Error: {type(e).__name__}: {e}"
                 safe_print(f"[EMAIL EXCEPTION] {err}")
+                safe_print("[EMAIL EXCEPTION] Full Traceback:")
+                safe_print(traceback.format_exc())
                 safe_print("=" * 80)
                 return False, err
 

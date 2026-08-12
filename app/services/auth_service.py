@@ -73,6 +73,8 @@ import random
 
 from app.services.email_service import EmailNotificationService
 
+import traceback
+
 PENDING_REGISTRATIONS: Dict[str, Dict[str, Any]] = {}
 
 def store_pending_registration(user_data: Dict[str, Any]) -> str:
@@ -88,7 +90,19 @@ def store_pending_registration(user_data: Dict[str, Any]) -> str:
         "attempts": 0
     }
     print(f"[SECURITY OTP LOG] Verification OTP for {email_key}: {otp}")
-    EmailNotificationService.send_registration_otp(email_key, otp)
+    try:
+        success, detail = EmailNotificationService.send_registration_otp(email_key, otp)
+        print(f"[AUTH_SERVICE] send_registration_otp result -> success: {success}, detail: {detail}")
+        if not success:
+            print(f"[AUTH_SERVICE ERROR] Email delivery failed for {email_key}: {detail}")
+            raise HTTPException(status_code=500, detail=f"Email delivery failed: {detail}")
+    except HTTPException:
+        raise
+    except Exception as ex:
+        print(f"[AUTH_SERVICE EXCEPTION] Exception during registration OTP email send for {email_key}: {ex}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Email delivery exception: {str(ex)}")
+
     return otp
 
 def get_pending_registration(email: str) -> Optional[Dict[str, Any]]:
