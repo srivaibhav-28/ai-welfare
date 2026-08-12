@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 import datetime
+import traceback
 from typing import Dict, List, Any, Optional
 import requests
 from app.config import config
@@ -382,17 +383,34 @@ class SupabaseDatabase:
         return []
 
     def insert_row(self, table: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        url = f"{config.SUPABASE_URL}/rest/v1/{table}" if config.SUPABASE_URL else ""
+        print("\n========== SUPABASE INSERT DIAGNOSTICS ==========")
+        print("TABLE:", table)
+        print("DATA:", json.dumps(data, indent=2) if isinstance(data, dict) else data)
+        print("SUPABASE_URL present:", bool(config.SUPABASE_URL))
+        print("SUPABASE_SERVICE_ROLE_KEY present:", bool(config.SUPABASE_SERVICE_ROLE_KEY))
+        print("Request URL:", url)
+
         if self.is_supabase_configured:
-            url = f"{config.SUPABASE_URL}/rest/v1/{table}"
             try:
                 res = requests.post(url, headers=self._headers(), json=data, timeout=5)
+                print("HTTP Status:", res.status_code)
+                print("Response Body:", res.text[:1000])
                 if res.status_code in [200, 201]:
                     res_json = res.json()
                     return res_json[0] if isinstance(res_json, list) and res_json else data
-            except Exception as e:
-                print(f"[Supabase DB Insert Error - {table}]: {e}")
 
-        # Update in-memory fallback
+                raise RuntimeError(
+                    f"Supabase INSERT failed: {res.status_code} - {res.text}"
+                )
+            except Exception:
+                print(traceback.format_exc())
+                raise
+
+        if self.is_production:
+            raise RuntimeError("Supabase is not configured in production environment.")
+
+        # Update in-memory fallback (local development only)
         if table == "users":
             self._in_memory_users.append(data)
         elif table == "schemes":
