@@ -3615,6 +3615,24 @@ function populateProfileCompletionForm() {
     setCheck("profBpl", p.bpl_status);
     setCheck("profMinority", p.minority_status);
     setCheck("profUnemployed", p.unemployed_status);
+
+    console.log("[POPULATE DIAGNOSTIC] Immediate Values:");
+    console.log("profName:", document.getElementById("profName")?.value);
+    console.log("profDistrict:", document.getElementById("profDistrict")?.value);
+    console.log("profAnnualIncome:", document.getElementById("profAnnualIncome")?.value);
+    console.log("profEducation:", document.getElementById("profEducation")?.value);
+    console.log("profStudent:", document.getElementById("profStudent")?.checked);
+    console.log("profBpl:", document.getElementById("profBpl")?.checked);
+
+    setTimeout(() => {
+        console.log("[POPULATE DIAGNOSTIC] 500ms Timeout Values:");
+        console.log("profName 500ms:", document.getElementById("profName")?.value);
+        console.log("profDistrict 500ms:", document.getElementById("profDistrict")?.value);
+        console.log("profAnnualIncome 500ms:", document.getElementById("profAnnualIncome")?.value);
+        console.log("profEducation 500ms:", document.getElementById("profEducation")?.value);
+        console.log("profStudent 500ms:", document.getElementById("profStudent")?.checked);
+        console.log("profBpl 500ms:", document.getElementById("profBpl")?.checked);
+    }, 500);
 }
 
 async function handleProfileCompletionSubmit(e) {
