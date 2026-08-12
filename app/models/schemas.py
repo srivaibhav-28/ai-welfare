@@ -49,24 +49,36 @@ class GoogleAuthRequest(BaseModel):
 class CitizenProfile(BaseModel):
     name: str = ""
     mobile_number: str = ""
+    aadhaar_number: str = ""
+    dob: str = ""
     age: int = Field(default=25, ge=0, le=120)
     gender: str = "Male"
     marital_status: str = "Single"  # Single, Married, Widow, Divorced
     state: str = "Uttar Pradesh"
     district: str = "Varanasi"
+    mandal: str = ""
+    village: str = ""
+    pincode: str = ""
     occupation: str = "Farmer"
     annual_income: float = Field(default=150000, ge=0)
+    family_income: float = Field(default=150000, ge=0)
+    bank_account_number: str = ""
+    ifsc_code: str = ""
     education: str = "Secondary"
     caste_category: str = "General"  # General, OBC, SC, ST, EWS
+    minority_status: bool = False
     disability_status: bool = False
     student_status: bool = False
     farmer_status: bool = False
     senior_citizen_status: bool = False
     widow_status: bool = False
     bpl_status: bool = False
+    unemployed_status: bool = False
     aadhaar_available: bool = True
     bank_account_available: bool = True
     rural_urban: str = "Rural"
+    profile_completed: bool = False
+    saved_schemes: List[str] = Field(default_factory=list)
 
 class SchemeCreate(BaseModel):
     name: str

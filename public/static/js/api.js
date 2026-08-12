@@ -252,6 +252,12 @@ class ApiService {
         return await this.request(`/api/schemes/search?q=${encodeURIComponent(query)}`);
     }
 
+    static async toggleBookmark(schemeId) {
+        return await this.request(`/api/schemes/${schemeId}/bookmark`, {
+            method: "POST"
+        });
+    }
+
     static async evaluateProfile(profileData) {
         return await this.request("/api/evaluate", {
             method: "POST",

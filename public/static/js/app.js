@@ -223,7 +223,7 @@ function setupEventListeners() {
 
 function switchView(viewId) {
     // STRICT ROUTE GUARD: Prevent unauthorized access to protected user views
-    const protectedViews = ["recommendations", "applications", "profile", "documents", "admin"];
+    const protectedViews = ["recommendations", "applications", "profile", "documents", "admin", "profile-completion"];
     if (protectedViews.includes(viewId) && !state.currentUser) {
         showNotification("Authentication Required", "Please log in to access your welfare portal.", "warning");
         document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("hidden"));
@@ -243,6 +243,19 @@ function switchView(viewId) {
     const userPortal = document.getElementById("userLayoutPortal");
     const adminPortal = document.getElementById("adminLayoutPortal");
 
+    // MANDATORY PROFILE ROUTE GUARD (For citizens with incomplete profile)
+    if (!isAdmin && state.currentUser && state.currentUser.role === "citizen") {
+        const isCompleted = state.currentProfile?.profile_completed || (state.currentProfile?.district && state.currentProfile?.occupation);
+        if (!isCompleted && viewId !== "profile-completion" && viewId !== "auth-landing") {
+            if (userPortal) userPortal.classList.remove("hidden");
+            if (adminPortal) adminPortal.classList.add("hidden");
+            document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("hidden"));
+            document.getElementById("view-profile-completion")?.classList.remove("hidden");
+            populateProfileCompletionForm();
+            return;
+        }
+    }
+
     if (isAdmin) {
         if (userPortal) userPortal.classList.add("hidden");
         if (adminPortal) adminPortal.classList.remove("hidden");
@@ -257,8 +270,12 @@ function switchView(viewId) {
         const target = document.getElementById(`view-${viewId}`);
         if (target) target.classList.remove("hidden");
 
+        if (viewId === "profile-completion") {
+            populateProfileCompletionForm();
+        }
+
         const heroSection = document.getElementById("heroSection");
-        if (viewId === "auth-landing" || viewId === "admin-auth" || !state.currentUser) {
+        if (viewId === "auth-landing" || viewId === "admin-auth" || viewId === "profile-completion" || !state.currentUser) {
             if (heroSection) heroSection.classList.add("hidden");
         } else {
             if (heroSection) heroSection.classList.remove("hidden");
@@ -3506,7 +3523,131 @@ function closeTimelineModal() {
     if (modal) modal.classList.add("hidden");
 }
 
-// Expose admin functions to global window scope
+async function loadUserData() {
+    if (!state.currentUser) return;
+    try {
+        const prof = await ApiService.getProfile();
+        state.currentProfile = prof;
+
+        if (prof) {
+            const evalRes = await ApiService.evaluateProfile(prof);
+            state.recommendations = evalRes.evaluations || evalRes.eligible_schemes || [];
+            state.hasEvaluatedQuestionnaire = true;
+            renderRecommendations();
+        }
+
+        const apps = await ApiService.getApplications();
+        state.applications = apps || [];
+        renderApplicationsTable();
+    } catch (e) {
+        console.warn("Failed loading user data:", e);
+    }
+}
+
+function populateProfileCompletionForm() {
+    if (!state.currentUser) return;
+    const p = state.currentProfile || {};
+    const setVal = (id, val) => {
+        const item = document.getElementById(id);
+        if (item && val !== undefined && val !== null) item.value = val;
+    };
+    const setCheck = (id, val) => {
+        const item = document.getElementById(id);
+        if (item) item.checked = Boolean(val);
+    };
+
+    setVal("profName", p.name || state.currentUser.name || "");
+    setVal("profMobile", p.mobile_number || state.currentUser.mobile_number || "");
+    setVal("profAadhaar", p.aadhaar_number || "");
+    setVal("profDob", p.dob || "1998-05-15");
+    setVal("profGender", p.gender || "Male");
+    setVal("profMarital", p.marital_status || "Single");
+    setVal("profState", p.state || "Uttar Pradesh");
+    setVal("profDistrict", p.district || "Varanasi");
+    setVal("profMandal", p.mandal || "Sadar");
+    setVal("profVillage", p.village || "Shivpur");
+    setVal("profPincode", p.pincode || "221001");
+    setVal("profRuralUrban", p.rural_urban || "Rural");
+    setVal("profOccupation", p.occupation || "Farmer");
+    setVal("profAnnualIncome", p.annual_income || 150000);
+    setVal("profFamilyIncome", p.family_income || 180000);
+    setVal("profBankAcc", p.bank_account_number || "");
+    setVal("profIfsc", p.ifsc_code || "SBIN0001234");
+    setVal("profEducation", p.education || "Secondary");
+    setVal("profCaste", p.caste_category || "General");
+
+    setCheck("profFarmer", p.farmer_status);
+    setCheck("profStudent", p.student_status);
+    setCheck("profDisability", p.disability_status);
+    setCheck("profSenior", p.senior_citizen_status);
+    setCheck("profWidow", p.widow_status);
+    setCheck("profBpl", p.bpl_status);
+    setCheck("profMinority", p.minority_status);
+    setCheck("profUnemployed", p.unemployed_status);
+}
+
+async function handleProfileCompletionSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const btn = document.getElementById("btnSaveProfile");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving Profile...`;
+    }
+
+    try {
+        const payload = {
+            name: document.getElementById("profName")?.value || "",
+            mobile_number: document.getElementById("profMobile")?.value || "",
+            aadhaar_number: document.getElementById("profAadhaar")?.value || "",
+            dob: document.getElementById("profDob")?.value || "",
+            gender: document.getElementById("profGender")?.value || "Male",
+            marital_status: document.getElementById("profMarital")?.value || "Single",
+            state: document.getElementById("profState")?.value || "Uttar Pradesh",
+            district: document.getElementById("profDistrict")?.value || "Varanasi",
+            mandal: document.getElementById("profMandal")?.value || "Sadar",
+            village: document.getElementById("profVillage")?.value || "Shivpur",
+            pincode: document.getElementById("profPincode")?.value || "221001",
+            rural_urban: document.getElementById("profRuralUrban")?.value || "Rural",
+            occupation: document.getElementById("profOccupation")?.value || "Farmer",
+            annual_income: parseFloat(document.getElementById("profAnnualIncome")?.value || 150000),
+            family_income: parseFloat(document.getElementById("profFamilyIncome")?.value || 180000),
+            bank_account_number: document.getElementById("profBankAcc")?.value || "",
+            ifsc_code: document.getElementById("profIfsc")?.value || "",
+            education: document.getElementById("profEducation")?.value || "Secondary",
+            caste_category: document.getElementById("profCaste")?.value || "General",
+            farmer_status: Boolean(document.getElementById("profFarmer")?.checked),
+            student_status: Boolean(document.getElementById("profStudent")?.checked),
+            disability_status: Boolean(document.getElementById("profDisability")?.checked),
+            senior_citizen_status: Boolean(document.getElementById("profSenior")?.checked),
+            widow_status: Boolean(document.getElementById("profWidow")?.checked),
+            bpl_status: Boolean(document.getElementById("profBpl")?.checked),
+            minority_status: Boolean(document.getElementById("profMinority")?.checked),
+            unemployed_status: Boolean(document.getElementById("profUnemployed")?.checked),
+            aadhaar_available: true,
+            bank_account_available: true,
+            profile_completed: true
+        };
+
+        const res = await ApiService.updateProfile(payload);
+        state.currentProfile = res.profile || payload;
+        showNotification("Profile Completed", "Your profile has been saved successfully!", "success");
+        
+        await loadUserData();
+        switchView("recommendations");
+    } catch (err) {
+        showNotification("Profile Error", err.message || "Failed to save profile", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="check-circle-2" class="w-5 h-5"></i> Save Profile & Complete Registration`;
+            initLucide();
+        }
+    }
+}
+
+// Expose admin and profile functions to global window scope
+window.loadUserData = loadUserData;
+window.handleProfileCompletionSubmit = handleProfileCompletionSubmit;
 window.handleAdminAuthFormSubmit = handleAdminAuthFormSubmit;
 window.toggleAdminAuthMode = toggleAdminAuthMode;
 window.inspectUserProfile = inspectUserProfile;

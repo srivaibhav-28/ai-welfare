@@ -18,17 +18,20 @@ app.add_middleware(
 
 @app.get("/api/profile")
 async def get_profile(user: Dict[str, Any] = Depends(require_current_user)):
-    prof = user.get("profile", {})
+    prof = user.get("profile", {}) or {}
     if not prof.get("name"):
         prof["name"] = user.get("name", "")
     if not prof.get("mobile_number"):
         prof["mobile_number"] = user.get("mobile_number", "")
+    prof["profile_completed"] = bool(prof.get("profile_completed", False) or (prof.get("district") and prof.get("occupation") and prof.get("state")))
     return prof
 
 @app.post("/api/profile")
 async def update_profile(profile_data: CitizenProfile, user: Dict[str, Any] = Depends(require_current_user)):
-    updated = db.update_user_profile(user["id"], profile_data.model_dump())
-    return {"message": "Profile updated successfully", "profile": updated["profile"] if updated else profile_data.model_dump()}
+    pdict = profile_data.model_dump()
+    pdict["profile_completed"] = True
+    updated = db.update_user_profile(user["id"], pdict)
+    return {"message": "Profile updated successfully", "profile": updated.get("profile", pdict) if updated else pdict}
 
 @app.get("/api/users")
 async def get_users(admin: Dict[str, Any] = Depends(require_admin_user)):

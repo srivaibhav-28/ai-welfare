@@ -1,8 +1,9 @@
 from typing import List, Dict, Any
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.supabase_db import db
+from app.services.auth_service import require_current_user
 
 app = FastAPI(title="AI Welfare Schemes API", version="2.0.0")
 
@@ -83,3 +84,17 @@ async def get_scheme_details(scheme_id: str):
     if not scheme:
         raise HTTPException(status_code=404, detail="Scheme not found")
     return scheme
+
+@app.post("/api/schemes/{scheme_id}/bookmark")
+async def toggle_bookmark(scheme_id: str, user: Dict[str, Any] = Depends(require_current_user)):
+    prof = user.get("profile", {}) or {}
+    saved = prof.get("saved_schemes", [])
+    if scheme_id in saved:
+        saved.remove(scheme_id)
+        action = "removed"
+    else:
+        saved.append(scheme_id)
+        action = "saved"
+    prof["saved_schemes"] = saved
+    db.update_user_profile(user["id"], prof)
+    return {"message": f"Scheme {action} successfully", "saved_schemes": saved, "action": action}
