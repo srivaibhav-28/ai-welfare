@@ -52,6 +52,8 @@ def get_current_user(request: Request = None, credentials: Optional[HTTPAuthoriz
 
     if user_id:
         user = db.get_user_by_id(user_id)
+        if not user:
+            user = next((u for u in db._in_memory_users if u.get("id") == user_id), None)
         if not user and "@" in user_id:
             user = db.get_user_by_email(user_id)
         if user:

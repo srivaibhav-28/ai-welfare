@@ -562,7 +562,18 @@ class SupabaseDatabase:
         return user
 
     def update_user_profile(self, user_id: str, profile: Dict[str, Any]):
-        return self.update_row("users", {"id": user_id}, {"profile": profile})
+        # Always maintain in-memory synchronization
+        for u in self._in_memory_users:
+            if u.get("id") == user_id:
+                u["profile"] = profile
+                break
+
+        if self.is_supabase_configured:
+            try:
+                return self.update_row("users", {"id": user_id}, {"profile": profile})
+            except Exception as err:
+                print(f"[SUPABASE UPDATE PROFILE EXCEPTION]: {err}")
+        return {"id": user_id, "profile": profile}
 
     def update_user_password(self, user_id: str, new_password_hash: str) -> bool:
         res = self.update_row("users", {"id": user_id}, {"password_hash": new_password_hash})
