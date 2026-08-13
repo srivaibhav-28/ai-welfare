@@ -616,7 +616,14 @@ class SupabaseDatabase:
         return apps
 
     def add_application(self, app_data: Dict[str, Any]):
-        return self.insert_row("applications", app_data)
+        core_app_columns = {
+            "id", "user_id", "user_name", "user_email", "scheme_id",
+            "scheme_name", "status", "applied_date", "uploaded_documents", "remarks"
+        }
+        clean_app = {k: v for k, v in app_data.items() if k in core_app_columns}
+        if not any(a.get("id") == app_data.get("id") for a in self._in_memory_applications):
+            self._in_memory_applications.append(app_data)
+        return self.insert_row("applications", clean_app)
 
     def update_application_status(self, app_id: str, status: str, remarks: str = ""):
         return self.update_row("applications", {"id": app_id}, {"status": status, "remarks": remarks})

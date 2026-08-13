@@ -247,15 +247,18 @@ async def verify_and_submit_application_otp(req: AppOtpVerifyRequest, user: Dict
             "status": initial_status,
             "applied_date": datetime.date.today().isoformat(),
             "uploaded_documents": uploaded_docs,
-            "remarks": f"Security Check: {fraud_res['recommendation']}." if fraud_res['is_flagged'] else "Application verified with 6-digit Email OTP.",
-            "is_flagged_fraud": fraud_res["is_flagged"],
-            "fraud_risk_score": fraud_res["risk_score"],
-            "fraud_flags": fraud_res["flags"],
-            "timeline_history": timeline_history
+            "remarks": f"Security Check: {fraud_res['recommendation']}." if fraud_res.get("is_flagged") else "Application verified with 6-digit Email OTP."
         }
 
         print(f"[DIAGNOSTIC LOG] Saving application - App ID: {new_app_id}, User ID: {user['id']}, Email: {user.get('email')}")
         db.add_application(new_app)
+        
+        # Verify row creation in public.applications
+        verified_apps = db.fetch_rows("applications", {"id": new_app_id})
+        print(f"[APPLICATION VERIFICATION] SELECT * FROM public.applications WHERE id = '{new_app_id}': {len(verified_apps)} rows returned.")
+        if not verified_apps and db.is_supabase_configured:
+            raise HTTPException(status_code=500, detail=f"Database application insertion failed: Application row '{new_app_id}' does not exist in public.applications table after insert.")
+
         print(f"[DIAGNOSTIC LOG] Application successfully persisted to DB - App ID: {new_app_id}, User ID: {user['id']}")
 
         PENDING_APPLICATION_OTPS.pop(session_key, None)
@@ -418,8 +421,9 @@ async def direct_apply_for_scheme(req: ApplicationCreate, user: Dict[str, Any] =
         }
     ]
 
+    new_app_id = f"app-{uuid.uuid4().hex[:6]}"
     new_app = {
-        "id": f"app-{uuid.uuid4().hex[:6]}",
+        "id": new_app_id,
         "user_id": user["id"],
         "user_name": user.get("name", "Citizen"),
         "user_email": user.get("email", ""),
@@ -428,14 +432,16 @@ async def direct_apply_for_scheme(req: ApplicationCreate, user: Dict[str, Any] =
         "status": initial_status,
         "applied_date": datetime.date.today().isoformat(),
         "uploaded_documents": uploaded_docs,
-        "remarks": f"Security Check: {fraud_res['recommendation']}." if fraud_res["is_flagged"] else "Application submitted successfully.",
-        "is_flagged_fraud": fraud_res["is_flagged"],
-        "fraud_risk_score": fraud_res["risk_score"],
-        "fraud_flags": fraud_res["flags"],
-        "timeline_history": timeline_history
+        "remarks": f"Security Check: {fraud_res['recommendation']}." if fraud_res.get("is_flagged") else "Application submitted successfully."
     }
 
     db.add_application(new_app)
+
+    # Verify row creation in public.applications
+    verified_apps = db.fetch_rows("applications", {"id": new_app_id})
+    print(f"[APPLICATION VERIFICATION] SELECT * FROM public.applications WHERE id = '{new_app_id}': {len(verified_apps)} rows returned.")
+    if not verified_apps and db.is_supabase_configured:
+        raise HTTPException(status_code=500, detail=f"Database application insertion failed: Application row '{new_app_id}' does not exist in public.applications table after insert.")
 
     # Send confirmation email
     if user.get("email"):
