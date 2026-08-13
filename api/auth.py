@@ -231,6 +231,7 @@ async def google_auth(req: GoogleAuthRequest):
     else:
         is_first_time = True
         user_name = req.name.strip() if (req.name and req.name.strip()) else clean_email.split("@")[0].capitalize()
+        user_id = f"usr-g-{uuid.uuid4().hex[:8]}"
         default_profile = {
             "name": user_name,
             "mobile_number": "",
@@ -267,7 +268,7 @@ async def google_auth(req: GoogleAuthRequest):
             "picture": avatar_url
         }
         user = {
-            "id": f"usr-g-{uuid.uuid4().hex[:8]}",
+            "id": user_id,
             "email": clean_email,
             "password_hash": hash_password("GoogleAuthPasswordlessSession"),
             "name": user_name,
@@ -277,34 +278,38 @@ async def google_auth(req: GoogleAuthRequest):
             "picture": avatar_url,
             "profile": default_profile
         }
+        
+        saved_row = None
         try:
-            db.add_user(user)
+            saved_row = db.add_user(user)
         except Exception as db_err:
-            print(f"[GOOGLE AUTH DB WARNING] db.add_user exception: {db_err}. Checking fallback fetch...")
-            fetched = db.get_user_by_email(clean_email)
-            if fetched:
-                user = fetched
+            print(f"[GOOGLE AUTH DB INSERT ERROR] db.add_user exception: {db_err}")
 
-        # Explicit Verification: Ensure user record is committed and queryable by db.get_user_by_id BEFORE issuing JWT
-        verified_user = db.get_user_by_id(user["id"])
-        if not verified_user:
-            # Ensure fallback in-memory synchronization
-            if not any(u.get("id") == user["id"] for u in db._in_memory_users):
-                db._in_memory_users.append(user)
-            verified_user = db.get_user_by_id(user["id"]) or user
-        user = verified_user
+        # Confirm the insert succeeds and retrieve the persisted user from database
+        persisted_user = db.get_user_by_email(clean_email) or db.get_user_by_id(user_id)
+        if not persisted_user:
+            if isinstance(saved_row, dict) and saved_row.get("id"):
+                persisted_user = saved_row
+            else:
+                if not any(u.get("id") == user_id for u in db._in_memory_users):
+                    db._in_memory_users.append(user)
+                persisted_user = user
+
+        user = persisted_user
+
+    persisted_user_id = user.get("id") or user.get("user_id")
+    token = create_access_token({"sub": persisted_user_id})
 
     from api.users import check_profile_completion
     prof = user.get("profile", {}) or {}
     has_completed_profile = check_profile_completion(prof)
 
-    token = create_access_token({"sub": user["id"]})
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user_id": user["id"],
-        "name": user["name"],
-        "email": user["email"],
+        "user_id": persisted_user_id,
+        "name": user.get("name", ""),
+        "email": user.get("email", clean_email),
         "mobile_number": user.get("mobile_number", ""),
         "role": user.get("role", "citizen"),
         "is_verified": True,
