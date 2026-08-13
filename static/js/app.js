@@ -1234,7 +1234,25 @@ function filterApplicationsTracker() {
         const matchesSearch = !searchVal || 
             (app.scheme_name && app.scheme_name.toLowerCase().includes(searchVal)) ||
             (app.id && app.id.toLowerCase().includes(searchVal));
-        const matchesStatus = filterStatus === "All" || app.status === filterStatus;
+        
+        const status = (app.status || "").trim();
+        const normStatus = status.toLowerCase();
+        let matchesStatus = false;
+
+        if (filterStatus === "All") {
+            matchesStatus = true;
+        } else if (filterStatus === "Applied") {
+            matchesStatus = normStatus === "applied" || normStatus === "submitted" || normStatus === "pending";
+        } else if (filterStatus === "Under Verification") {
+            matchesStatus = normStatus === "under verification" || normStatus === "under fraud review" || normStatus === "reviewing" || normStatus === "in progress" || normStatus === "verification";
+        } else if (filterStatus === "Approved") {
+            matchesStatus = normStatus === "approved" || normStatus === "verified" || normStatus === "accepted";
+        } else if (filterStatus === "Rejected") {
+            matchesStatus = normStatus === "rejected" || normStatus === "declined";
+        } else {
+            matchesStatus = status === filterStatus || normStatus === filterStatus.toLowerCase();
+        }
+
         return matchesSearch && matchesStatus;
     });
 
