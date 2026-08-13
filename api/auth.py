@@ -231,7 +231,7 @@ async def google_auth(req: GoogleAuthRequest):
     else:
         is_first_time = True
         user_name = req.name.strip() if (req.name and req.name.strip()) else clean_email.split("@")[0].capitalize()
-        user_id = f"usr-g-{uuid.uuid4().hex[:8]}"
+        user_id = f"usr-{uuid.uuid4().hex[:8]}"
         default_profile = {
             "name": user_name,
             "mobile_number": "",
