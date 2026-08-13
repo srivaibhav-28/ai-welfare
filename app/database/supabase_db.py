@@ -315,41 +315,38 @@ class SupabaseDatabase:
             "Prefer": "return=representation"
         }
 
+    def _print_db_audit(self, operation: str, table: str, query_or_url: str, payload: Any, status: int, body_text: str, rows: Any):
+        rows_list = rows if isinstance(rows, list) else ([rows] if rows else [])
+        print("\n" + "=" * 80)
+        print(f"[DB AUDIT LOG - {operation.upper()}]")
+        print(f"1. Exact Supabase Table Name: public.{table}")
+        print("2. Schema Name             : public")
+        print(f"3. Select / Query URL      : {query_or_url}")
+        print(f"4. Insert / Update Payload  : {json.dumps(payload, indent=2) if isinstance(payload, (dict, list)) else payload}")
+        print(f"5. Raw Supabase Status Code: {status}")
+        print(f"6. Response Data (JSON)    : {json.dumps(rows_list[:2], indent=2) if rows_list else '[]'}")
+        print(f"7. Response Error Text     : {body_text if status not in [200, 201, 204] else 'None (Success)'}")
+        print(f"8. Number of Rows Returned : {len(rows_list)}")
+        print("=" * 80 + "\n")
+
     # REST helper methods
     def fetch_rows(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        print("\n========== SUPABASE RUNTIME DIAGNOSTICS ==========")
-        print("SUPABASE_URL exists:", bool(config.SUPABASE_URL))
-        print("SUPABASE_SERVICE_ROLE_KEY exists:", bool(config.SUPABASE_SERVICE_ROLE_KEY))
-        print("SUPABASE_SERVICE_ROLE_KEY length:", len(config.SUPABASE_SERVICE_ROLE_KEY or ""))
-        print("SUPABASE_ANON_KEY exists:", bool(config.SUPABASE_ANON_KEY))
-        print("SUPABASE_ANON_KEY length:", len(config.SUPABASE_ANON_KEY or ""))
-        print("is_supabase_configured:", self.is_supabase_configured)
-        print("is_production:", self.is_production)
-        print("table:", table)
-        print("filters:", filters)
-
-        if not self.is_supabase_configured:
-            if self.is_production:
-                err_msg = "Production Database Error: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in Vercel environment."
-                print(f"[PRODUCTION ERROR] {err_msg}")
-                raise RuntimeError(err_msg)
-            print("USING IN-MEMORY DATABASE")
-            return self.fetch_rows_in_memory(table, filters)
-
-        url = f"{config.SUPABASE_URL}/rest/v1/{table}?select=*"
+        url = f"{config.SUPABASE_URL}/rest/v1/{table}?select=*" if config.SUPABASE_URL else ""
         if filters:
             for k, v in filters.items():
                 url += f"&{k}=eq.{v}"
 
-        print("USING SUPABASE REST")
-        print("REQUEST URL:", url)
+        if not self.is_supabase_configured:
+            rows = self.fetch_rows_in_memory(table, filters)
+            self._print_db_audit("FETCH_ROWS_IN_MEMORY", table, url or f"in_memory://{table}", filters, 200, "", rows)
+            return rows
 
         try:
             res = requests.get(url, headers=self._headers(), timeout=5)
-            print("STATUS:", res.status_code)
-            print("BODY:", res.text[:500])
+            rows = res.json() if res.status_code == 200 and res.content else []
+            self._print_db_audit("FETCH_ROWS_SUPABASE", table, url, filters, res.status_code, res.text[:500], rows)
             if res.status_code == 200:
-                return res.json()
+                return rows
             
             err_msg = f"Supabase REST API Error (Status {res.status_code}): {res.text[:500]}"
             if self.is_production:
@@ -363,9 +360,9 @@ class SupabaseDatabase:
             if self.is_production:
                 raise RuntimeError(err_msg) from e
 
-        print("USING IN-MEMORY DATABASE (POST-FETCH FALLBACK)")
-        print("=================================================\n")
-        return self.fetch_rows_in_memory(table, filters)
+        fallback_rows = self.fetch_rows_in_memory(table, filters)
+        self._print_db_audit("FETCH_ROWS_FALLBACK", table, url, filters, 200, "Fallback to in-memory cache", fallback_rows)
+        return fallback_rows
 
     def fetch_rows_in_memory(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         if table == "users":
@@ -391,27 +388,16 @@ class SupabaseDatabase:
 
     def insert_row(self, table: str, data: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{config.SUPABASE_URL}/rest/v1/{table}" if config.SUPABASE_URL else ""
-        print("\n========== SUPABASE INSERT DIAGNOSTICS ==========")
-        print("TABLE:", table)
-        print("INSERTED ROW ID:", data.get("id"))
-        print("INSERTED USER ID:", data.get("user_id"))
-        print("DATA:", json.dumps(data, indent=2) if isinstance(data, dict) else data)
-        print("SUPABASE_URL present:", bool(config.SUPABASE_URL))
-        print("SUPABASE_SERVICE_ROLE_KEY present:", bool(config.SUPABASE_SERVICE_ROLE_KEY))
-        print("Request URL:", url)
 
         if self.is_supabase_configured:
             try:
                 res = requests.post(url, headers=self._headers(), json=data, timeout=5)
-                print("HTTP Status:", res.status_code)
-                print("Response Body:", res.text[:1000])
+                res_data = res.json() if res.content else []
+                self._print_db_audit("INSERT_ROW_SUPABASE", table, url, data, res.status_code, res.text[:500], res_data)
                 if res.status_code in [200, 201]:
-                    res_json = res.json()
-                    return res_json[0] if isinstance(res_json, list) and res_json else data
+                    return res_data[0] if isinstance(res_data, list) and res_data else data
 
-                # Handle Schema Mismatch Fallback (PGRST204: missing column in schema cache)
                 if res.status_code == 400 and "PGRST204" in res.text:
-                    print(f"[SUPABASE SCHEMA MISMATCH DETECTED for {table}] Filtering data payload to core table columns...")
                     known_core_columns = {
                         "applications": {"id", "user_id", "user_name", "user_email", "scheme_id", "scheme_name", "status", "applied_date", "uploaded_documents", "remarks"},
                         "users": {"id", "email", "password_hash", "name", "mobile_number", "role", "picture", "profile", "is_blocked", "is_verified", "verified_at"},
@@ -420,13 +406,11 @@ class SupabaseDatabase:
                     cols = known_core_columns.get(table)
                     if cols:
                         filtered_data = {k: v for k, v in data.items() if k in cols}
-                        print("[SCHEMA RETRY DATA]:", json.dumps(filtered_data, indent=2))
                         retry_res = requests.post(url, headers=self._headers(), json=filtered_data, timeout=5)
-                        print("RETRY Status:", retry_res.status_code)
-                        print("RETRY Body:", retry_res.text[:1000])
+                        retry_data = retry_res.json() if retry_res.content else []
+                        self._print_db_audit("INSERT_ROW_SCHEMA_RETRY", table, url, filtered_data, retry_res.status_code, retry_res.text[:500], retry_data)
                         if retry_res.status_code in [200, 201]:
-                            res_json = retry_res.json()
-                            return res_json[0] if isinstance(res_json, list) and res_json else filtered_data
+                            return retry_data[0] if isinstance(retry_data, list) and retry_data else filtered_data
 
                 raise RuntimeError(
                     f"Supabase INSERT failed for table '{table}': {res.status_code} - {res.text}"
@@ -438,7 +422,6 @@ class SupabaseDatabase:
         if self.is_production:
             raise RuntimeError("Supabase is not configured in production environment.")
 
-        # Update in-memory fallback (local development only)
         if table == "users":
             self._in_memory_users.append(data)
         elif table == "schemes":
@@ -451,6 +434,7 @@ class SupabaseDatabase:
             email_key = str(data.get("email", "")).strip().lower()
             if email_key:
                 self._in_memory_pending_registrations[email_key] = data
+        self._print_db_audit("INSERT_ROW_IN_MEMORY", table, f"in_memory://{table}", data, 200, "", data)
         return data
 
     def update_row(self, table: str, filters: Dict[str, Any], data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -459,9 +443,10 @@ class SupabaseDatabase:
             url = f"{config.SUPABASE_URL}/rest/v1/{table}?{query}"
             try:
                 res = requests.patch(url, headers=self._headers(), json=data, timeout=5)
+                res_data = res.json() if res.content else []
+                self._print_db_audit("UPDATE_ROW_SUPABASE", table, url, data, res.status_code, res.text[:500], res_data)
                 if res.status_code in [200, 201, 204]:
-                    res_json = res.json() if res.content else []
-                    return res_json[0] if isinstance(res_json, list) and res_json else data
+                    return res_data[0] if isinstance(res_data, list) and res_data else data
             except Exception as e:
                 print(f"[Supabase DB Update Error - {table}]: {e}")
 
@@ -470,6 +455,7 @@ class SupabaseDatabase:
             for u in self._in_memory_users:
                 if u["id"] == filters["id"]:
                     u.update(data)
+                    self._print_db_audit("UPDATE_ROW_IN_MEMORY", table, f"in_memory://{table}", data, 200, "", u)
                     return u
         elif table == "schemes" and "id" in filters:
             for s in self._in_memory_schemes:
