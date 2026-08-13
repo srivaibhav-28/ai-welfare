@@ -517,30 +517,49 @@ class SupabaseDatabase:
         return users or []
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        rows = self.fetch_rows("users", {"email": email.strip().lower()})
-        if rows:
-            u = rows[0]
-            if email.lower() == "admin@welfare.gov" and not u.get("password_hash"):
-                u["password_hash"] = "admin123"
-            return u
-        if not self.is_production:
-            for u in self._in_memory_users:
-                if u.get("email", "").lower() == email.lower():
+        clean_email = email.strip().lower()
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("users", {"email": clean_email})
+                if rows:
+                    u = rows[0]
+                    if clean_email == "admin@welfare.gov" and not u.get("password_hash"):
+                        u["password_hash"] = "admin123"
                     return u
+            except Exception as err:
+                print(f"[SUPABASE GET USER BY EMAIL EXCEPTION]: {err}. Checking in-memory cache...")
+        for u in self._in_memory_users:
+            if u.get("email", "").strip().lower() == clean_email:
+                return u
         return None
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        rows = self.fetch_rows("users", {"id": user_id})
-        if rows:
-            return rows[0]
-        if not self.is_production:
-            for u in self._in_memory_users:
-                if u.get("id") == user_id:
-                    return u
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("users", {"id": user_id})
+                if rows:
+                    return rows[0]
+            except Exception as err:
+                print(f"[SUPABASE GET USER BY ID EXCEPTION]: {err}. Checking in-memory cache...")
+        for u in self._in_memory_users:
+            if u.get("id") == user_id:
+                return u
         return None
 
     def add_user(self, user: Dict[str, Any]):
-        return self.insert_row("users", user)
+        # Maintain in-memory synchronization
+        existing_idx = next((i for i, u in enumerate(self._in_memory_users) if u.get("id") == user.get("id") or u.get("email", "").lower() == user.get("email", "").lower()), None)
+        if existing_idx is not None:
+            self._in_memory_users[existing_idx] = user
+        else:
+            self._in_memory_users.append(user)
+
+        if self.is_supabase_configured:
+            try:
+                return self.insert_row("users", user)
+            except Exception as err:
+                print(f"[SUPABASE ADD USER EXCEPTION]: {err}. Stored in in-memory fallback cache.")
+        return user
 
     def update_user_profile(self, user_id: str, profile: Dict[str, Any]):
         return self.update_row("users", {"id": user_id}, {"profile": profile})

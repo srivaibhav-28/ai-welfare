@@ -231,6 +231,41 @@ async def google_auth(req: GoogleAuthRequest):
     else:
         is_first_time = True
         user_name = req.name.strip() if (req.name and req.name.strip()) else clean_email.split("@")[0].capitalize()
+        default_profile = {
+            "name": user_name,
+            "mobile_number": "",
+            "aadhaar_number": "",
+            "dob": "",
+            "pincode": "",
+            "bank_account_number": "",
+            "ifsc_code": "",
+            "profile_completed": False,
+            "age": 0,
+            "gender": "",
+            "marital_status": "",
+            "state": "",
+            "district": "",
+            "mandal": "",
+            "village": "",
+            "occupation": "",
+            "annual_income": 0,
+            "family_income": 0,
+            "education": "",
+            "caste_category": "",
+            "disability_status": False,
+            "student_status": False,
+            "farmer_status": False,
+            "senior_citizen_status": False,
+            "widow_status": False,
+            "bpl_status": False,
+            "minority_status": False,
+            "unemployed_status": False,
+            "aadhaar_available": False,
+            "bank_account_available": False,
+            "rural_urban": "",
+            "email": clean_email,
+            "picture": avatar_url
+        }
         user = {
             "id": f"usr-g-{uuid.uuid4().hex[:8]}",
             "email": clean_email,
@@ -240,13 +275,7 @@ async def google_auth(req: GoogleAuthRequest):
             "role": req.role or "citizen",
             "is_verified": True,
             "picture": avatar_url,
-            "profile": {
-                "name": user_name,
-                "email": clean_email,
-                "picture": avatar_url,
-                "mobile_number": "",
-                "profile_completed": False
-            }
+            "profile": default_profile
         }
         try:
             db.add_user(user)
