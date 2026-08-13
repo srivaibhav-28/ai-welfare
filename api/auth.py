@@ -168,7 +168,10 @@ async def verify_otp(req: OTPVerifyRequest):
     
     # User is now verified; store user in database
     verified_user_data["is_verified"] = True
-    db.add_user(verified_user_data)
+    try:
+        db.add_user(verified_user_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
     token = create_access_token({"sub": verified_user_data["id"]})
     from api.users import check_profile_completion
