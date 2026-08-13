@@ -228,28 +228,37 @@ async def google_auth(req: GoogleAuthRequest):
             db.verify_user(existing["id"])
             existing["is_verified"] = True
         user = existing
-        prof = user.get("profile", {}) or {}
-        # Completed profile check
-        has_completed_profile = bool(prof.get("mobile_number") and prof.get("district") and prof.get("occupation"))
     else:
         is_first_time = True
-        has_completed_profile = False
+        user_name = req.name.strip() if (req.name and req.name.strip()) else clean_email.split("@")[0].capitalize()
         user = {
             "id": f"usr-g-{uuid.uuid4().hex[:8]}",
             "email": clean_email,
             "password_hash": hash_password("GoogleAuthPasswordlessSession"),
-            "name": req.name.strip() or clean_email.split("@")[0].capitalize(),
+            "name": user_name,
             "mobile_number": "",
             "role": req.role or "citizen",
             "is_verified": True,
             "picture": avatar_url,
             "profile": {
-                "name": req.name.strip() or clean_email.split("@")[0].capitalize(),
+                "name": user_name,
                 "email": clean_email,
-                "picture": avatar_url
+                "picture": avatar_url,
+                "mobile_number": "",
+                "profile_completed": False
             }
         }
-        db.add_user(user)
+        try:
+            db.add_user(user)
+        except Exception as db_err:
+            print(f"[GOOGLE AUTH DB WARNING] db.add_user exception: {db_err}. Checking fallback fetch...")
+            fetched = db.get_user_by_email(clean_email)
+            if fetched:
+                user = fetched
+
+    from api.users import check_profile_completion
+    prof = user.get("profile", {}) or {}
+    has_completed_profile = check_profile_completion(prof)
 
     token = create_access_token({"sub": user["id"]})
     return {
