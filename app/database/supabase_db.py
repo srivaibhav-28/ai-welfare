@@ -393,6 +393,8 @@ class SupabaseDatabase:
         url = f"{config.SUPABASE_URL}/rest/v1/{table}" if config.SUPABASE_URL else ""
         print("\n========== SUPABASE INSERT DIAGNOSTICS ==========")
         print("TABLE:", table)
+        print("INSERTED ROW ID:", data.get("id"))
+        print("INSERTED USER ID:", data.get("user_id"))
         print("DATA:", json.dumps(data, indent=2) if isinstance(data, dict) else data)
         print("SUPABASE_URL present:", bool(config.SUPABASE_URL))
         print("SUPABASE_SERVICE_ROLE_KEY present:", bool(config.SUPABASE_SERVICE_ROLE_KEY))
@@ -407,8 +409,27 @@ class SupabaseDatabase:
                     res_json = res.json()
                     return res_json[0] if isinstance(res_json, list) and res_json else data
 
+                # Handle Schema Mismatch Fallback (PGRST204: missing column in schema cache)
+                if res.status_code == 400 and "PGRST204" in res.text:
+                    print(f"[SUPABASE SCHEMA MISMATCH DETECTED for {table}] Filtering data payload to core table columns...")
+                    known_core_columns = {
+                        "applications": {"id", "user_id", "user_name", "user_email", "scheme_id", "scheme_name", "status", "applied_date", "uploaded_documents", "remarks"},
+                        "users": {"id", "email", "password_hash", "name", "mobile_number", "role", "picture", "profile", "is_blocked", "is_verified", "verified_at"},
+                        "schemes": {"id", "name", "category", "description", "benefits", "criteria", "required_documents", "official_link", "last_date", "state_restriction", "icon"}
+                    }
+                    cols = known_core_columns.get(table)
+                    if cols:
+                        filtered_data = {k: v for k, v in data.items() if k in cols}
+                        print("[SCHEMA RETRY DATA]:", json.dumps(filtered_data, indent=2))
+                        retry_res = requests.post(url, headers=self._headers(), json=filtered_data, timeout=5)
+                        print("RETRY Status:", retry_res.status_code)
+                        print("RETRY Body:", retry_res.text[:1000])
+                        if retry_res.status_code in [200, 201]:
+                            res_json = retry_res.json()
+                            return res_json[0] if isinstance(res_json, list) and res_json else filtered_data
+
                 raise RuntimeError(
-                    f"Supabase INSERT failed: {res.status_code} - {res.text}"
+                    f"Supabase INSERT failed for table '{table}': {res.status_code} - {res.text}"
                 )
             except Exception:
                 print(traceback.format_exc())

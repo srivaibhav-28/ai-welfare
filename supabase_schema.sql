@@ -55,8 +55,18 @@ CREATE TABLE IF NOT EXISTS applications (
     applied_date TEXT,
     uploaded_documents JSONB DEFAULT '{}'::jsonb,
     remarks TEXT,
+    is_flagged_fraud BOOLEAN DEFAULT FALSE,
+    fraud_risk_score INT DEFAULT 0,
+    fraud_flags JSONB DEFAULT '[]'::jsonb,
+    timeline_history JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration Statements: Ensure existing applications table acquires any missing columns
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS is_flagged_fraud BOOLEAN DEFAULT FALSE;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS fraud_risk_score INT DEFAULT 0;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS fraud_flags JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS timeline_history JSONB DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS user_documents (
     id BIGSERIAL PRIMARY KEY,
@@ -85,11 +95,27 @@ CREATE TABLE IF NOT EXISTS pending_registrations (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Keep Row-Level Security enabled. The Vercel backend uses the Supabase
--- Service Role key server-side, which bypasses RLS without exposing database
--- access to browsers or anonymous users.
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schemes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pending_registrations ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'applications' AND policyname = 'Allow public read write applications') THEN
+        CREATE POLICY "Allow public read write applications" ON applications FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'users' AND policyname = 'Allow public read write users') THEN
+        CREATE POLICY "Allow public read write users" ON users FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'schemes' AND policyname = 'Allow public read write schemes') THEN
+        CREATE POLICY "Allow public read write schemes" ON schemes FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_documents' AND policyname = 'Allow public read write user_documents') THEN
+        CREATE POLICY "Allow public read write user_documents" ON user_documents FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'pending_registrations' AND policyname = 'Allow public read write pending_registrations') THEN
+        CREATE POLICY "Allow public read write pending_registrations" ON pending_registrations FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+END $$;

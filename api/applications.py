@@ -30,9 +30,19 @@ PENDING_APPLICATION_OTPS: Dict[str, Dict[str, Any]] = {}
 
 @app.get("/api/applications")
 async def get_applications(user: Dict[str, Any] = Depends(require_current_user)):
-    if user.get("role") == "admin":
-        return db.get_applications()
-    return db.get_applications(user_id=user["id"])
+    user_id = user["id"]
+    user_email = user.get("email", "")
+    user_role = user.get("role", "citizen")
+    print(f"\n[DIAGNOSTIC LOG] GET /api/applications request - Auth User ID: {user_id}, Email: {user_email}, Role: {user_role}")
+    
+    if user_role == "admin":
+        apps = db.get_applications()
+    else:
+        apps = db.get_applications(user_id=user_id)
+
+    print(f"[DIAGNOSTIC LOG] GET /api/applications result - Fetched Application Count: {len(apps)} for user_id: {user_id}")
+    print(f"[DIAGNOSTIC LOG] Fetched Applications: {apps}\n")
+    return apps
 
 @app.post("/api/applications/initiate-otp")
 async def initiate_application_otp(req: AppOtpInitiateRequest, user: Dict[str, Any] = Depends(require_current_user)):
@@ -244,13 +254,9 @@ async def verify_and_submit_application_otp(req: AppOtpVerifyRequest, user: Dict
             "timeline_history": timeline_history
         }
 
-        print(f"[VERIFY-SUBMIT LOG] Saving application {new_app_id} for user {user.get('email')}...")
-        try:
-            db.add_application(new_app)
-        except Exception as db_err:
-            print(f"[VERIFY-SUBMIT DB WARNING] db.add_application exception: {db_err}. Applying in-memory fallback...")
-            if hasattr(db, "_in_memory_applications"):
-                db._in_memory_applications.append(new_app)
+        print(f"[DIAGNOSTIC LOG] Saving application - App ID: {new_app_id}, User ID: {user['id']}, Email: {user.get('email')}")
+        db.add_application(new_app)
+        print(f"[DIAGNOSTIC LOG] Application successfully persisted to DB - App ID: {new_app_id}, User ID: {user['id']}")
 
         PENDING_APPLICATION_OTPS.pop(session_key, None)
 
