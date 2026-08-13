@@ -65,18 +65,55 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function initSupabaseSessionListener() {
     if (!window.supabaseClient) return;
 
-    try {
-        const { data: { session } } = await window.supabaseClient.auth.getSession();
-        if (session && session.user) {
-            await handleSupabaseAuthSession(session);
+    // 1. Check for OAuth callback code parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+
+    if (authCode) {
+        console.log("[OAUTH LOG] OAuth callback received with authorization code.");
+        try {
+            const { data: exchangeData, error: exchangeError } = await window.supabaseClient.auth.exchangeCodeForSession(authCode);
+            console.log("[OAUTH LOG] exchangeCodeForSession result:", { exchangeData, exchangeError });
+            if (exchangeError) {
+                console.error("[OAUTH ERROR] exchangeCodeForSession failed:", exchangeError);
+            } else if (exchangeData && exchangeData.session) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } catch (err) {
+            console.error("[OAUTH EXCEPTION] exchangeCodeForSession exception:", err);
         }
-    } catch (e) {
-        console.warn("Supabase initial session restore:", e);
     }
 
+    // 2. Retrieve session and verify authenticated user
+    try {
+        const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+        console.log("[OAUTH LOG] getSession result:", { session, sessionError });
+
+        if (session && session.user) {
+            const { data: { user }, error: userError } = await window.supabaseClient.auth.getUser();
+            console.log("[OAUTH LOG] getUser result:", { user, userError });
+
+            if (user) {
+                await handleSupabaseAuthSession(session);
+            } else {
+                console.error("[OAUTH ERROR] getUser() returned null user after session retrieval:", userError);
+            }
+        }
+    } catch (e) {
+        console.warn("[OAUTH WARNING] Supabase initial session restore exception:", e);
+    }
+
+    // 3. Listen for auth state changes
     window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        console.log("[OAUTH LOG] Auth state change event:", event, "session present:", !!session);
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && session.user) {
-            await handleSupabaseAuthSession(session);
+            const { data: { user }, error: userError } = await window.supabaseClient.auth.getUser();
+            console.log("[OAUTH LOG] onAuthStateChange getUser result:", { user, userError });
+            if (user) {
+                await handleSupabaseAuthSession(session);
+            } else {
+                console.error("[OAUTH ERROR] onAuthStateChange getUser() failed:", userError);
+            }
         }
     });
 }
@@ -89,8 +126,11 @@ async function handleSupabaseAuthSession(session) {
     const name = metadata.full_name || metadata.name || email.split("@")[0];
     const picture = metadata.avatar_url || metadata.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`;
 
+    console.log("[OAUTH LOG] Syncing public users table for authenticated Supabase user:", { googleId, email, name });
+
     try {
         const authData = await ApiService.googleLogin(email, name, "citizen", picture, googleId);
+        console.log("[OAUTH LOG] users table insert result:", authData);
         persistAuthSession(authData);
         if (authData.is_first_time || !authData.has_completed_profile) {
             switchView("profile-completion");
@@ -98,7 +138,7 @@ async function handleSupabaseAuthSession(session) {
             switchView("recommendations");
         }
     } catch (e) {
-        console.warn("Backend auth session sync:", e);
+        console.error("[OAUTH ERROR] Failed to insert/sync public users table:", e);
     }
 }
 
@@ -3430,6 +3470,8 @@ async function handleGoogleSignIn(role = "citizen") {
         return;
     }
 
+    const redirectUrl = window.location.origin + window.location.pathname;
+    console.log("[OAUTH LOG] Initiating Google OAuth with redirectUrl:", redirectUrl);
     showNotification("Redirecting to Google...", "Launching official Google Account Chooser...", "info");
 
     try {
@@ -3440,9 +3482,11 @@ async function handleGoogleSignIn(role = "citizen") {
                     prompt: 'select_account',
                     access_type: 'offline'
                 },
-                redirectTo: window.location.origin
+                redirectTo: redirectUrl
             }
         });
+
+        console.log("[OAUTH LOG] signInWithOAuth call result:", { data, error });
 
         if (error) {
             console.error("Supabase Google OAuth Error:", error);
