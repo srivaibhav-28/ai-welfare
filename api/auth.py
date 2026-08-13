@@ -162,33 +162,50 @@ async def register_user(req: UserRegister):
 
 @app.post("/api/auth/verify-otp", response_model=TokenResponse)
 async def verify_otp(req: OTPVerifyRequest):
-    verified_user_data = verify_pending_otp(req.email, req.otp)
-    if not verified_user_data:
-        raise HTTPException(status_code=400, detail="Invalid verification code. Please double-check the OTP or click resend.")
-    
-    # User is now verified; store user in database
-    verified_user_data["is_verified"] = True
     try:
-        db.add_user(verified_user_data)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    token = create_access_token({"sub": verified_user_data["id"]})
-    from api.users import check_profile_completion
-    prof = verified_user_data.get("profile", {}) or {}
-    has_comp = check_profile_completion(prof)
+        email_key = req.email.strip().lower()
+        clean_otp = req.otp.strip()
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user_id": verified_user_data["id"],
-        "name": verified_user_data["name"],
-        "email": verified_user_data["email"],
-        "mobile_number": verified_user_data.get("mobile_number", ""),
-        "role": verified_user_data["role"],
-        "is_verified": True,
-        "has_completed_profile": has_comp
-    }
+        verified_user_data = verify_pending_otp(email_key, clean_otp)
+        if not verified_user_data:
+            raise HTTPException(status_code=400, detail="Invalid verification code. Please double-check the OTP or click resend.")
+        
+        # User is now verified; store user in database
+        verified_user_data["is_verified"] = True
+
+        try:
+            db.add_user(verified_user_data)
+        except Exception as db_err:
+            existing = db.get_user_by_email(email_key)
+            if existing:
+                db.verify_user(existing["id"])
+                verified_user_data = existing
+            else:
+                print(f"[VERIFY-OTP DB ERROR] Failed to save verified user: {db_err}")
+
+        token = create_access_token({"sub": verified_user_data["id"]})
+
+        from api.users import check_profile_completion
+        prof = verified_user_data.get("profile", {}) or {}
+        has_comp = check_profile_completion(prof)
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user_id": verified_user_data["id"],
+            "name": verified_user_data["name"],
+            "email": verified_user_data["email"],
+            "mobile_number": verified_user_data.get("mobile_number", ""),
+            "role": verified_user_data["role"],
+            "is_verified": True,
+            "has_completed_profile": has_comp
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"[ERROR in verify_otp]: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"OTP verification server error: {str(e)}")
 
 @app.post("/api/auth/resend-otp")
 async def resend_otp(req: OTPResendRequest):

@@ -677,12 +677,14 @@ class SupabaseDatabase:
 
     def get_pending_registration(self, email: str) -> Optional[Dict[str, Any]]:
         email_key = email.strip().lower()
-        rows = self.fetch_rows("pending_registrations", {"email": email_key})
-        if rows:
-            return rows[0]
-        if not self.is_production:
-            return self._in_memory_pending_registrations.get(email_key)
-        return None
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("pending_registrations", {"email": email_key})
+                if rows:
+                    return rows[0]
+            except Exception as err:
+                print(f"[SUPABASE GET PENDING WARNING]: {err}. Falling back to in-memory pending storage...")
+        return self._in_memory_pending_registrations.get(email_key)
 
     def save_pending_registration(self, email: str, otp: str, user_data: Dict[str, Any], expires_at_iso: str, last_sent_at_iso: str, attempts: int = 0) -> Dict[str, Any]:
         email_key = email.strip().lower()
@@ -694,24 +696,39 @@ class SupabaseDatabase:
             "last_sent_at": last_sent_at_iso,
             "attempts": attempts
         }
+        # Keep in-memory cache synchronized under all conditions
+        self._in_memory_pending_registrations[email_key] = payload
+
         if self.is_supabase_configured:
             try:
                 res = self.update_row("pending_registrations", {"email": email_key}, payload)
                 if res and isinstance(res, dict) and res.get("email") == email_key:
                     return res
-                return self.insert_row("pending_registrations", payload)
-            except Exception:
-                return self.insert_row("pending_registrations", payload)
+                self.insert_row("pending_registrations", payload)
+            except Exception as err:
+                print(f"[SUPABASE SAVE PENDING WARNING]: {err}. Using in-memory pending storage fallback...")
 
-        self._in_memory_pending_registrations[email_key] = payload
         return payload
 
     def update_pending_registration_attempts(self, email: str, attempts: int) -> Optional[Dict[str, Any]]:
         email_key = email.strip().lower()
-        return self.update_row("pending_registrations", {"email": email_key}, {"attempts": attempts})
+        if email_key in self._in_memory_pending_registrations:
+            self._in_memory_pending_registrations[email_key]["attempts"] = attempts
+        if self.is_supabase_configured:
+            try:
+                return self.update_row("pending_registrations", {"email": email_key}, {"attempts": attempts})
+            except Exception:
+                pass
+        return self._in_memory_pending_registrations.get(email_key)
 
     def delete_pending_registration(self, email: str) -> bool:
         email_key = email.strip().lower()
-        return self.delete_rows("pending_registrations", {"email": email_key})
+        self._in_memory_pending_registrations.pop(email_key, None)
+        if self.is_supabase_configured:
+            try:
+                self.delete_rows("pending_registrations", {"email": email_key})
+            except Exception:
+                pass
+        return True
 
 db = SupabaseDatabase()
