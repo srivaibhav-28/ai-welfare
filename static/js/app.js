@@ -311,7 +311,12 @@ function switchView(viewId) {
         });
 
         if (viewId === "recommendations") {
-            renderRecommendations();
+            if ((!state.recommendations || state.recommendations.length === 0) && state.currentProfile) {
+                console.log("[switchView] state.recommendations is empty, triggering evaluateCurrentProfile()");
+                evaluateCurrentProfile();
+            } else {
+                renderRecommendations();
+            }
         } else if (viewId === "applications") {
             loadApplicationsView();
         } else if (viewId === "profile") {
@@ -574,21 +579,7 @@ function updateAuthUI() {
     initLucide();
 }
 
-async function loadUserData() {
-    try {
-        const profile = await ApiService.getProfile();
-        if (profile) {
-            state.currentProfile = profile;
-        }
-        const apps = await ApiService.getApplications();
-        state.applications = apps || [];
-
-        state.hasEvaluatedQuestionnaire = true;
-        await evaluateCurrentProfile();
-    } catch (e) {
-        console.warn("Load user data exception:", e);
-    }
-}
+// loadUserData is defined canonically below in user management section
 
 // WIZARD QUESTIONNAIRE MODAL
 function openWizardModal() {
@@ -753,11 +744,15 @@ async function submitWizard(e) {
 
 async function evaluateCurrentProfile() {
     try {
+        console.log("[evaluateCurrentProfile] Running evaluation for profile:", state.currentProfile);
         const res = await ApiService.evaluateProfile(state.currentProfile || {});
-        state.recommendations = res.recommendations || [];
+        console.log("[evaluateCurrentProfile] Raw API response:", res);
+        const recs = res.recommendations || res.evaluations || res.eligible_schemes || res.data?.recommendations || (Array.isArray(res) ? res : []);
+        state.recommendations = recs;
+        console.log(`[evaluateCurrentProfile] Stored ${state.recommendations.length} recommendations in state.recommendations`);
         renderRecommendations();
         const eligibleList = state.recommendations.filter(r => r.is_eligible);
-        updateQuickStats(eligibleList.length, state.applications.length);
+        updateQuickStats(eligibleList.length, (state.applications || []).length);
     } catch (e) {
         console.warn("Evaluation API exception:", e);
     }
@@ -775,13 +770,17 @@ function renderRecommendations() {
     const grid = document.getElementById("schemesGrid");
     if (!grid) return;
 
+    console.log("[renderRecommendations] state.recommendations total count:", state.recommendations ? state.recommendations.length : 0);
+
     grid.innerHTML = "";
 
-    let schemesToDisplay = state.recommendations.filter(item => item.is_eligible === true);
+    let schemesToDisplay = (state.recommendations || []).filter(item => item && (item.is_eligible === true || item.is_eligible === "true"));
+
+    console.log("[renderRecommendations] Eligible schemes count to display:", schemesToDisplay.length);
 
     let filtered = schemesToDisplay.filter(item => {
-        const matchesCategory = state.selectedCategory === "All" || item.category === state.selectedCategory;
-        const matchesQuery = !state.searchQuery || item.scheme_name.toLowerCase().includes(state.searchQuery) || item.category.toLowerCase().includes(state.searchQuery);
+        const matchesCategory = !state.selectedCategory || state.selectedCategory === "All" || item.category === state.selectedCategory;
+        const matchesQuery = !state.searchQuery || (item.scheme_name && item.scheme_name.toLowerCase().includes(state.searchQuery)) || (item.category && item.category.toLowerCase().includes(state.searchQuery));
         return matchesCategory && matchesQuery;
     });
 
@@ -3549,16 +3548,23 @@ function closeTimelineModal() {
 async function loadUserData() {
     if (!state.currentUser) return;
     try {
+        console.log("[loadUserData] Fetching user profile...");
         const prof = await ApiService.getProfile();
         state.currentProfile = prof;
 
         if (prof) {
+            console.log("[loadUserData] Evaluating profile via ApiService.evaluateProfile...", prof);
             const evalRes = await ApiService.evaluateProfile(prof);
-            state.recommendations = evalRes.evaluations || evalRes.eligible_schemes || [];
+            console.log("[loadUserData] evaluateProfile raw response:", evalRes);
+            const recs = evalRes.recommendations || evalRes.evaluations || evalRes.eligible_schemes || evalRes.data?.recommendations || (Array.isArray(evalRes) ? evalRes : []);
+            state.recommendations = recs;
+            console.log(`[loadUserData] Stored ${state.recommendations.length} recommendations in state.recommendations`);
             state.hasEvaluatedQuestionnaire = true;
             if (typeof renderRecommendations === "function") {
                 renderRecommendations();
             }
+            const eligibleList = state.recommendations.filter(r => r.is_eligible);
+            updateQuickStats(eligibleList.length, (state.applications || []).length);
         }
 
         const apps = await ApiService.getApplications();

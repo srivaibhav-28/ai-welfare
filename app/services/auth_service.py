@@ -72,20 +72,30 @@ from app.services.email_service import EmailNotificationService
 
 import traceback
 
-PENDING_REGISTRATIONS: Dict[str, Dict[str, Any]] = {}
+def _parse_datetime(dt_val: Any) -> datetime:
+    if isinstance(dt_val, datetime):
+        return dt_val if dt_val.tzinfo else dt_val.replace(tzinfo=timezone.utc)
+    if isinstance(dt_val, str):
+        try:
+            parsed = datetime.fromisoformat(dt_val.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+    return datetime.now(timezone.utc)
 
 def store_pending_registration(user_data: Dict[str, Any]) -> str:
     email_key = user_data["email"].strip().lower()
     otp = f"{random.randint(100000, 999999)}"
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(minutes=5) # Requirement: 5-minute expiry
-    PENDING_REGISTRATIONS[email_key] = {
-        "user_data": user_data,
-        "otp": otp,
-        "expires_at": expires_at,
-        "last_sent_at": now,
-        "attempts": 0
-    }
+    db.save_pending_registration(
+        email=email_key,
+        otp=otp,
+        user_data=user_data,
+        expires_at_iso=expires_at.isoformat(),
+        last_sent_at_iso=now.isoformat(),
+        attempts=0
+    )
     print(f"[SECURITY OTP LOG] Verification OTP for {email_key}: {otp}")
     try:
         success, detail = EmailNotificationService.send_registration_otp(email_key, otp)
@@ -103,42 +113,47 @@ def store_pending_registration(user_data: Dict[str, Any]) -> str:
     return otp
 
 def get_pending_registration(email: str) -> Optional[Dict[str, Any]]:
-    return PENDING_REGISTRATIONS.get(email.strip().lower())
+    return db.get_pending_registration(email.strip().lower())
 
 def verify_pending_otp(email: str, otp_code: str) -> Optional[Dict[str, Any]]:
     email_key = email.strip().lower()
-    pending = PENDING_REGISTRATIONS.get(email_key)
+    pending = db.get_pending_registration(email_key)
     if not pending:
         raise HTTPException(status_code=404, detail="No pending OTP session found. Please register or request a new OTP.")
     
+    now = datetime.now(timezone.utc)
+    expires_at = _parse_datetime(pending.get("expires_at"))
+
     # 1. Expiry Check (5 minutes)
-    if datetime.now(timezone.utc) > pending["expires_at"]:
-        PENDING_REGISTRATIONS.pop(email_key, None)
+    if now > expires_at:
+        db.delete_pending_registration(email_key)
         raise HTTPException(status_code=400, detail="OTP verification code has expired (5-minute limit). Please request a new OTP code.")
     
     # 2. Maximum Attempts Check (5 attempts limit)
-    pending["attempts"] = pending.get("attempts", 0) + 1
-    if pending["attempts"] > 5:
-        PENDING_REGISTRATIONS.pop(email_key, None)
+    attempts = pending.get("attempts", 0) + 1
+    if attempts > 5:
+        db.delete_pending_registration(email_key)
         raise HTTPException(status_code=429, detail="Maximum OTP verification attempts exceeded (5 attempts max). Please request a fresh OTP code.")
     
     # 3. OTP Code Match Check
     clean_code = otp_code.strip()
-    if pending["otp"] == clean_code or clean_code == "123456":
-        data = pending["user_data"]
-        PENDING_REGISTRATIONS.pop(email_key, None)
+    if pending.get("otp") == clean_code or clean_code == "123456":
+        data = pending.get("user_data")
+        db.delete_pending_registration(email_key)
         return data
     
-    remaining_attempts = 5 - pending["attempts"]
+    db.update_pending_registration_attempts(email_key, attempts)
+    remaining_attempts = 5 - attempts
     raise HTTPException(status_code=400, detail=f"Invalid 6-digit OTP code. {remaining_attempts} attempts remaining.")
 
 def resend_pending_otp(email: str) -> str:
     email_key = email.strip().lower()
     now = datetime.now(timezone.utc)
-    pending = PENDING_REGISTRATIONS.get(email_key)
+    pending = db.get_pending_registration(email_key)
 
     if pending and "last_sent_at" in pending:
-        seconds_since_last = (now - pending["last_sent_at"]).total_seconds()
+        last_sent_at = _parse_datetime(pending["last_sent_at"])
+        seconds_since_last = (now - last_sent_at).total_seconds()
         if seconds_since_last < 60: # Requirement: 60-second cooldown
             wait_remaining = int(60 - seconds_since_last)
             raise HTTPException(status_code=429, detail=f"Please wait {wait_remaining} seconds before requesting another OTP.")
@@ -147,23 +162,30 @@ def resend_pending_otp(email: str) -> str:
         existing_user = db.get_user_by_email(email_key)
         if existing_user and not existing_user.get("is_verified", False):
             otp = f"{random.randint(100000, 999999)}"
-            PENDING_REGISTRATIONS[email_key] = {
-                "user_data": existing_user,
-                "otp": otp,
-                "expires_at": now + timedelta(minutes=5),
-                "last_sent_at": now,
-                "attempts": 0
-            }
+            expires_at = now + timedelta(minutes=5)
+            db.save_pending_registration(
+                email=email_key,
+                otp=otp,
+                user_data=existing_user,
+                expires_at_iso=expires_at.isoformat(),
+                last_sent_at_iso=now.isoformat(),
+                attempts=0
+            )
             print(f"[SECURITY OTP LOG] Re-sent OTP for {email_key}: {otp}")
             EmailNotificationService.send_registration_otp(email_key, otp)
             return otp
         raise HTTPException(status_code=404, detail="No pending registration found for this email address.")
     
     otp = f"{random.randint(100000, 999999)}"
-    pending["otp"] = otp
-    pending["expires_at"] = now + timedelta(minutes=5)
-    pending["last_sent_at"] = now
-    pending["attempts"] = 0
+    expires_at = now + timedelta(minutes=5)
+    db.save_pending_registration(
+        email=email_key,
+        otp=otp,
+        user_data=pending.get("user_data", {}),
+        expires_at_iso=expires_at.isoformat(),
+        last_sent_at_iso=now.isoformat(),
+        attempts=0
+    )
     print(f"[SECURITY OTP LOG] Fresh OTP for {email_key}: {otp}")
     EmailNotificationService.send_registration_otp(email_key, otp)
     return otp

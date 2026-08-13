@@ -296,6 +296,7 @@ class SupabaseDatabase:
                 "created_at": "2026-03-10T12:30:00"
             }
         ]
+        self._in_memory_pending_registrations: Dict[str, Dict[str, Any]] = {}
 
     @property
     def is_production(self) -> bool:
@@ -380,6 +381,12 @@ class SupabaseDatabase:
             if filters and "user_id" in filters:
                 return [a for a in self._in_memory_applications if a.get("user_id") == filters["user_id"]]
             return self._in_memory_applications
+        elif table == "pending_registrations":
+            if filters and "email" in filters:
+                email_val = str(filters["email"]).lower()
+                res = [p for p in self._in_memory_pending_registrations.values() if p.get("email", "").lower() == email_val]
+                return res
+            return list(self._in_memory_pending_registrations.values())
         return []
 
     def insert_row(self, table: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -419,6 +426,10 @@ class SupabaseDatabase:
             self._in_memory_applications.append(data)
         elif table == "notifications":
             self._in_memory_notifications.insert(0, data)
+        elif table == "pending_registrations":
+            email_key = str(data.get("email", "")).strip().lower()
+            if email_key:
+                self._in_memory_pending_registrations[email_key] = data
         return data
 
     def update_row(self, table: str, filters: Dict[str, Any], data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -449,6 +460,11 @@ class SupabaseDatabase:
                 if a["id"] == filters["id"]:
                     a.update(data)
                     return a
+        elif table == "pending_registrations" and "email" in filters:
+            email_key = str(filters["email"]).strip().lower()
+            if email_key in self._in_memory_pending_registrations:
+                self._in_memory_pending_registrations[email_key].update(data)
+                return self._in_memory_pending_registrations[email_key]
         return data
 
     def delete_rows(self, table: str, filters: Dict[str, Any]) -> bool:
@@ -467,6 +483,9 @@ class SupabaseDatabase:
             self._in_memory_users = [u for u in self._in_memory_users if u.get("id") != filters["id"]]
         elif table == "schemes" and "id" in filters:
             self._in_memory_schemes = [s for s in self._in_memory_schemes if s.get("id") != filters["id"]]
+        elif table == "pending_registrations" and "email" in filters:
+            email_key = str(filters["email"]).strip().lower()
+            self._in_memory_pending_registrations.pop(email_key, None)
         return True
 
     # High level domain operations
@@ -634,5 +653,44 @@ class SupabaseDatabase:
             except Exception:
                 pass
         return log_entry
+
+    def get_pending_registration(self, email: str) -> Optional[Dict[str, Any]]:
+        email_key = email.strip().lower()
+        rows = self.fetch_rows("pending_registrations", {"email": email_key})
+        if rows:
+            return rows[0]
+        if not self.is_production:
+            return self._in_memory_pending_registrations.get(email_key)
+        return None
+
+    def save_pending_registration(self, email: str, otp: str, user_data: Dict[str, Any], expires_at_iso: str, last_sent_at_iso: str, attempts: int = 0) -> Dict[str, Any]:
+        email_key = email.strip().lower()
+        payload = {
+            "email": email_key,
+            "otp": otp,
+            "user_data": user_data,
+            "expires_at": expires_at_iso,
+            "last_sent_at": last_sent_at_iso,
+            "attempts": attempts
+        }
+        if self.is_supabase_configured:
+            try:
+                res = self.update_row("pending_registrations", {"email": email_key}, payload)
+                if res and isinstance(res, dict) and res.get("email") == email_key:
+                    return res
+                return self.insert_row("pending_registrations", payload)
+            except Exception:
+                return self.insert_row("pending_registrations", payload)
+
+        self._in_memory_pending_registrations[email_key] = payload
+        return payload
+
+    def update_pending_registration_attempts(self, email: str, attempts: int) -> Optional[Dict[str, Any]]:
+        email_key = email.strip().lower()
+        return self.update_row("pending_registrations", {"email": email_key}, {"attempts": attempts})
+
+    def delete_pending_registration(self, email: str) -> bool:
+        email_key = email.strip().lower()
+        return self.delete_rows("pending_registrations", {"email": email_key})
 
 db = SupabaseDatabase()
