@@ -551,7 +551,9 @@ class SupabaseDatabase:
 
         if self.is_supabase_configured:
             try:
-                return self.insert_row("users", user)
+                core_user_cols = {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified", "verified_at"}
+                clean_user = {k: v for k, v in user.items() if k in core_user_cols}
+                return self.insert_row("users", clean_user)
             except Exception as err:
                 print(f"[SUPABASE ADD USER EXCEPTION]: {err}. Stored in in-memory fallback cache.")
         return user
@@ -663,12 +665,13 @@ class SupabaseDatabase:
         }
         if self.is_supabase_configured:
             try:
-                # Try patch first
-                res = self.update_row("user_documents", {"user_id": user_id, "document_name": doc_name}, payload)
-                if not res:
+                existing_docs = self.fetch_rows("user_documents", {"user_id": user_id, "document_name": doc_name})
+                if existing_docs:
+                    self.update_row("user_documents", {"user_id": user_id, "document_name": doc_name}, payload)
+                else:
                     self.insert_row("user_documents", payload)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[SUPABASE USER DOCUMENTS PERSISTENCE EXCEPTION]: {e}")
         return doc_info
 
     def get_notifications(self, target_user_id: Optional[str] = None) -> List[Dict[str, Any]]:

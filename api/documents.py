@@ -122,7 +122,8 @@ async def upload_document_file(
             print(f"[API UPLOAD INFO] Same filename '{filename}' reused for '{document_name}' (was also used for '{existing_doc_name}'). Allowing.")
 
     clean_doc_name = "".join(c for c in document_name if c.isalnum() or c in (' ', '_')).rstrip().replace(' ', '_').lower()
-    safe_name = f"{user['id']}_{clean_doc_name}_{uuid.uuid4().hex[:6]}{ext}"
+    user_uuid = user["id"]
+    safe_name = f"{user_uuid}/{clean_doc_name}_{uuid.uuid4().hex[:6]}{ext}"
 
     file_url = f"https://placehold.co/600x400/1e293b/38bdf8?text={clean_doc_name}.jpg"
 
