@@ -305,7 +305,7 @@ class SupabaseDatabase:
 
     @property
     def is_supabase_configured(self) -> bool:
-        return bool(config.SUPABASE_URL and config.SUPABASE_SERVICE_ROLE_KEY)
+        return bool(config.SUPABASE_URL and (config.SUPABASE_SERVICE_ROLE_KEY or config.SUPABASE_ANON_KEY))
 
     def _headers(self) -> Dict[str, str]:
         return {
@@ -398,19 +398,28 @@ class SupabaseDatabase:
                     return res_data[0] if isinstance(res_data, list) and res_data else data
 
                 if res.status_code == 400 and "PGRST204" in res.text:
-                    known_core_columns = {
-                        "applications": {"id", "user_id", "user_name", "user_email", "scheme_id", "scheme_name", "status", "applied_date", "uploaded_documents", "remarks"},
-                        "users": {"id", "email", "password_hash", "name", "mobile_number", "role", "picture", "profile", "is_blocked", "is_verified", "verified_at"},
-                        "schemes": {"id", "name", "category", "description", "benefits", "criteria", "required_documents", "official_link", "last_date", "state_restriction", "icon"}
-                    }
-                    cols = known_core_columns.get(table)
-                    if cols:
-                        filtered_data = {k: v for k, v in data.items() if k in cols}
-                        retry_res = requests.post(url, headers=self._headers(), json=filtered_data, timeout=5)
-                        retry_data = retry_res.json() if retry_res.content else []
-                        self._print_db_audit("INSERT_ROW_SCHEMA_RETRY", table, url, filtered_data, retry_res.status_code, retry_res.text[:500], retry_data)
-                        if retry_res.status_code in [200, 201]:
-                            return retry_data[0] if isinstance(retry_data, list) and retry_data else filtered_data
+                    import re
+                    m = re.search(r"Could not find the '([^']+)' column", res.text)
+                    missing_col = m.group(1) if m else None
+                    
+                    payload_retry = dict(data)
+                    if missing_col and missing_col in payload_retry:
+                        del payload_retry[missing_col]
+                    else:
+                        known_core_columns = {
+                            "applications": {"id", "user_id", "user_name", "user_email", "scheme_id", "scheme_name", "status", "applied_date", "uploaded_documents", "remarks"},
+                            "users": {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified", "verified_at"},
+                            "schemes": {"id", "name", "category", "description", "benefits", "criteria", "required_documents", "official_link", "last_date", "state_restriction", "icon"}
+                        }
+                        cols = known_core_columns.get(table)
+                        if cols:
+                            payload_retry = {k: v for k, v in data.items() if k in cols and k != "picture"}
+
+                    retry_res = requests.post(url, headers=self._headers(), json=payload_retry, timeout=5)
+                    retry_data = retry_res.json() if retry_res.content else []
+                    self._print_db_audit("INSERT_ROW_SCHEMA_RETRY", table, url, payload_retry, retry_res.status_code, retry_res.text[:500], retry_data)
+                    if retry_res.status_code in [200, 201]:
+                        return retry_data[0] if isinstance(retry_data, list) and retry_data else payload_retry
 
                 raise RuntimeError(
                     f"Supabase INSERT failed for table '{table}': {res.status_code} - {res.text}"

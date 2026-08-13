@@ -280,7 +280,6 @@ async def google_auth(req: GoogleAuthRequest):
             "mobile_number": "",
             "role": req.role or "citizen",
             "is_verified": True,
-            "picture": avatar_url,
             "profile": default_profile
         }
         
@@ -289,17 +288,17 @@ async def google_auth(req: GoogleAuthRequest):
             saved_row = db.add_user(user)
         except Exception as db_err:
             print(f"[GOOGLE AUTH DB INSERT ERROR] db.add_user exception: {db_err}")
+            raise HTTPException(status_code=500, detail=f"Database user creation failed: {db_err}")
 
-        # Confirm the insert succeeds and retrieve the persisted user from database
-        persisted_user = db.get_user_by_email(clean_email) or db.get_user_by_id(user_id)
-        if not persisted_user:
-            if isinstance(saved_row, dict) and saved_row.get("id"):
-                persisted_user = saved_row
-            else:
-                if not any(u.get("id") == user_id for u in db._in_memory_users):
-                    db._in_memory_users.append(user)
-                persisted_user = user
+        # Verification step: Immediately query SELECT * FROM public.users WHERE id = '<user_id>'
+        verified_rows = db.fetch_rows("users", {"id": user_id})
+        print(f"[GOOGLE AUTH VERIFICATION] SELECT * FROM public.users WHERE id = '{user_id}': {len(verified_rows)} rows returned.")
 
+        if not verified_rows and db.is_supabase_configured:
+            print(f"[CRITICAL OAUTH FAILURE] User insert failed! 0 rows returned from public.users for ID '{user_id}'!")
+            raise HTTPException(status_code=500, detail=f"Database insertion failed: User row with ID '{user_id}' does not exist in public.users table after insert.")
+
+        persisted_user = verified_rows[0] if verified_rows else (saved_row if isinstance(saved_row, dict) else user)
         user = persisted_user
         print(f"[GOOGLE AUTH STEP 4] User insert result: persisted_id='{user.get('id')}', row_retrieved={bool(persisted_user)}")
 
