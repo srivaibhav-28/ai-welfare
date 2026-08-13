@@ -211,10 +211,10 @@ class ApiService {
         });
     }
 
-    static async googleLogin(email, name, role = "citizen", picture = null) {
+    static async googleLogin(email, name, role = "citizen", picture = null, googleId = null) {
         const data = await this.request("/api/auth/google", {
             method: "POST",
-            body: JSON.stringify({ email, name, role, picture })
+            body: JSON.stringify({ email, name, role, picture, google_id: googleId })
         });
         if (data && data.access_token) {
             this.setAuthToken(data.access_token);

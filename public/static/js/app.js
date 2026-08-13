@@ -84,12 +84,13 @@ async function initSupabaseSessionListener() {
 async function handleSupabaseAuthSession(session) {
     const user = session.user;
     const email = user.email;
+    const googleId = user.id;
     const metadata = user.user_metadata || {};
     const name = metadata.full_name || metadata.name || email.split("@")[0];
     const picture = metadata.avatar_url || metadata.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`;
 
     try {
-        const authData = await ApiService.googleLogin(email, name, "citizen", picture);
+        const authData = await ApiService.googleLogin(email, name, "citizen", picture, googleId);
         persistAuthSession(authData);
         if (authData.is_first_time || !authData.has_completed_profile) {
             switchView("profile-completion");
