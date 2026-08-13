@@ -285,6 +285,15 @@ async def google_auth(req: GoogleAuthRequest):
             if fetched:
                 user = fetched
 
+        # Explicit Verification: Ensure user record is committed and queryable by db.get_user_by_id BEFORE issuing JWT
+        verified_user = db.get_user_by_id(user["id"])
+        if not verified_user:
+            # Ensure fallback in-memory synchronization
+            if not any(u.get("id") == user["id"] for u in db._in_memory_users):
+                db._in_memory_users.append(user)
+            verified_user = db.get_user_by_id(user["id"]) or user
+        user = verified_user
+
     from api.users import check_profile_completion
     prof = user.get("profile", {}) or {}
     has_completed_profile = check_profile_completion(prof)
