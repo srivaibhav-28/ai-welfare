@@ -31,7 +31,9 @@ def check_profile_completion(p: Dict[str, Any]) -> bool:
     has_district = len(dist) > 0
     has_bank = len(bank) > 0
     
-    return bool(p.get("profile_completed", False) and has_valid_aadhaar and has_valid_pincode and has_dob and has_district and has_bank)
+    is_complete = bool(has_valid_aadhaar and has_valid_pincode and has_dob and has_district and has_bank)
+    p["profile_completed"] = is_complete
+    return is_complete
 
 @app.get("/api/profile")
 async def get_profile(user: Dict[str, Any] = Depends(require_current_user)):
@@ -41,6 +43,7 @@ async def get_profile(user: Dict[str, Any] = Depends(require_current_user)):
     if not prof.get("mobile_number"):
         prof["mobile_number"] = user.get("mobile_number", "")
     prof["profile_completed"] = check_profile_completion(prof)
+    print(f"[STAGE 3 & 4: GET /api/profile] Returning profile for user {user.get('id')}: profile_completed={prof.get('profile_completed')}")
     return prof
 
 @app.post("/api/profile")

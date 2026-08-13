@@ -168,7 +168,10 @@ function isProfileCompleted(p) {
     const hasDist = dist.length > 0;
     const hasBank = bank.length > 0;
 
-    return Boolean(p.profile_completed === true && isValidAadhaar && isValidPincode && hasDob && hasDist && hasBank);
+    const isCompBool = p.profile_completed === true || p.profile_completed === "true";
+    const result = Boolean((isCompBool || (isValidAadhaar && isValidPincode && hasDob && hasDist && hasBank)) && isValidAadhaar && isValidPincode && hasDob && hasDist && hasBank);
+    console.log("[isProfileCompleted evaluated]", { profile_completed: p.profile_completed, isValidAadhaar, isValidPincode, hasDob, hasDist, hasBank, result });
+    return result;
 }
 
 async function finalizeAuthFlow(authData, defaultView = "recommendations") {
@@ -686,19 +689,21 @@ async function submitWizard(e) {
     const incomeVal = parseFloat(getVal("wizIncome", "150000")) || 150000;
     const maritalVal = getVal("wizMarital", "Single");
 
+    console.log("[STAGE Wizard: submitWizard] Previous state.currentProfile before merge:", state.currentProfile);
     state.currentProfile = {
-        name: getVal("wizName", state.currentUser?.name || "Citizen").trim(),
-        mobile_number: getVal("wizMobile", state.currentUser?.mobile_number || "").trim(),
+        ...(state.currentProfile || {}),
+        name: getVal("wizName", state.currentUser?.name || state.currentProfile?.name || "Citizen").trim(),
+        mobile_number: getVal("wizMobile", state.currentUser?.mobile_number || state.currentProfile?.mobile_number || "").trim(),
         age: ageVal,
-        gender: getVal("wizGender", "Male"),
+        gender: getVal("wizGender", state.currentProfile?.gender || "Male"),
         marital_status: maritalVal,
-        state: getVal("wizState", "Uttar Pradesh").trim(),
-        district: getVal("wizDistrict", "Varanasi").trim(),
-        rural_urban: getVal("wizRuralUrban", "Rural"),
-        education: getVal("wizEducation", "Secondary"),
-        occupation: getVal("wizOccupation", "Farmer"),
+        state: getVal("wizState", state.currentProfile?.state || "Uttar Pradesh").trim(),
+        district: getVal("wizDistrict", state.currentProfile?.district || "Varanasi").trim(),
+        rural_urban: getVal("wizRuralUrban", state.currentProfile?.rural_urban || "Rural"),
+        education: getVal("wizEducation", state.currentProfile?.education || "Secondary"),
+        occupation: getVal("wizOccupation", state.currentProfile?.occupation || "Farmer"),
         annual_income: incomeVal,
-        caste_category: getVal("wizCaste", "General"),
+        caste_category: getVal("wizCaste", state.currentProfile?.caste_category || "General"),
         farmer_status: getCheck("wizFarmer"),
         student_status: getCheck("wizStudent"),
         disability_status: getCheck("wizDisability"),
@@ -706,8 +711,10 @@ async function submitWizard(e) {
         widow_status: getCheck("wizWidow") || (maritalVal === "Widow"),
         bpl_status: getCheck("wizBPL") || (incomeVal <= 150000),
         aadhaar_available: getCheck("wizAadhaar"),
-        bank_account_available: getCheck("wizBank")
+        bank_account_available: getCheck("wizBank"),
+        profile_completed: (state.currentProfile?.profile_completed !== undefined) ? Boolean(state.currentProfile.profile_completed) : true
     };
+    console.log("[STAGE Wizard: submitWizard] Preserved state.currentProfile after merge:", state.currentProfile);
 
     state.hasEvaluatedQuestionnaire = true;
     const userKey = state.currentUser?.email || "default";
@@ -3548,13 +3555,20 @@ function closeTimelineModal() {
 async function loadUserData() {
     if (!state.currentUser) return;
     try {
-        console.log("[loadUserData] Fetching user profile...");
+        console.log("[STAGE 5 & 6: loadUserData] Fetching user profile via ApiService.getProfile()...");
         const prof = await ApiService.getProfile();
-        state.currentProfile = prof;
-
+        console.log("[STAGE 5 & 6: loadUserData] Received profile from backend GET /api/profile:", prof);
         if (prof) {
-            console.log("[loadUserData] Evaluating profile via ApiService.evaluateProfile...", prof);
-            const evalRes = await ApiService.evaluateProfile(prof);
+            state.currentProfile = {
+                ...(state.currentProfile || {}),
+                ...prof,
+                profile_completed: (prof.profile_completed !== undefined) ? Boolean(prof.profile_completed) : isProfileCompleted(prof)
+            };
+            console.log("[STAGE 5 & 6: loadUserData] Assigned state.currentProfile:", state.currentProfile);
+            console.log("[STAGE 5 & 6: loadUserData] isProfileCompleted(state.currentProfile) =", isProfileCompleted(state.currentProfile));
+
+            console.log("[loadUserData] Evaluating profile via ApiService.evaluateProfile...", state.currentProfile);
+            const evalRes = await ApiService.evaluateProfile(state.currentProfile);
             console.log("[loadUserData] evaluateProfile raw response:", evalRes);
             const recs = evalRes.recommendations || evalRes.evaluations || evalRes.eligible_schemes || evalRes.data?.recommendations || (Array.isArray(evalRes) ? evalRes : []);
             state.recommendations = recs;
@@ -3713,8 +3727,16 @@ async function handleProfileCompletionSubmit(e) {
             profile_completed: true
         };
 
+        console.log("[STAGE 1: handleProfileCompletionSubmit] Submitting complete profile payload:", payload);
         const res = await ApiService.updateProfile(payload);
-        state.currentProfile = res.profile || payload;
+        console.log("[STAGE 1: handleProfileCompletionSubmit] Received backend response:", res);
+
+        state.currentProfile = {
+            ...(res.profile || payload),
+            profile_completed: true
+        };
+        console.log("[STAGE 1: handleProfileCompletionSubmit] Set state.currentProfile:", state.currentProfile);
+        console.log("[STAGE 1: handleProfileCompletionSubmit] isProfileCompleted(state.currentProfile) =", isProfileCompleted(state.currentProfile));
         
         if (res.profile_completed || isProfileCompleted(state.currentProfile)) {
             showNotification("Profile Completed", "Your profile has been saved successfully! Redirecting to Eligibility Questionnaire...", "success");

@@ -240,10 +240,13 @@ class ApiService {
     }
 
     static async updateProfile(profileData) {
-        return await this.request("/api/profile", {
+        console.log("[STAGE 2: ApiService.updateProfile] Transmitting profile update payload:", profileData);
+        const res = await this.request("/api/profile", {
             method: "POST",
             body: JSON.stringify(profileData)
         });
+        console.log("[STAGE 2: ApiService.updateProfile] Received backend response:", res);
+        return res;
     }
 
     // Schemes & Evaluation
