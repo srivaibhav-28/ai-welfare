@@ -92,7 +92,7 @@ async function handleSupabaseAuthSession(session) {
         const authData = await ApiService.googleLogin(email, name, "citizen", picture);
         persistAuthSession(authData);
         if (authData.is_first_time || !authData.has_completed_profile) {
-            openWizardModal();
+            switchView("profile-completion");
         } else {
             switchView("recommendations");
         }
