@@ -218,9 +218,14 @@ async def resend_otp(req: OTPResendRequest):
 @app.post("/api/auth/google", response_model=TokenResponse)
 async def google_auth(req: GoogleAuthRequest):
     clean_email = req.email.strip().lower()
+    print("\n" + "=" * 80)
+    print(f"[GOOGLE AUTH STEP 1] Google token received: name='{req.name}', google_id='{req.google_id}'")
+    print(f"[GOOGLE AUTH STEP 2] Google email: '{clean_email}'")
+
     existing = db.get_user_by_email(clean_email)
+    print(f"[GOOGLE AUTH STEP 3] Existing user lookup result: {existing.get('id') if existing else 'None (New User)'}")
+
     is_first_time = False
-    
     avatar_url = req.picture or f"https://api.dicebear.com/7.x/avataaars/svg?seed={clean_email}"
 
     if existing:
@@ -296,9 +301,12 @@ async def google_auth(req: GoogleAuthRequest):
                 persisted_user = user
 
         user = persisted_user
+        print(f"[GOOGLE AUTH STEP 4] User insert result: persisted_id='{user.get('id')}', row_retrieved={bool(persisted_user)}")
 
     persisted_user_id = user.get("id") or user.get("user_id")
     token = create_access_token({"sub": persisted_user_id})
+    print(f"[GOOGLE AUTH STEP 5] JWT payload: {{'sub': '{persisted_user_id}'}}, token_preview='{token[:25]}...'")
+    print("=" * 80 + "\n")
 
     from api.users import check_profile_completion
     prof = user.get("profile", {}) or {}
