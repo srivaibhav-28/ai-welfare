@@ -42,9 +42,6 @@ async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
         "profile": {"role": "admin"}
     }
     
-    # Store or update in database
-    db.add_user(admin_record)
-
     token = create_access_token({"sub": ADMIN_USER_ID, "role": "admin"})
 
     return {
