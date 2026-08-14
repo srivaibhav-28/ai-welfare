@@ -1,12 +1,11 @@
 import os
-from app.services.auth_service import verify_password, hash_password
 
 # Single System Administrator Configuration
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@welfare.gov").strip().lower()
 ADMIN_NAME = os.getenv("ADMIN_NAME", "System Administrator").strip()
 
-# Password Hash from Environment Variable (default generated via passlib hash_password)
-_DEFAULT_ADMIN_HASH = os.getenv("ADMIN_PASSWORD_HASH") or hash_password("Admin@123456")
+# Password Hash from Environment Variable
+_DEFAULT_ADMIN_HASH = os.getenv("ADMIN_PASSWORD_HASH") or "$pbkdf2-sha256$29000$nNO6d.5d6/0/B6CUstZ6zw$C7IDjSIOWLsw02bzgOYufBBx/sQa5rlXDLbocFkGq84"
 ADMIN_PASSWORD_HASH = _DEFAULT_ADMIN_HASH.strip()
 
 ADMIN_USER_ID = "usr-admin-system-001"
@@ -16,6 +15,7 @@ def authenticate_admin(email: str, plain_password: str) -> bool:
     Verifies that the provided credentials match the single system administrator.
     Never exposes plain password or hash.
     """
+    from app.services.auth_service import verify_password
     if not email or not plain_password:
         return False
     if email.strip().lower() != ADMIN_EMAIL:
