@@ -346,12 +346,7 @@ class SupabaseDatabase:
             rows = res.json() if res.status_code == 200 and res.content else []
             self._print_db_audit("FETCH_ROWS_SUPABASE", table, url, filters, res.status_code, res.text[:500], rows)
             if res.status_code == 200:
-                if rows:
-                    return rows
-                in_mem = self.fetch_rows_in_memory(table, filters)
-                if in_mem:
-                    return in_mem
-                return rows
+                return rows if isinstance(rows, list) else []
             
             err_msg = f"Supabase REST API Error (Status {res.status_code}): {res.text[:500]}"
             if self.is_production:
@@ -561,27 +556,36 @@ class SupabaseDatabase:
             self._in_memory_users.append(user)
 
         if self.is_supabase_configured:
-            try:
-                core_user_cols = {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified"}
-                clean_user = {k: v for k, v in user.items() if k in core_user_cols}
-                existing_remote = self.fetch_rows("users", {"email": clean_user["email"]}) if "email" in clean_user else None
-                if not existing_remote and "id" in clean_user:
-                    existing_remote = self.fetch_rows("users", {"id": clean_user["id"]})
-                if existing_remote:
-                    existing_row = existing_remote[0]
-                    if existing_row.get("id"):
-                        clean_user["id"] = existing_row["id"]
-                        user["id"] = existing_row["id"]
-                    if existing_row.get("profile") and not clean_user.get("profile"):
-                        clean_user["profile"] = existing_row["profile"]
-                    res = self.update_row("users", {"id": existing_row["id"]}, clean_user)
-                    return res or clean_user
+            core_user_cols = {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified"}
+            clean_user = {k: v for k, v in user.items() if k in core_user_cols}
+            existing_remote = self.fetch_rows("users", {"email": clean_user["email"]}) if "email" in clean_user else None
+            if not existing_remote and "id" in clean_user:
+                existing_remote = self.fetch_rows("users", {"id": clean_user["id"]})
+
+            if existing_remote:
+                existing_row = existing_remote[0]
+                if existing_row.get("id"):
+                    clean_user["id"] = existing_row["id"]
+                    user["id"] = existing_row["id"]
+                if existing_row.get("profile") and not clean_user.get("profile"):
+                    clean_user["profile"] = existing_row["profile"]
+                res = self.update_row("users", {"id": existing_row["id"]}, clean_user)
+            else:
                 res = self.insert_row("users", clean_user)
-                if isinstance(res, dict) and res.get("id"):
-                    user["id"] = res["id"]
-                return res or clean_user
-            except Exception as err:
-                print(f"[SUPABASE ADD USER EXCEPTION]: {err}. Stored in in-memory fallback cache.")
+
+            if isinstance(res, dict) and res.get("id"):
+                user["id"] = res["id"]
+
+            # Post-Insertion Verification: SELECT * FROM public.users WHERE email = clean_user['email']
+            verif_rows = self.fetch_rows("users", {"email": clean_user["email"]})
+            if not verif_rows:
+                raise RuntimeError(
+                    f"Supabase Database Error: Verification failed. User '{clean_user['email']}' was not persisted to public.users table."
+                )
+
+            persisted_row = verif_rows[0]
+            user["id"] = persisted_row.get("id", user["id"])
+            return persisted_row
         return user
 
     def update_user_profile(self, user_id: str, profile: Dict[str, Any]):

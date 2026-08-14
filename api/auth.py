@@ -143,19 +143,21 @@ async def verify_otp(req: OTPVerifyRequest):
         if not verified_user_data:
             raise HTTPException(status_code=400, detail="Invalid verification code. Please double-check the OTP or click resend.")
         
-        # User is now verified; store user in database
+        # User is now verified; store user in database and verify row exists in public.users
         verified_user_data["is_verified"] = True
+        persisted = db.add_user(verified_user_data)
+        if isinstance(persisted, dict) and persisted.get("id"):
+            verified_user_data["id"] = persisted["id"]
+        db.verify_user(verified_user_data["id"])
 
-        try:
-            db.add_user(verified_user_data)
-            db.verify_user(verified_user_data["id"])
-        except Exception as db_err:
-            existing = db.get_user_by_email(email_key)
-            if existing:
-                db.verify_user(existing["id"])
-                verified_user_data = existing
-            else:
-                print(f"[VERIFY-OTP DB ERROR] Failed to save verified user: {db_err}")
+        # Post-Insertion Strict Verification
+        db_user_row = db.get_user_by_email(email_key)
+        if not db_user_row:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Database Insertion Error: Failed to insert user record for {email_key} into Supabase public.users table."
+            )
+        verified_user_data["id"] = db_user_row["id"]
 
         token = create_access_token({
             "sub": verified_user_data["id"],
