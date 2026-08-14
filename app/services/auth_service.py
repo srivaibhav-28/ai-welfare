@@ -34,6 +34,9 @@ from app.admin_constants import ADMIN_EMAIL, ADMIN_NAME, ADMIN_USER_ID
 def get_current_user(request: Request = None, credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)) -> Optional[Dict[str, Any]]:
     user_id = None
     user_role = None
+    user_email = None
+    user_name = None
+    payload = None
     token_str = None
     if credentials and credentials.credentials:
         token_str = credentials.credentials
@@ -45,6 +48,8 @@ def get_current_user(request: Request = None, credentials: Optional[HTTPAuthoriz
             payload = jwt.decode(token_str, _get_secret_key(), algorithms=[JWT_ALGORITHM])
             user_id = payload.get("sub")
             user_role = payload.get("role")
+            user_email = payload.get("email")
+            user_name = payload.get("name")
         except JWTError:
             if token_str.startswith("usr-") or token_str.startswith("admin-") or "@" in token_str:
                 user_id = token_str
@@ -66,13 +71,52 @@ def get_current_user(request: Request = None, credentials: Optional[HTTPAuthoriz
                 "profile": {"role": "admin"}
             }
 
+        # 1. Primary lookup: get user by ID from DB
         user = db.get_user_by_id(user_id)
+
+        # 2. Secondary lookup: get user by email if provided in token
+        if not user and user_email:
+            user = db.get_user_by_email(user_email)
+            if user and user.get("id") != user_id:
+                user["id"] = user_id
+                try:
+                    db.update_user(user)
+                except Exception as sync_id_err:
+                    print(f"[AUTH_SERVICE ID SYNC WARNING]: {sync_id_err}")
+
+        # 3. Fallback lookup: in-memory cache
         if not user:
-            user = next((u for u in db._in_memory_users if u.get("id") == user_id), None)
+            user = next((u for u in db._in_memory_users if u.get("id") == user_id or (user_email and u.get("email", "").lower() == user_email.lower())), None)
         if not user and "@" in user_id:
             user = db.get_user_by_email(user_id)
+
+        # 4. REQUIREMENT 9: Automatic User Record Sync / Creation if user exists in valid JWT but missing in DB
+        if not user and user_id:
+            email_val = user_email or (user_id if "@" in user_id else f"{user_id}@citizen.local")
+            name_val = user_name or email_val.split("@")[0].capitalize()
+            new_user = {
+                "id": user_id,
+                "email": email_val,
+                "password_hash": hash_password("CitizenSessionAutoCreated"),
+                "name": name_val,
+                "mobile_number": "",
+                "role": user_role or "citizen",
+                "is_verified": True,
+                "profile": {
+                    "name": name_val,
+                    "email": email_val,
+                    "profile_completed": False
+                }
+            }
+            try:
+                user = db.add_user(new_user)
+            except Exception as sync_err:
+                print(f"[AUTH_SERVICE AUTO-SYNC USER EXCEPTION]: {sync_err}")
+                user = new_user
+
         if user:
             return user
+
         raise HTTPException(
             status_code=401,
             detail=f"Authenticated user not found: {user_id}"

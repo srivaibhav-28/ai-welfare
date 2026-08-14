@@ -153,7 +153,12 @@ async def verify_otp(req: OTPVerifyRequest):
             else:
                 print(f"[VERIFY-OTP DB ERROR] Failed to save verified user: {db_err}")
 
-        token = create_access_token({"sub": verified_user_data["id"]})
+        token = create_access_token({
+            "sub": verified_user_data["id"],
+            "email": verified_user_data["email"],
+            "name": verified_user_data.get("name", ""),
+            "role": verified_user_data.get("role", "citizen")
+        })
 
         from api.users import check_profile_completion
         prof = verified_user_data.get("profile", {}) or {}
@@ -273,7 +278,12 @@ async def google_auth(req: GoogleAuthRequest):
         persisted_user = user
 
     persisted_user_id = persisted_user.get("id") or auth_uuid
-    token = create_access_token({"sub": persisted_user_id})
+    token = create_access_token({
+        "sub": persisted_user_id,
+        "email": clean_email,
+        "name": persisted_user.get("name", ""),
+        "role": persisted_user.get("role", "citizen")
+    })
     print(f"[GOOGLE AUTH STEP 5] JWT payload: {{'sub': '{persisted_user_id}'}}, token_preview='{token[:25]}...'")
     print("=" * 80 + "\n")
 
@@ -333,7 +343,12 @@ async def login_user(req: UserLogin):
             detail="Email verification required. A new OTP has been sent to your email address."
         )
 
-    token = create_access_token({"sub": user["id"]})
+    token = create_access_token({
+        "sub": user["id"],
+        "email": user["email"],
+        "name": user.get("name") or user["email"].split("@")[0].capitalize(),
+        "role": user.get("role", "citizen")
+    })
     from api.users import check_profile_completion
     prof = user.get("profile", {}) or {}
     has_comp = check_profile_completion(prof)
