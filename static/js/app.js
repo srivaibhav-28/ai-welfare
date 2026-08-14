@@ -1986,29 +1986,29 @@ async function refreshAdminDashboard() {
             const rejected = apps.filter(a => a.status === 'Rejected').length;
 
             analytics = {
-                total_users: users.length || 5,
-                total_schemes: schemes.length || 10,
-                total_applications: apps.length || 1,
-                pending_applications: pending || 1,
-                approved_applications: approved || 0,
-                rejected_applications: rejected || 0,
-                monthly_applications: { 'Jan': 12, 'Feb': 18, 'Mar': 24, 'Apr': 19, 'May': 28, 'Jun': 35, 'Jul': 42 },
-                application_status_distribution: { 'Applied': pending || 1, 'Under Verification': 0, 'Approved': approved || 0, 'Rejected': rejected || 0 },
-                top_applied_schemes: { 'PM-Kisan': 1, 'Ayushman Bharat': 1 },
+                total_users: users.length,
+                total_schemes: schemes.length,
+                total_applications: apps.length,
+                pending_applications: pending,
+                approved_applications: approved,
+                rejected_applications: rejected,
+                monthly_applications: {},
+                application_status_distribution: { 'Applied': pending, 'Under Verification': 0, 'Approved': approved, 'Rejected': rejected },
+                top_applied_schemes: {},
                 recent_applications: apps.slice(-5),
                 recent_users: users.slice(-5)
             };
         } catch (err) {
             analytics = {
-                total_users: 5,
-                total_schemes: 10,
-                total_applications: 1,
-                pending_applications: 1,
+                total_users: 0,
+                total_schemes: 0,
+                total_applications: 0,
+                pending_applications: 0,
                 approved_applications: 0,
                 rejected_applications: 0,
-                monthly_applications: { 'Jan': 12, 'Feb': 18, 'Mar': 24, 'Apr': 19, 'May': 28, 'Jun': 35, 'Jul': 42 },
-                application_status_distribution: { 'Applied': 1, 'Under Verification': 0, 'Approved': 0, 'Rejected': 0 },
-                top_applied_schemes: { 'PM-Kisan': 1 },
+                monthly_applications: {},
+                application_status_distribution: {},
+                top_applied_schemes: {},
                 recent_applications: [],
                 recent_users: []
             };
@@ -2410,29 +2410,21 @@ let currentSelectedUserRole = "all";
 async function loadAdminUsers() {
     try {
         const users = await ApiService.getAdminUsers();
-        if (Array.isArray(users) && users.length > 0) {
+        if (Array.isArray(users)) {
             adminUsersList = users;
         } else {
             const dbUsers = await ApiService.request("/api/admin/db/users");
-            adminUsersList = Array.isArray(dbUsers) && dbUsers.length > 0 ? dbUsers : [];
+            adminUsersList = Array.isArray(dbUsers) ? dbUsers : [];
         }
     } catch (e) {
         console.error("Error loading admin users:", e);
         try {
             const dbUsers = await ApiService.request("/api/admin/db/users");
-            adminUsersList = Array.isArray(dbUsers) && dbUsers.length > 0 ? dbUsers : [];
+            adminUsersList = Array.isArray(dbUsers) ? dbUsers : [];
         } catch (err) {
             console.error("Fallback error loading users:", err);
+            adminUsersList = [];
         }
-    }
-
-    if (!adminUsersList || adminUsersList.length === 0) {
-        adminUsersList = [
-            { id: "usr-admin-01", email: "admin@welfare.gov", name: "System Administrator", role: "admin", applications_count: 0 },
-            { id: "usr-citizen-01", email: "citizen@welfare.gov", name: "Rajesh Kumar", role: "citizen", applications_count: 1 },
-            { id: "usr-ce1815ac", email: "user.test@welfare.gov.in", name: "User Test", role: "citizen", applications_count: 0 },
-            { id: "usr-2f23b00b", email: "thogitisrivaibhou@gmail.com", name: "Thogitisrivaibhou", role: "citizen", applications_count: 1 }
-        ];
     }
     filterUserTable();
 }
@@ -2590,50 +2582,17 @@ let adminAppsList = [];
 async function loadAdminApplications() {
     try {
         let apps = await ApiService.getApplications();
-        if (!Array.isArray(apps) || apps.length === 0) {
+        if (!Array.isArray(apps)) {
             apps = await ApiService.request("/api/admin/db/applications") || [];
         }
-        adminAppsList = apps || [];
+        adminAppsList = Array.isArray(apps) ? apps : [];
     } catch (e) {
         console.error("Error loading admin apps:", e);
         try {
             adminAppsList = await ApiService.request("/api/admin/db/applications") || [];
-        } catch (err) {}
-    }
-
-    if (!adminAppsList || adminAppsList.length === 0) {
-        adminAppsList = [
-            {
-                id: "APP-1001",
-                user_id: "usr-citizen-01",
-                user_name: "Rajesh Kumar",
-                user_email: "citizen@welfare.gov",
-                scheme_id: "SCHEME-001",
-                scheme_name: "PM-KISAN Samman Nidhi",
-                applied_date: "2026-08-04",
-                status: "Under Verification",
-                remarks: "Aadhaar Card and Land Certificate under review",
-                uploaded_documents: {
-                    "Aadhaar Card": "./static/uploads/sample.jpg",
-                    "Income Certificate": "./static/uploads/sample.jpg"
-                }
-            },
-            {
-                id: "APP-1002",
-                user_id: "usr-2f23b00b",
-                user_name: "Thogitisrivaibhou",
-                user_email: "thogitisrivaibhou@gmail.com",
-                scheme_id: "SCHEME-002",
-                scheme_name: "Ayushman Bharat PM-JAY",
-                applied_date: "2026-08-08",
-                status: "Approved",
-                remarks: "All documents verified successfully by Admin",
-                uploaded_documents: {
-                    "Aadhaar Card": "./static/uploads/sample.jpg",
-                    "BPL Card": "./static/uploads/sample.jpg"
-                }
-            }
-        ];
+        } catch (err) {
+            adminAppsList = [];
+        }
     }
     renderAdminApplicationsTable(adminAppsList);
 }

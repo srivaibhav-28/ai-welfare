@@ -413,7 +413,7 @@ class SupabaseDatabase:
                     else:
                         known_core_columns = {
                             "applications": {"id", "user_id", "user_name", "user_email", "scheme_id", "scheme_name", "status", "applied_date", "uploaded_documents", "remarks"},
-                            "users": {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified", "verified_at"},
+                            "users": {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified"},
                             "schemes": {"id", "name", "category", "description", "benefits", "criteria", "required_documents", "official_link", "last_date", "state_restriction", "icon"}
                         }
                         cols = known_core_columns.get(table)
@@ -511,10 +511,13 @@ class SupabaseDatabase:
 
     # High level domain operations
     def get_users(self) -> List[Dict[str, Any]]:
-        users = self.fetch_rows("users")
-        if not users and not self.is_production:
-            users = self._in_memory_users
-        return users or []
+        remote_users = self.fetch_rows("users") or []
+        remote_ids = {u["id"] for u in remote_users if u.get("id")}
+        merged = list(remote_users)
+        for u in self._in_memory_users:
+            if u.get("id") and u["id"] not in remote_ids:
+                merged.append(u)
+        return merged
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         clean_email = email.strip().lower()
@@ -559,7 +562,7 @@ class SupabaseDatabase:
 
         if self.is_supabase_configured:
             try:
-                core_user_cols = {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified", "verified_at"}
+                core_user_cols = {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified"}
                 clean_user = {k: v for k, v in user.items() if k in core_user_cols}
                 existing_remote = self.fetch_rows("users", {"id": clean_user["id"]})
                 if not existing_remote and "email" in clean_user:
@@ -593,7 +596,18 @@ class SupabaseDatabase:
         return res is not None
 
     def update_user_status(self, user_id: str, is_blocked: bool) -> Optional[Dict[str, Any]]:
-        return self.update_row("users", {"id": user_id}, {"is_blocked": is_blocked})
+        for u in self._in_memory_users:
+            if u.get("id") == user_id:
+                u["is_blocked"] = is_blocked
+                break
+        if self.is_supabase_configured:
+            try:
+                res = self.update_row("users", {"id": user_id}, {"is_blocked": is_blocked})
+                if res:
+                    return res
+            except Exception as err:
+                print(f"[SUPABASE UPDATE USER STATUS EXCEPTION]: {err}")
+        return {"id": user_id, "is_blocked": is_blocked}
 
     def verify_user(self, user_id: str) -> Optional[Dict[str, Any]]:
         from datetime import datetime, timezone
@@ -603,12 +617,18 @@ class SupabaseDatabase:
                 u["is_verified"] = True
                 u["verified_at"] = now_iso
                 break
-        return self.update_row("users", {"id": user_id}, {"is_verified": True, "verified_at": now_iso})
+        return self.update_row("users", {"id": user_id}, {"is_verified": True})
 
     def delete_user(self, user_id: str) -> bool:
-        self.delete_rows("users", {"id": user_id})
-        self.delete_rows("user_documents", {"user_id": user_id})
-        self.delete_rows("applications", {"user_id": user_id})
+        self._in_memory_users = [u for u in self._in_memory_users if u.get("id") != user_id]
+        self._in_memory_applications = [a for a in self._in_memory_applications if a.get("user_id") != user_id]
+        if self.is_supabase_configured:
+            try:
+                self.delete_rows("users", {"id": user_id})
+                self.delete_rows("user_documents", {"user_id": user_id})
+                self.delete_rows("applications", {"user_id": user_id})
+            except Exception as err:
+                print(f"[SUPABASE DELETE USER EXCEPTION]: {err}")
         return True
 
     def get_schemes(self) -> List[Dict[str, Any]]:

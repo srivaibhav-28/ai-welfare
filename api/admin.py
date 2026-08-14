@@ -76,6 +76,7 @@ async def admin_update_user_status(user_id: str, req: UserStatusUpdate, admin: D
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
     status_str = "blocked" if req.is_blocked else "unblocked"
+    db.add_audit_log("User Status Updated", admin.get("email", "Admin"), f"User {user_id} status updated to '{status_str}'")
     return {"message": f"User successfully {status_str}", "user": updated}
 
 @app.delete("/api/admin/users/{user_id}")
@@ -83,6 +84,7 @@ async def admin_delete_user(user_id: str, admin: Dict[str, Any] = Depends(requir
     deleted = db.delete_user(user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
+    db.add_audit_log("User Deleted", admin.get("email", "Admin"), f"Deleted user {user_id} and associated applications and documents")
     return {"message": "User and associated records deleted successfully"}
 
 @app.post("/api/admin/documents/verify")
