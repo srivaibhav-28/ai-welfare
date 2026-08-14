@@ -29,6 +29,7 @@ from app.models.schemas import (
 PENDING_APPLICATION_OTPS: Dict[str, Dict[str, Any]] = {}
 
 @app.get("/api/applications")
+@app.get("/api/admin/applications")
 async def get_applications(user: Dict[str, Any] = Depends(require_current_user)):
     user_id = user["id"]
     user_email = user.get("email", "")
@@ -345,12 +346,7 @@ async def resend_application_otp(req: AppOtpInitiateRequest, user: Dict[str, Any
 
 @app.post("/api/applications/apply")
 async def apply_for_scheme(req: ApplicationCreate, user: Dict[str, Any] = Depends(require_current_user)):
-    # Fallback endpoint that initiates OTP
-    init_res = await initiate_application_otp(
-        AppOtpInitiateRequest(scheme_id=req.scheme_id, uploaded_documents=req.uploaded_documents),
-        user=user
-    )
-    return init_res
+    return await direct_apply_for_scheme(req, user=user)
 
 @app.post("/api/applications/direct-apply")
 async def direct_apply_for_scheme(req: ApplicationCreate, user: Dict[str, Any] = Depends(require_current_user)):

@@ -506,26 +506,20 @@ class SupabaseDatabase:
 
     # High level domain operations
     def get_users(self) -> List[Dict[str, Any]]:
-        remote_users = self.fetch_rows("users") or []
-        remote_ids = {u["id"] for u in remote_users if u.get("id")}
-        merged = list(remote_users)
-        for u in self._in_memory_users:
-            if u.get("id") and u["id"] not in remote_ids:
-                merged.append(u)
-        return merged
+        if self.is_supabase_configured:
+            return self.fetch_rows("users") or []
+        return self._in_memory_users
 
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         clean_email = email.strip().lower()
         if self.is_supabase_configured:
-            try:
-                rows = self.fetch_rows("users", {"email": clean_email})
-                if rows:
-                    u = rows[0]
-                    if clean_email == "admin@welfare.gov" and not u.get("password_hash"):
-                        u["password_hash"] = "admin123"
-                    return u
-            except Exception as err:
-                print(f"[SUPABASE GET USER BY EMAIL EXCEPTION]: {err}. Checking in-memory cache...")
+            rows = self.fetch_rows("users", {"email": clean_email})
+            if rows:
+                u = rows[0]
+                if clean_email == "admin@welfare.gov" and not u.get("password_hash"):
+                    u["password_hash"] = "admin123"
+                return u
+            return None
         for u in self._in_memory_users:
             if u.get("email", "").strip().lower() == clean_email:
                 return u
@@ -533,12 +527,10 @@ class SupabaseDatabase:
 
     def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         if self.is_supabase_configured:
-            try:
-                rows = self.fetch_rows("users", {"id": user_id})
-                if rows:
-                    return rows[0]
-            except Exception as err:
-                print(f"[SUPABASE GET USER BY ID EXCEPTION]: {err}. Checking in-memory cache...")
+            rows = self.fetch_rows("users", {"id": user_id})
+            if rows:
+                return rows[0]
+            return None
         for u in self._in_memory_users:
             if u.get("id") == user_id:
                 return u
@@ -688,22 +680,22 @@ class SupabaseDatabase:
         return self.update_row("applications", {"id": app_id}, {"status": status, "remarks": remarks})
 
     def get_user_documents(self, user_id: str) -> Dict[str, Any]:
-        rows = self.fetch_rows("user_documents", {"user_id": user_id})
-        docs_map = {}
-        for r in rows:
-            doc_name = r.get("document_name")
-            if doc_name:
-                docs_map[doc_name] = {
-                    "status": r.get("status"),
-                    "upload_date": r.get("upload_date"),
-                    "file_name": r.get("file_name"),
-                    "file_url": r.get("file_url"),
-                    "remarks": r.get("remarks"),
-                    "verified_by": r.get("verified_by")
-                }
-        if not docs_map and user_id in self._in_memory_documents:
-            docs_map = self._in_memory_documents[user_id]
-        return docs_map
+        if self.is_supabase_configured:
+            rows = self.fetch_rows("user_documents", {"user_id": user_id})
+            docs_map = {}
+            for r in rows:
+                doc_name = r.get("document_name")
+                if doc_name:
+                    docs_map[doc_name] = {
+                        "status": r.get("status"),
+                        "upload_date": r.get("upload_date"),
+                        "file_name": r.get("file_name"),
+                        "file_url": r.get("file_url"),
+                        "remarks": r.get("remarks"),
+                        "verified_by": r.get("verified_by")
+                    }
+            return docs_map
+        return self._in_memory_documents.get(user_id, {})
 
     def update_user_document(self, user_id: str, doc_name: str, doc_info: Dict[str, Any]):
         if user_id not in self._in_memory_documents:
