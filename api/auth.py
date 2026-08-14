@@ -67,15 +67,17 @@ async def register_user(req: UserRegister):
     if existing and existing.get("is_verified", True):
         raise HTTPException(status_code=400, detail="An account with this email address is already registered and verified. Please sign in.")
 
+    user_id = existing.get("id") if (existing and existing.get("id")) else f"usr-{uuid.uuid4().hex[:8]}"
+
     new_user = {
-        "id": f"usr-{uuid.uuid4().hex[:8]}",
+        "id": user_id,
         "email": clean_email,
         "password_hash": hash_password(req.password),
         "name": req.name.strip(),
         "mobile_number": req.mobile_number.strip(),
         "role": req.role,
         "is_verified": False,
-        "profile": {
+        "profile": (existing.get("profile") if (existing and existing.get("profile")) else {
             "name": req.name.strip(),
             "mobile_number": req.mobile_number.strip(),
             "aadhaar_number": "",
@@ -107,15 +109,17 @@ async def register_user(req: UserRegister):
             "aadhaar_available": False,
             "bank_account_available": False,
             "rural_urban": ""
-        }
+        })
     }
     
     print("STEP 5 & 6: USER PREPARATION & OTP GENERATION")
     print(f"User ID: {new_user['id']}")
     print(f"Email: {new_user['email']}")
     
-    # Store user in database
-    db.add_user(new_user)
+    # Store user in database and capture exact persisted user ID
+    persisted_user = db.add_user(new_user)
+    if isinstance(persisted_user, dict) and persisted_user.get("id"):
+        new_user["id"] = persisted_user["id"]
     
     otp_code = store_pending_registration(new_user)
     print(f"OTP generated: {otp_code}")
