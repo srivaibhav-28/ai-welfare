@@ -59,44 +59,10 @@ async def register_user(req: UserRegister):
     existing = db.get_user_by_email(clean_email)
 
     if req.role == "admin":
-        if existing:
-            db.update_user_password(existing["id"], hash_password(req.password))
-            existing["role"] = "admin"
-            existing["is_verified"] = True
-            token = create_access_token({"sub": existing["id"]})
-            return {
-                "access_token": token,
-                "token_type": "bearer",
-                "user_id": existing["id"],
-                "name": existing.get("name") or req.name.strip(),
-                "email": clean_email,
-                "mobile_number": req.mobile_number.strip(),
-                "role": "admin",
-                "is_verified": True
-            }
-        
-        admin_user = {
-            "id": f"usr-admin-{uuid.uuid4().hex[:6]}",
-            "email": clean_email,
-            "password_hash": hash_password(req.password),
-            "name": req.name.strip() or "Administrator",
-            "mobile_number": req.mobile_number.strip(),
-            "role": "admin",
-            "is_verified": True,
-            "profile": {}
-        }
-        db.add_user(admin_user)
-        token = create_access_token({"sub": admin_user["id"]})
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user_id": admin_user["id"],
-            "name": admin_user["name"],
-            "email": admin_user["email"],
-            "mobile_number": admin_user["mobile_number"],
-            "role": "admin",
-            "is_verified": True
-        }
+        raise HTTPException(
+            status_code=403,
+            detail="Admin registration is disabled. System administrator accounts must log in via Admin Portal."
+        )
 
     if existing and existing.get("is_verified", True):
         raise HTTPException(status_code=400, detail="An account with this email address is already registered and verified. Please sign in.")
@@ -386,54 +352,37 @@ async def login_user(req: UserLogin):
 
 @app.post("/api/admin/login", response_model=TokenResponse)
 async def admin_login_user(req: UserLogin):
+    from app.admin_constants import ADMIN_EMAIL, ADMIN_NAME, ADMIN_USER_ID, authenticate_admin
     req_email = req.email.strip().lower()
     print("=" * 80)
     print(f"[BACKEND ADMIN LOGIN REQUEST RECEIVED]: email='{req_email}'")
     print("=" * 80)
-    user = db.get_user_by_email(req_email)
-
-    is_admin_email = "admin" in req_email or req_email in ["admin@aiwelfare.gov", "admin@welfare.gov", "admin@gmail.com"]
-
-    if not user and is_admin_email:
-        admin_user = {
-            "id": f"usr-admin-{uuid.uuid4().hex[:6]}",
-            "email": req_email,
-            "password_hash": hash_password(req.password if req.password else "Admin@123"),
-            "name": "System Administrator",
-            "role": "admin",
-            "is_verified": True,
-            "profile": {}
-        }
-        db.add_user(admin_user)
-        user = admin_user
-    elif user and (is_admin_email or user.get("role") == "admin"):
-        user["role"] = "admin"
-
-    if not user or user.get("role") != "admin":
-        raise HTTPException(
-            status_code=404,
-            detail=f"Admin account not found for '{req_email}'. Please use an admin email like admin@aiwelfare.gov or admin@welfare.gov."
-        )
-
-    pwd_valid = (
-        verify_password(req.password, user.get("password_hash", ""))
-        or req.password in ["Admin@123", "admin123", "Admin123"]
-    )
-
-    if not pwd_valid:
+    
+    if not authenticate_admin(req_email, req.password):
         raise HTTPException(
             status_code=401,
-            detail="Incorrect admin password. Default admin passwords are 'Admin@123' or 'admin123'."
+            detail="Invalid Admin Credentials. Access Denied."
         )
 
-    token = create_access_token({"sub": user["id"]})
+    admin_user = {
+        "id": ADMIN_USER_ID,
+        "email": ADMIN_EMAIL,
+        "name": ADMIN_NAME,
+        "mobile_number": "",
+        "role": "admin",
+        "is_verified": True,
+        "profile": {"role": "admin"}
+    }
+    db.add_user(admin_user)
+    token = create_access_token({"sub": ADMIN_USER_ID, "role": "admin"})
+
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user_id": user["id"],
-        "name": user.get("name") or "System Administrator",
-        "email": user["email"],
-        "mobile_number": user.get("mobile_number") or "",
+        "user_id": ADMIN_USER_ID,
+        "name": ADMIN_NAME,
+        "email": ADMIN_EMAIL,
+        "mobile_number": "",
         "role": "admin",
         "is_verified": True
     }

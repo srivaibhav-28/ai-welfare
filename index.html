@@ -621,55 +621,8 @@
                                         administrative control panel</p>
                                 </div>
 
-                                <!-- Admin Auth Tab Toggle -->
-                                <div
-                                    class="grid grid-cols-2 p-1 rounded-2xl bg-purple-50 border border-purple-200/60 mb-6 text-xs font-bold">
-                                    <button type="button" id="tabAdminLogin" onclick="toggleAdminAuthMode('login')"
-                                        class="py-2.5 rounded-xl bg-purple-600 text-white shadow-md transition-all duration-200 flex items-center justify-center gap-1.5">
-                                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Sign In
-                                    </button>
-                                    <button type="button" id="tabAdminRegister"
-                                        onclick="toggleAdminAuthMode('register')"
-                                        class="py-2.5 rounded-xl text-purple-500 hover:text-purple-800 transition-all duration-200 flex items-center justify-center gap-1.5">
-                                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register
-                                    </button>
-                                </div>
-
                                 <!-- Admin Auth Form -->
                                 <form id="adminAuthForm" onsubmit="handleAdminAuthFormSubmit(event); return false;" class="space-y-4 text-left">
-                                    <div id="adminAuthNameGroup" style="display: none;">
-                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Full Name *</label>
-                                        <div class="relative">
-                                            <i data-lucide="user"
-                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                            <input type="text" id="adminAuthName" placeholder="Enter admin full name"
-                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
-                                        </div>
-                                    </div>
-
-                                    <div id="adminAuthMobileGroup" style="display: none;">
-                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Mobile Number
-                                            *</label>
-                                        <div class="relative">
-                                            <i data-lucide="smartphone"
-                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                            <input type="tel" id="adminAuthMobile" placeholder="10-digit mobile number"
-                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
-                                        </div>
-                                    </div>
-
-                                    <div id="adminAuthCodeGroup" style="display: none;">
-                                        <label class="block text-xs font-bold text-slate-700 mb-1.5">Admin Invite Code
-                                            *</label>
-                                        <div class="relative">
-                                            <i data-lucide="key-round"
-                                                class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                            <input type="text" id="adminAuthCode" placeholder="Enter admin invite code"
-                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
-                                        </div>
-                                        <p class="text-[10px] text-slate-400 mt-1">Contact the system administrator for
-                                            your invite code.</p>
-                                    </div>
 
                                     <div>
                                         <label class="block text-xs font-bold text-slate-700 mb-1.5">Admin Email
@@ -2562,6 +2515,7 @@
     <script src="./static/js/i18n.js?v=11.0"></script>
     <script src="./static/js/api.js?v=11.0"></script>
     <script src="./static/js/app.js?v=11.0"></script>
+    <script src="./static/js/admin_login.js?v=1.0"></script>
 </body>
 
 </html>

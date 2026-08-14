@@ -12,6 +12,7 @@ from api.eligibility import app as eligibility_app
 from api.applications import app as applications_app
 from api.documents import app as documents_app
 from api.admin import app as admin_app
+from api.admin_auth import app as admin_auth_app
 from api.reports import app as reports_app
 
 app = FastAPI(
@@ -36,6 +37,7 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+app.include_router(admin_auth_app.router)
 app.include_router(auth_app.router)
 app.include_router(users_app.router)
 app.include_router(schemes_app.router)
