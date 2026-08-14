@@ -12,6 +12,10 @@ from app.models.schemas import (
 from app.services.auth_service import require_current_user, require_admin_user
 from app.services.storage_service import storage_service
 
+from pydantic import BaseModel
+from app.admin_constants import ADMIN_EMAIL, ADMIN_NAME, ADMIN_USER_ID, authenticate_admin
+from app.services.auth_service import create_access_token
+
 app = FastAPI(title="AI Welfare Admin Portal API", version="2.0.0")
 
 app.add_middleware(
@@ -21,6 +25,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/admin/login")
+async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
+    clean_email = req.email.strip().lower()
+    if not authenticate_admin(clean_email, req.password):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Admin Credentials. Access Denied."
+        )
+
+    admin_record = {
+        "id": ADMIN_USER_ID,
+        "email": ADMIN_EMAIL,
+        "name": ADMIN_NAME,
+        "mobile_number": "",
+        "role": "admin",
+        "is_verified": True,
+        "profile": {"role": "admin"}
+    }
+    
+    db.add_user(admin_record)
+    token = create_access_token({"sub": ADMIN_USER_ID, "role": "admin"})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user_id": ADMIN_USER_ID,
+        "name": ADMIN_NAME,
+        "email": ADMIN_EMAIL,
+        "role": "admin",
+        "is_verified": True
+    }
 
 @app.post("/api/admin/schemes")
 async def admin_create_scheme(req: SchemeCreate, admin: Dict[str, Any] = Depends(require_admin_user)):

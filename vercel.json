@@ -56,6 +56,10 @@
       "dest": "/api/documents.py"
     },
     {
+      "src": "/api/admin/login(.*)",
+      "dest": "/api/admin_auth.py"
+    },
+    {
       "src": "/api/admin/reports(.*)",
       "dest": "/api/reports.py"
     },
