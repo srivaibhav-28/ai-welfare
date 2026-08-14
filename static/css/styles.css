@@ -621,18 +621,18 @@ tr:hover td {
 /* Top Border Accent Colors per Stat Card Type */
 #view-admin .grid > div:nth-child(1) { border-top: 4px solid #FF9933 !important; }
 #view-admin .grid > div:nth-child(2) { border-top: 4px solid #138808 !important; }
-#view-admin .grid > div:nth-child(3) { border-top: 4px solid #0B3D91 !important; }
+#view-admin .grid > div:nth-child(3) { border-top: 4px solid #0B5ED7 !important; }
 #view-admin .grid > div:nth-child(4) { border-top: 4px solid #FF9933 !important; }
 #view-admin .grid > div:nth-child(5) { border-top: 4px solid #138808 !important; }
-#view-admin .grid > div:nth-child(6) { border-top: 4px solid #DC2626 !important; }
+#view-admin .grid > div:nth-child(6) { border-top: 4px solid #DC3545 !important; }
 
 /* Stat Numbers Coloring */
 #dashTotalUsers { color: #1F2937 !important; }
 #dashTotalSchemes { color: #FF9933 !important; }
-#dashTotalApps { color: #0B3D91 !important; }
+#dashTotalApps { color: #0B5ED7 !important; }
 #dashPendingApps { color: #FF9933 !important; }
 #dashApprovedApps { color: #138808 !important; }
-#dashRejectedApps { color: #DC2626 !important; }
+#dashRejectedApps { color: #DC3545 !important; }
 
 /* Text Color Adjustments */
 #view-admin h1, #view-admin h2, #view-admin h3, #view-admin h4, #view-admin h5, #view-admin h6,
@@ -646,7 +646,7 @@ tr:hover td {
     color: #6B7280 !important;
 }
 
-/* Tables - White Background, Deep Navy Header, White Text, Saffron Bottom Border */
+/* Tables - White Background, Blue Table Header, White Text, Saffron Bottom Border */
 #view-admin table {
     border-collapse: separate !important;
     border-spacing: 0 !important;
@@ -658,7 +658,7 @@ tr:hover td {
 }
 
 #view-admin th {
-    background-color: #0B3D91 !important;
+    background-color: #0B5ED7 !important;
     color: #FFFFFF !important;
     font-weight: 600 !important;
     font-size: 0.75rem !important;
@@ -723,7 +723,7 @@ button.bg-green-600:hover {
 button.bg-rose-600,
 button.bg-red-600,
 .btn-goi-danger {
-    background-color: #DC2626 !important;
+    background-color: #DC3545 !important;
     color: #FFFFFF !important;
     border-radius: 8px !important;
 }
@@ -737,7 +737,7 @@ button.bg-red-600,
 /* Status Badges */
 .badge-citizen {
     background-color: #E0F2FE !important;
-    color: #0284C7 !important;
+    color: #0B5ED7 !important;
     border: 1px solid #BAE6FD !important;
     font-weight: 600 !important;
     padding: 0.2rem 0.6rem !important;
@@ -746,7 +746,7 @@ button.bg-red-600,
 
 .badge-admin {
     background-color: #EBF2FA !important;
-    color: #0B3D91 !important;
+    color: #0B5ED7 !important;
     border: 1px solid #B8D0EB !important;
     font-weight: 600 !important;
     padding: 0.2rem 0.6rem !important;
@@ -755,7 +755,7 @@ button.bg-red-600,
 
 .badge-blocked, .badge-rejected {
     background-color: #FEE2E2 !important;
-    color: #DC2626 !important;
+    color: #DC3545 !important;
     border: 1px solid #FCA5A5 !important;
     font-weight: 600 !important;
     padding: 0.2rem 0.6rem !important;
@@ -811,6 +811,7 @@ button.bg-red-600,
 .admin-active-dot, .badge-active-green {
     background-color: #138808 !important;
 }
+
 
 
 
