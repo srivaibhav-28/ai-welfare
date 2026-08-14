@@ -346,6 +346,11 @@ class SupabaseDatabase:
             rows = res.json() if res.status_code == 200 and res.content else []
             self._print_db_audit("FETCH_ROWS_SUPABASE", table, url, filters, res.status_code, res.text[:500], rows)
             if res.status_code == 200:
+                if rows:
+                    return rows
+                in_mem = self.fetch_rows_in_memory(table, filters)
+                if in_mem:
+                    return in_mem
                 return rows
             
             err_msg = f"Supabase REST API Error (Status {res.status_code}): {res.text[:500]}"
@@ -545,6 +550,9 @@ class SupabaseDatabase:
         # Maintain in-memory synchronization
         existing_idx = next((i for i, u in enumerate(self._in_memory_users) if u.get("id") == user.get("id") or u.get("email", "").lower() == user.get("email", "").lower()), None)
         if existing_idx is not None:
+            existing_prof = self._in_memory_users[existing_idx].get("profile") or {}
+            if existing_prof and not user.get("profile"):
+                user["profile"] = existing_prof
             self._in_memory_users[existing_idx] = user
         else:
             self._in_memory_users.append(user)
@@ -553,6 +561,14 @@ class SupabaseDatabase:
             try:
                 core_user_cols = {"id", "email", "password_hash", "name", "mobile_number", "role", "profile", "is_blocked", "is_verified", "verified_at"}
                 clean_user = {k: v for k, v in user.items() if k in core_user_cols}
+                existing_remote = self.fetch_rows("users", {"id": clean_user["id"]})
+                if not existing_remote and "email" in clean_user:
+                    existing_remote = self.fetch_rows("users", {"email": clean_user["email"]})
+                if existing_remote:
+                    existing_row = existing_remote[0]
+                    if existing_row.get("profile") and not clean_user.get("profile"):
+                        clean_user["profile"] = existing_row["profile"]
+                    return self.update_row("users", {"id": existing_row["id"]}, clean_user) or clean_user
                 return self.insert_row("users", clean_user)
             except Exception as err:
                 print(f"[SUPABASE ADD USER EXCEPTION]: {err}. Stored in in-memory fallback cache.")
@@ -582,6 +598,11 @@ class SupabaseDatabase:
     def verify_user(self, user_id: str) -> Optional[Dict[str, Any]]:
         from datetime import datetime, timezone
         now_iso = datetime.now(timezone.utc).isoformat()
+        for u in self._in_memory_users:
+            if u.get("id") == user_id:
+                u["is_verified"] = True
+                u["verified_at"] = now_iso
+                break
         return self.update_row("users", {"id": user_id}, {"is_verified": True, "verified_at": now_iso})
 
     def delete_user(self, user_id: str) -> bool:
@@ -625,7 +646,12 @@ class SupabaseDatabase:
         clean_app = {k: v for k, v in app_data.items() if k in core_app_columns}
         if not any(a.get("id") == app_data.get("id") for a in self._in_memory_applications):
             self._in_memory_applications.append(app_data)
-        return self.insert_row("applications", clean_app)
+        if self.is_supabase_configured:
+            try:
+                return self.insert_row("applications", clean_app)
+            except Exception as err:
+                print(f"[SUPABASE ADD APPLICATION EXCEPTION]: {err}. Stored in in-memory fallback cache.")
+        return app_data
 
     def update_application_status(self, app_id: str, status: str, remarks: str = ""):
         return self.update_row("applications", {"id": app_id}, {"status": status, "remarks": remarks})

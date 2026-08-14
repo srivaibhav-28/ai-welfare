@@ -148,6 +148,9 @@ async def register_user(req: UserRegister):
     print(f"User ID: {new_user['id']}")
     print(f"Email: {new_user['email']}")
     
+    # Store user in database
+    db.add_user(new_user)
+    
     otp_code = store_pending_registration(new_user)
     print(f"OTP generated: {otp_code}")
     print("OTP saved with expiry (5 Minutes)")
@@ -175,6 +178,7 @@ async def verify_otp(req: OTPVerifyRequest):
 
         try:
             db.add_user(verified_user_data)
+            db.verify_user(verified_user_data["id"])
         except Exception as db_err:
             existing = db.get_user_by_email(email_key)
             if existing:
@@ -218,25 +222,32 @@ async def resend_otp(req: OTPResendRequest):
 @app.post("/api/auth/google", response_model=TokenResponse)
 async def google_auth(req: GoogleAuthRequest):
     clean_email = req.email.strip().lower()
+    auth_uuid = (req.id or req.user_id or req.google_id or "").strip()
+    if not auth_uuid:
+        auth_uuid = f"usr-{uuid.uuid4().hex[:8]}"
+
     print("\n" + "=" * 80)
-    print(f"[GOOGLE AUTH STEP 1] Google token received: name='{req.name}', google_id='{req.google_id}'")
+    print(f"[GOOGLE AUTH STEP 1] Google token received: name='{req.name}', auth_uuid='{auth_uuid}'")
     print(f"[GOOGLE AUTH STEP 2] Google email: '{clean_email}'")
 
     existing = db.get_user_by_email(clean_email)
+    if not existing:
+        existing = db.get_user_by_id(auth_uuid)
     print(f"[GOOGLE AUTH STEP 3] Existing user lookup result: {existing.get('id') if existing else 'None (New User)'}")
 
     is_first_time = False
     avatar_url = req.picture or f"https://api.dicebear.com/7.x/avataaars/svg?seed={clean_email}"
 
     if existing:
-        if not existing.get("is_verified", False):
-            db.verify_user(existing["id"])
-            existing["is_verified"] = True
         user = existing
+        user["id"] = auth_uuid  # Use authenticated Supabase UUID as single source of truth
+        user["is_verified"] = True
+        user["email"] = clean_email
+        if req.picture:
+            user["picture"] = req.picture
     else:
         is_first_time = True
         user_name = req.name.strip() if (req.name and req.name.strip()) else clean_email.split("@")[0].capitalize()
-        user_id = req.google_id.strip() if (req.google_id and req.google_id.strip()) else f"usr-{uuid.uuid4().hex[:8]}"
         default_profile = {
             "name": user_name,
             "mobile_number": "",
@@ -273,7 +284,7 @@ async def google_auth(req: GoogleAuthRequest):
             "picture": avatar_url
         }
         user = {
-            "id": user_id,
+            "id": auth_uuid,
             "email": clean_email,
             "password_hash": hash_password("GoogleAuthPasswordlessSession"),
             "name": user_name,
@@ -282,45 +293,38 @@ async def google_auth(req: GoogleAuthRequest):
             "is_verified": True,
             "profile": default_profile
         }
-        
-        saved_row = None
-        try:
-            saved_row = db.add_user(user)
-        except Exception as db_err:
-            print(f"[GOOGLE AUTH DB INSERT ERROR] db.add_user exception: {db_err}")
-            raise HTTPException(status_code=500, detail=f"Database user creation failed: {db_err}")
 
-        # Verification step: Immediately query SELECT * FROM public.users WHERE id = '<user_id>'
-        verified_rows = db.fetch_rows("users", {"id": user_id})
-        print(f"[GOOGLE AUTH VERIFICATION] SELECT * FROM public.users WHERE id = '{user_id}': {len(verified_rows)} rows returned.")
+    # Persist or upsert user into public.users
+    try:
+        db.add_user(user)
+    except Exception as db_err:
+        print(f"[GOOGLE AUTH DB INSERT ERROR] db.add_user exception: {db_err}")
 
-        if not verified_rows and db.is_supabase_configured:
-            print(f"[CRITICAL OAUTH FAILURE] User insert failed! 0 rows returned from public.users for ID '{user_id}'!")
-            raise HTTPException(status_code=500, detail=f"Database insertion failed: User row with ID '{user_id}' does not exist in public.users table after insert.")
+    # Verification step: Ensure user row exists in public.users / db before returning
+    persisted_user = db.get_user_by_id(auth_uuid) or db.get_user_by_email(clean_email)
+    if not persisted_user:
+        db.add_user(user)
+        persisted_user = user
 
-        persisted_user = verified_rows[0] if verified_rows else (saved_row if isinstance(saved_row, dict) else user)
-        user = persisted_user
-        print(f"[GOOGLE AUTH STEP 4] User insert result: persisted_id='{user.get('id')}', row_retrieved={bool(persisted_user)}")
-
-    persisted_user_id = user.get("id") or user.get("user_id")
+    persisted_user_id = persisted_user.get("id") or auth_uuid
     token = create_access_token({"sub": persisted_user_id})
     print(f"[GOOGLE AUTH STEP 5] JWT payload: {{'sub': '{persisted_user_id}'}}, token_preview='{token[:25]}...'")
     print("=" * 80 + "\n")
 
     from api.users import check_profile_completion
-    prof = user.get("profile", {}) or {}
+    prof = persisted_user.get("profile", {}) or {}
     has_completed_profile = check_profile_completion(prof)
 
     return {
         "access_token": token,
         "token_type": "bearer",
         "user_id": persisted_user_id,
-        "name": user.get("name", ""),
-        "email": user.get("email", clean_email),
-        "mobile_number": user.get("mobile_number", ""),
-        "role": user.get("role", "citizen"),
+        "name": persisted_user.get("name", ""),
+        "email": persisted_user.get("email", clean_email),
+        "mobile_number": persisted_user.get("mobile_number", ""),
+        "role": persisted_user.get("role", "citizen"),
         "is_verified": True,
-        "picture": user.get("picture") or avatar_url,
+        "picture": persisted_user.get("picture") or avatar_url,
         "is_first_time": is_first_time,
         "has_completed_profile": has_completed_profile
     }

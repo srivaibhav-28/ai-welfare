@@ -125,7 +125,7 @@ async def upload_document_file(
     user_uuid = user["id"]
     safe_name = f"{user_uuid}/{clean_doc_name}_{uuid.uuid4().hex[:6]}{ext}"
 
-    file_url = f"https://placehold.co/600x400/1e293b/38bdf8?text={clean_doc_name}.jpg"
+    file_url = f"/static/uploads/{safe_name}"
 
     # Upload directly to Supabase Storage bucket 'scheme-documents'
     supabase_url = storage_service.upload_file_to_supabase(

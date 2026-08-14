@@ -43,6 +43,8 @@ class GoogleAuthRequest(BaseModel):
     email: str
     name: str
     google_id: Optional[str] = None
+    user_id: Optional[str] = None
+    id: Optional[str] = None
     picture: Optional[str] = None
     role: str = "citizen"
 

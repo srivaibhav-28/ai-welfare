@@ -369,6 +369,10 @@ function switchView(viewId) {
     }
 
     updateAuthUI();
+    if (state.currentUser) {
+        const eligibleList = (state.recommendations || []).filter(r => r && (r.is_eligible === true || r.is_eligible === "true"));
+        updateQuickStats(eligibleList.length, (state.applications || []).length);
+    }
     initLucide();
 }
 
@@ -809,8 +813,21 @@ async function evaluateCurrentProfile() {
 function updateQuickStats(eligibleCount, appliedCount) {
     const elEligible = document.getElementById("statEligibleCount");
     const elApplied = document.getElementById("statAppliedCount");
-    if (elEligible) elEligible.textContent = eligibleCount || "0";
-    if (elApplied) elApplied.textContent = appliedCount || state.applications.length || "0";
+
+    const eligible = (eligibleCount !== undefined && eligibleCount !== null)
+        ? eligibleCount
+        : ((state.recommendations || []).filter(r => r && (r.is_eligible === true || r.is_eligible === "true")).length);
+
+    const applied = Array.isArray(state.applications)
+        ? state.applications.length
+        : ((appliedCount !== undefined && appliedCount !== null) ? appliedCount : 0);
+
+    if (elEligible) {
+        elEligible.textContent = eligible;
+    }
+    if (elApplied) {
+        elApplied.textContent = applied;
+    }
 }
 
 // RECOMMENDATIONS VIEW (DISPLAYING ONLY ELIGIBLE SCHEMES)
@@ -825,6 +842,7 @@ function renderRecommendations() {
     let schemesToDisplay = (state.recommendations || []).filter(item => item && (item.is_eligible === true || item.is_eligible === "true"));
 
     console.log("[renderRecommendations] Eligible schemes count to display:", schemesToDisplay.length);
+    updateQuickStats(schemesToDisplay.length, (state.applications || []).length);
 
     let filtered = schemesToDisplay.filter(item => {
         const matchesCategory = !state.selectedCategory || state.selectedCategory === "All" || item.category === state.selectedCategory;
@@ -1313,6 +1331,8 @@ async function loadApplicationsView() {
         const apps = await ApiService.getApplications();
         state.applications = apps || [];
         filterApplicationsTracker();
+        const eligibleList = (state.recommendations || []).filter(r => r.is_eligible);
+        updateQuickStats(eligibleList.length, state.applications.length);
     } catch (e) {
         console.error("App load error:", e);
     }
@@ -3425,6 +3445,10 @@ async function submitAppOtpVerification() {
 
         // Reload and go to Application Tracker
         await loadUserData();
+        const apps = await ApiService.getApplications();
+        state.applications = apps || [];
+        const eligibleList = (state.recommendations || []).filter(r => r.is_eligible);
+        updateQuickStats(eligibleList.length, state.applications.length);
         switchView("applications");
 
     } catch (err) {
@@ -3618,6 +3642,11 @@ function closeTimelineModal() {
 async function loadUserData() {
     if (!state.currentUser) return;
     try {
+        console.log("[STAGE 5 & 6: loadUserData] Fetching applications via ApiService.getApplications()...");
+        const apps = await ApiService.getApplications();
+        state.applications = apps || [];
+        updateQuickStats();
+
         console.log("[STAGE 5 & 6: loadUserData] Fetching user profile via ApiService.getProfile()...");
         const prof = await ApiService.getProfile();
         console.log("[STAGE 5 & 6: loadUserData] Received profile from backend GET /api/profile:", prof);
@@ -3640,12 +3669,11 @@ async function loadUserData() {
             if (typeof renderRecommendations === "function") {
                 renderRecommendations();
             }
-            const eligibleList = state.recommendations.filter(r => r.is_eligible);
-            updateQuickStats(eligibleList.length, (state.applications || []).length);
         }
 
-        const apps = await ApiService.getApplications();
-        state.applications = apps || [];
+        const eligibleList = (state.recommendations || []).filter(r => r && (r.is_eligible === true || r.is_eligible === "true"));
+        updateQuickStats(eligibleList.length, state.applications.length);
+
         if (typeof renderApplicationsTable === "function") {
             renderApplicationsTable();
         }
