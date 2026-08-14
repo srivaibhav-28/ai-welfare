@@ -186,13 +186,14 @@ async def admin_get_supabase_status(admin: Dict[str, Any] = Depends(require_admi
 @app.get("/api/admin/dashboard")
 @app.get("/api/admin/analytics")
 async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user)):
-    schemes = db.get_schemes()
-    users = db.get_users()
-    apps = db.get_applications()
+    users = db.fetch_rows("users") or db.get_users()
+    schemes = db.fetch_rows("schemes") or db.get_schemes()
+    apps = db.fetch_rows("applications") or db.get_applications()
 
     status_counts = {
         "Applied": 0,
         "Under Verification": 0,
+        "Pending": 0,
         "Approved": 0,
         "Rejected": 0,
         "Benefits Received": 0,
@@ -210,11 +211,14 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         cat = s.get("category", "General")
         category_counts[cat] = category_counts.get(cat, 0) + 1
 
-    monthly_apps = {
-        "Jan": 14, "Feb": 22, "Mar": 31, "Apr": 28, "May": 39, "Jun": 48, "Jul": 56
-    }
+    monthly_apps = {}
+    for a in apps:
+        dt_str = str(a.get("applied_date") or a.get("created_at") or "")
+        if len(dt_str) >= 7:
+            month_key = dt_str[:7]
+            monthly_apps[month_key] = monthly_apps.get(month_key, 0) + 1
 
-    district_counts = {"Varanasi": 18, "Lucknow": 14, "Hyderabad": 12, "Patna": 9, "Jaipur": 7}
+    district_counts = {}
     gender_counts = {"Male": 0, "Female": 0, "Other": 0}
     income_brackets = {"< ₹1 Lakh": 0, "₹1L - ₹2.5L": 0, "₹2.5L - ₹5L": 0, "> ₹5 Lakh": 0}
 
@@ -223,15 +227,20 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         g = prof.get("gender", "Male")
         gender_counts[g] = gender_counts.get(g, 0) + 1
         
-        inc = prof.get("annual_income", 150000)
-        if inc <= 100000:
-            income_brackets["< ₹1 Lakh"] += 1
-        elif inc <= 250000:
-            income_brackets["₹1L - ₹2.5L"] += 1
-        elif inc <= 500000:
-            income_brackets["₹2.5L - ₹5L"] += 1
-        else:
-            income_brackets["> ₹5 Lakh"] += 1
+        dist = prof.get("district")
+        if dist:
+            district_counts[dist] = district_counts.get(dist, 0) + 1
+
+        inc = prof.get("annual_income", 0)
+        if inc > 0:
+            if inc <= 100000:
+                income_brackets["< ₹1 Lakh"] += 1
+            elif inc <= 250000:
+                income_brackets["₹1L - ₹2.5L"] += 1
+            elif inc <= 500000:
+                income_brackets["₹2.5L - ₹5L"] += 1
+            else:
+                income_brackets["> ₹5 Lakh"] += 1
 
     scheme_app_counts = {}
     for a in apps:
@@ -239,9 +248,10 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         scheme_app_counts[s_name] = scheme_app_counts.get(s_name, 0) + 1
 
     top_schemes = sorted(scheme_app_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-    most_applied = top_schemes[0][0] if top_schemes else "PM-Kisan Samman Nidhi"
+    most_applied = top_schemes[0][0] if top_schemes else "N/A"
 
-    total_apps_len = len(apps) or 1
+    total_apps_len = len(apps)
+    pending_count = status_counts.get("Applied", 0) + status_counts.get("Under Verification", 0) + status_counts.get("Pending", 0)
     approved_count = status_counts.get("Approved", 0) + status_counts.get("Benefits Received", 0)
     rejected_count = status_counts.get("Rejected", 0)
 
@@ -249,13 +259,13 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         "total_users": len(users),
         "total_schemes": len(schemes),
         "total_applications": len(apps),
-        "pending_applications": status_counts.get("Applied", 0) + status_counts.get("Under Verification", 0),
+        "pending_applications": pending_count,
         "approved_applications": approved_count,
         "rejected_applications": rejected_count,
         "flagged_fraud_applications": flagged_fraud_count,
         "most_applied_scheme": most_applied,
-        "approval_rate": round((approved_count / total_apps_len) * 100, 1),
-        "rejection_rate": round((rejected_count / total_apps_len) * 100, 1),
+        "approval_rate": round((approved_count / total_apps_len) * 100, 1) if total_apps_len > 0 else 0.0,
+        "rejection_rate": round((rejected_count / total_apps_len) * 100, 1) if total_apps_len > 0 else 0.0,
         "application_status_distribution": status_counts,
         "scheme_category_distribution": category_counts,
         "monthly_applications": monthly_apps,

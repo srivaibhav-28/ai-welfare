@@ -2290,6 +2290,7 @@ async function handleSaveScheme(e) {
         }
         closeAddSchemeModal();
         await loadAdminSchemes();
+        refreshAdminDashboard();
     } catch (err) {
         showNotification("Error", err.message, "error");
     }
@@ -2529,6 +2530,7 @@ async function toggleUserBlockStatus(userId, isBlocked) {
         await ApiService.updateUserStatus(userId, isBlocked);
         showNotification("Success", `User status updated to ${isBlocked ? 'Blocked' : 'Active'}`, "success");
         await loadAdminUsers();
+        refreshAdminDashboard();
     } catch (e) {
         showNotification("Error", e.message, "error");
     }
@@ -2540,6 +2542,7 @@ async function confirmDeleteUser(userId) {
         await ApiService.deleteUser(userId);
         showNotification("Success", "User deleted successfully from database", "success");
         await loadAdminUsers();
+        refreshAdminDashboard();
     } catch (e) {
         showNotification("Error", e.message, "error");
     }
@@ -2633,6 +2636,7 @@ async function adminUpdateAppStatus(appId, newStatus) {
         if (typeof filterApplicationsTracker === "function") {
             filterApplicationsTracker();
         }
+        refreshAdminDashboard();
 
         showNotification("Status Updated", `Application ${appId} status updated to "${newStatus}" in Database & User Application Tracker!`, "success");
     } catch (err) {
@@ -2710,8 +2714,8 @@ async function loadAdminDocVerificationQueue() {
         if (!Array.isArray(apps) || apps.length === 0) {
             apps = await ApiService.request("/api/admin/db/applications") || [];
         }
-        if (!Array.isArray(apps) || apps.length === 0) {
-            apps = adminAppsList;
+        if (!Array.isArray(apps)) {
+            apps = [];
         }
 
         adminUserDocFoldersList = (users || []).map(u => {
@@ -2883,6 +2887,7 @@ async function actionVerifyDocument(status) {
         showNotification("Success", `Document status set to ${status}`, "success");
         closeDocPreviewModal();
         await loadAdminDocVerificationQueue();
+        refreshAdminDashboard();
     } catch (err) {
         showNotification("Error", err.message, "error");
     }
