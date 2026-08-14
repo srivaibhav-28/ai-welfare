@@ -512,3 +512,270 @@ tr:hover td {
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
+
+/* ==========================================================================
+   OFFICIAL GOVERNMENT OF INDIA (NIC / DIGITAL INDIA) ADMIN PORTAL THEME
+   Strict Palette: Navy (#0B2E59), Saffron (#FF9933), Green (#138808), White (#FFFFFF)
+   ========================================================================== */
+
+:root {
+    --goi-primary-navy: #0B2E59;
+    --goi-saffron: #FF9933;
+    --goi-saffron-dark: #E68A00;
+    --goi-green: #138808;
+    --goi-green-dark: #0F6B06;
+    --goi-white: #FFFFFF;
+    --goi-light-bg: #F7F8FA;
+    --goi-border: #D9D9D9;
+    --goi-card-bg: #FFFFFF;
+    --goi-danger-red: #DC2626;
+    --goi-shadow: 0 2px 8px rgba(11, 46, 89, 0.08);
+}
+
+/* Global Font Override */
+body, button, input, select, textarea {
+    font-family: 'Inter', 'Poppins', 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Government Admin View Styling */
+#view-admin, #view-admin-auth {
+    background-color: var(--goi-light-bg) !important;
+}
+
+/* Top Bar Styling */
+#view-admin header, .admin-topbar {
+    background-color: var(--goi-primary-navy) !important;
+    border-bottom: 3px solid var(--goi-saffron) !important;
+    color: var(--goi-white) !important;
+}
+
+/* Administrator Card & Active Indicator */
+.admin-profile-card, #adminProfileCard {
+    background-color: var(--goi-white) !important;
+    border: 1px solid var(--goi-border) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--goi-shadow) !important;
+}
+
+.admin-active-dot, .badge-active-green {
+    background-color: var(--goi-green) !important;
+}
+
+/* Sidebar Styling */
+#view-admin aside, .admin-sidebar {
+    background-color: var(--goi-primary-navy) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.admin-sidebar-btn {
+    color: #E2E8F0 !important;
+    transition: all 0.2s ease-in-out !important;
+    border-radius: 8px !important;
+}
+
+.admin-sidebar-btn:hover {
+    background-color: rgba(255, 153, 51, 0.15) !important;
+    color: var(--goi-saffron) !important;
+}
+
+.admin-sidebar-btn:hover svg, .admin-sidebar-btn:hover i {
+    color: var(--goi-saffron) !important;
+}
+
+.admin-sidebar-btn.bg-indigo-600\/90,
+.admin-sidebar-btn.active,
+.admin-sidebar-link.active {
+    background-color: var(--goi-saffron) !important;
+    color: var(--goi-white) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(255, 153, 51, 0.4) !important;
+}
+
+.admin-sidebar-btn.bg-indigo-600\/90 svg,
+.admin-sidebar-btn.active svg,
+.admin-sidebar-link.active svg {
+    color: var(--goi-white) !important;
+}
+
+/* Executive Cards */
+.admin-panel-screen .bg-slate-900\/60,
+.admin-panel-screen .bg-slate-800\/50,
+.admin-panel-screen .bg-slate-800,
+.admin-panel-screen .bg-white,
+.admin-card,
+.admin-kpi-card {
+    background-color: var(--goi-card-bg) !important;
+    border: 1px solid var(--goi-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--goi-shadow) !important;
+    color: #1E293B !important;
+}
+
+/* Alternating Card Top Borders (Saffron / Green) */
+.admin-panel-screen .grid > div:nth-child(odd) {
+    border-top: 4px solid var(--goi-saffron) !important;
+}
+
+.admin-panel-screen .grid > div:nth-child(even) {
+    border-top: 4px solid var(--goi-green) !important;
+}
+
+/* Buttons */
+.btn-goi-primary,
+button.bg-indigo-600,
+button.bg-purple-600,
+#btnAdminAuthSubmit,
+#btnAdminLoginSubmit {
+    background-color: var(--goi-saffron) !important;
+    color: var(--goi-white) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.btn-goi-primary:hover,
+button.bg-indigo-600:hover,
+button.bg-purple-600:hover,
+#btnAdminAuthSubmit:hover,
+#btnAdminLoginSubmit:hover {
+    background-color: var(--goi-saffron-dark) !important;
+}
+
+.btn-goi-secondary,
+button.bg-emerald-600,
+button.bg-green-600 {
+    background-color: var(--goi-green) !important;
+    color: var(--goi-white) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+.btn-goi-secondary:hover,
+button.bg-emerald-600:hover,
+button.bg-green-600:hover {
+    background-color: var(--goi-green-dark) !important;
+}
+
+button.bg-rose-600,
+button.bg-red-600,
+.btn-goi-danger {
+    background-color: var(--goi-danger-red) !important;
+    color: var(--goi-white) !important;
+    border-radius: 8px !important;
+}
+
+/* Logout Button */
+.btn-admin-logout {
+    background-color: var(--goi-saffron) !important;
+    color: var(--goi-white) !important;
+    border-radius: 8px !important;
+}
+.btn-admin-logout:hover {
+    background-color: var(--goi-saffron-dark) !important;
+}
+
+/* Executive Tables */
+.admin-panel-screen table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    background-color: var(--goi-white) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--goi-border) !important;
+}
+
+.admin-panel-screen th {
+    background-color: var(--goi-primary-navy) !important;
+    color: var(--goi-white) !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.85rem 1rem !important;
+    border-bottom: 3px solid var(--goi-saffron) !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+}
+
+.admin-panel-screen td {
+    padding: 0.85rem 1rem !important;
+    border-bottom: 1px solid var(--goi-border) !important;
+    color: #1E293B !important;
+    background-color: var(--goi-white) !important;
+}
+
+.admin-panel-screen tbody tr:nth-child(even) td {
+    background-color: #F9FAFB !important;
+}
+
+.admin-panel-screen tbody tr:hover td {
+    background-color: #FFF3E0 !important;
+}
+
+/* Government Badges */
+.badge-citizen {
+    background-color: #E8F5E9 !important;
+    color: var(--goi-green) !important;
+    border: 1px solid #C8E6C9 !important;
+    font-weight: 600 !important;
+}
+
+.badge-admin {
+    background-color: #EBF2FA !important;
+    color: var(--goi-primary-navy) !important;
+    border: 1px solid #B8D0EB !important;
+    font-weight: 600 !important;
+}
+
+.badge-blocked, .badge-rejected {
+    background-color: #FEE2E2 !important;
+    color: var(--goi-danger-red) !important;
+    border: 1px solid #FCA5A5 !important;
+    font-weight: 600 !important;
+}
+
+.badge-pending, .badge-applied {
+    background-color: #FFF3E0 !important;
+    color: #D97706 !important;
+    border: 1px solid #FDE68A !important;
+    font-weight: 600 !important;
+}
+
+.badge-approved {
+    background-color: #E8F5E9 !important;
+    color: var(--goi-green) !important;
+    border: 1px solid #A5D6A7 !important;
+    font-weight: 600 !important;
+}
+
+/* Form Controls */
+.admin-panel-screen input,
+.admin-panel-screen select,
+.admin-panel-screen textarea {
+    background-color: var(--goi-white) !important;
+    color: #0F172A !important;
+    border: 1px solid var(--goi-border) !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 0.85rem !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.admin-panel-screen input:focus,
+.admin-panel-screen select:focus,
+.admin-panel-screen textarea:focus {
+    border-color: var(--goi-primary-navy) !important;
+    box-shadow: 0 0 0 3px rgba(11, 46, 89, 0.15) !important;
+    outline: none !important;
+}
+
+/* Subtle Executive Animations */
+.admin-card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.admin-card-hover:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(11, 46, 89, 0.12) !important;
+}
+
