@@ -160,3 +160,9 @@ class AppOtpVerifyRequest(BaseModel):
     scheme_id: str
     otp: str
     uploaded_documents: Optional[Dict[str, str]] = None
+
+class PaymentStatusUpdate(BaseModel):
+    payment_status: str  # Pending, Processing, Completed, Failed, Cancelled
+    payment_reference: Optional[str] = ""
+    remarks: Optional[str] = ""
+

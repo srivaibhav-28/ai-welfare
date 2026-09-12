@@ -874,5 +874,107 @@ class SupabaseDatabase:
             except Exception:
                 pass
 
+    def add_payment(self, payment_data: Dict[str, Any]) -> Dict[str, Any]:
+        if not hasattr(self, "_in_memory_payments"):
+            self._in_memory_payments = []
+        
+        # Prevent duplicate payment records for the same application
+        app_id = payment_data.get("application_id")
+        if app_id:
+            existing = [p for p in self.get_payments() if p.get("application_id") == app_id]
+            if existing:
+                return existing[0]
+
+        if "payment_id" not in payment_data:
+            payment_data["payment_id"] = payment_data.get("id", f"pay-{uuid.uuid4().hex[:8]}")
+
+        self._in_memory_payments.insert(0, payment_data)
+
+        if self.is_supabase_configured:
+            try:
+                res = self.insert_row("payments", payment_data)
+                if isinstance(res, dict) and res.get("id"):
+                    return res
+            except Exception as err:
+                print(f"[SUPABASE ADD PAYMENT EXCEPTION]: {err}")
+        return payment_data
+
+    def get_payments(self, user_id: Optional[str] = None, application_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        filters = {}
+        if user_id:
+            filters["user_id"] = user_id
+        if application_id:
+            filters["application_id"] = application_id
+
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("payments", filters if filters else None)
+                if isinstance(rows, list) and len(rows) > 0:
+                    return rows
+            except Exception as err:
+                print(f"[SUPABASE GET PAYMENTS EXCEPTION]: {err}")
+
+        # In-memory fallback / sync
+        payments = getattr(self, "_in_memory_payments", [])
+        if user_id:
+            payments = [p for p in payments if p.get("user_id") == user_id]
+        if application_id:
+            payments = [p for p in payments if p.get("application_id") == application_id]
+        return payments
+
+    def get_payment_by_id(self, payment_id: str) -> Optional[Dict[str, Any]]:
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("payments", {"id": payment_id})
+                if not rows:
+                    rows = self.fetch_rows("payments", {"payment_id": payment_id})
+                if rows:
+                    return rows[0]
+            except Exception:
+                pass
+        payments = getattr(self, "_in_memory_payments", [])
+        for p in payments:
+            if p.get("id") == payment_id or p.get("payment_id") == payment_id:
+                return p
+        return None
+
+    def update_payment(self, payment_id: str, updated_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        updated_data["updated_at"] = now_iso
+
+        allowed_statuses = ["Pending", "Processing", "Completed", "Failed", "Cancelled"]
+        new_status = updated_data.get("payment_status")
+        if new_status and new_status not in allowed_statuses:
+            raise ValueError(f"Invalid payment status '{new_status}'. Allowed statuses: {', '.join(allowed_statuses)}")
+
+        existing = self.get_payment_by_id(payment_id)
+        if existing and new_status:
+            current_status = existing.get("payment_status")
+            if current_status == "Completed" and new_status in ["Pending", "Processing"]:
+                raise ValueError(f"Cannot transition payment from Completed to {new_status}")
+            if current_status in ["Failed", "Cancelled"] and new_status == "Pending":
+                raise ValueError(f"Cannot transition payment from {current_status} to Pending")
+            if new_status == "Completed" and not existing.get("paid_at"):
+                updated_data["paid_at"] = now_iso
+
+        payments = getattr(self, "_in_memory_payments", [])
+        for p in payments:
+            if p.get("id") == payment_id or p.get("payment_id") == payment_id:
+                p.update(updated_data)
+                break
+
+        if self.is_supabase_configured:
+            try:
+                res = self.update_row("payments", {"id": payment_id}, updated_data)
+                if not res:
+                    res = self.update_row("payments", {"payment_id": payment_id}, updated_data)
+                if res:
+                    return res
+            except Exception as err:
+                print(f"[SUPABASE UPDATE PAYMENT EXCEPTION]: {err}")
+
+        return self.get_payment_by_id(payment_id)
+
 db = SupabaseDatabase()
+
 

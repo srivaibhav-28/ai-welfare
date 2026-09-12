@@ -1330,11 +1330,33 @@ async function loadApplicationsView() {
     try {
         const apps = await ApiService.getApplications();
         state.applications = apps || [];
+        try {
+            state.myPayments = await ApiService.getMyPayments();
+        } catch (pErr) {
+            state.myPayments = [];
+        }
         filterApplicationsTracker();
         const eligibleList = (state.recommendations || []).filter(r => r.is_eligible);
         updateQuickStats(eligibleList.length, state.applications.length);
     } catch (e) {
         console.error("App load error:", e);
+    }
+}
+
+function getPaymentBadgeClass(status) {
+    switch (status) {
+        case "Completed":
+            return "bg-emerald-100 text-emerald-800 border-emerald-300";
+        case "Processing":
+            return "bg-blue-100 text-blue-800 border-blue-300";
+        case "Pending":
+            return "bg-amber-100 text-amber-800 border-amber-300";
+        case "Failed":
+            return "bg-rose-100 text-rose-800 border-rose-300";
+        case "Cancelled":
+            return "bg-slate-100 text-slate-700 border-slate-300";
+        default:
+            return "bg-amber-100 text-amber-800 border-amber-300";
     }
 }
 
@@ -1402,6 +1424,11 @@ function renderApplicationsList(apps) {
         const uploadedDocs = app.uploaded_documents || {};
         const docsCount = Object.keys(uploadedDocs).length;
 
+        // Payment details only if application is Approved
+        const payment = (app.status === "Approved" && Array.isArray(state.myPayments)) 
+            ? state.myPayments.find(p => p.application_id === app.id) 
+            : null;
+
         card.innerHTML = `
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
@@ -1444,6 +1471,43 @@ function renderApplicationsList(apps) {
                     </div>
                 </div>
             </div>
+
+            ${app.status === "Approved" ? `
+                <!-- CITIZEN WELFARE PAYMENT INFORMATION (Approved Only) -->
+                <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-3 shadow-xs">
+                    <div class="flex items-center justify-between border-b border-emerald-200/80 pb-2">
+                        <span class="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
+                            <i data-lucide="credit-card" class="w-4 h-4 text-emerald-600"></i> Welfare Payment Details
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full font-extrabold border text-[11px] ${getPaymentBadgeClass(payment ? payment.payment_status : 'Pending')}">
+                            ${payment ? payment.payment_status : 'Pending'}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-700">
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Amount</span>
+                            <span class="font-extrabold text-emerald-700 text-sm">${payment && payment.amount ? '₹' + Number(payment.amount).toLocaleString('en-IN') : '₹' + (app.amount ? Number(app.amount).toLocaleString('en-IN') : '0')}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Payment Reference</span>
+                            <span class="font-mono font-bold text-slate-800 text-[11px]">${payment && payment.payment_reference ? payment.payment_reference : 'Pending Generation'}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Approved Date</span>
+                            <span class="font-semibold text-slate-800 text-[11px]">${payment && payment.approved_at ? payment.approved_at.split('T')[0] : (app.applied_date || 'Approved')}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Paid Date</span>
+                            <span class="font-semibold text-slate-800 text-[11px]">${payment && payment.paid_at ? payment.paid_at.split('T')[0] : 'Pending'}</span>
+                        </div>
+                    </div>
+                    ${payment && payment.remarks ? `
+                        <div class="text-[11px] text-emerald-800 pt-1 border-t border-emerald-200/60 font-medium">
+                            <strong>Remarks:</strong> ${payment.remarks}
+                        </div>
+                    ` : ''}
+                </div>
+            ` : ''}
 
             ${app.remarks ? `
                 <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
@@ -1942,6 +2006,8 @@ function switchAdminSubTab(subTabName) {
         loadAdminReports();
     } else if (subTabName === "profile") {
         loadAdminProfile();
+    } else if (subTabName === "payments") {
+        loadAdminPayments();
     }
 
     initLucide();
@@ -4005,6 +4071,219 @@ window.openForgotPasswordModal = openForgotPasswordModal;
 window.closeForgotPasswordModal = closeForgotPasswordModal;
 window.handleForgotPasswordSubmit = handleForgotPasswordSubmit;
 window.handleResetPasswordSubmit = handleResetPasswordSubmit;
+
+// ====================================================================
+// ADMIN WELFARE PAYMENT MANAGEMENT SYSTEM
+// ====================================================================
+let adminPaymentsList = [];
+
+async function loadAdminPayments() {
+    try {
+        const data = await ApiService.getPayments();
+        if (data && data.analytics) {
+            const a = data.analytics;
+            const elTotal = document.getElementById("pm-total-count");
+            const elPend = document.getElementById("pm-pending-count");
+            const elProc = document.getElementById("pm-processing-count");
+            const elComp = document.getElementById("pm-completed-count");
+            const elFail = document.getElementById("pm-failed-count");
+            const elCanc = document.getElementById("pm-cancelled-count");
+            const elAmt = document.getElementById("pm-total-amount");
+
+            if (elTotal) elTotal.textContent = a.total_count || 0;
+            if (elPend) elPend.textContent = a.pending_count || 0;
+            if (elProc) elProc.textContent = a.processing_count || 0;
+            if (elComp) elComp.textContent = a.completed_count || 0;
+            if (elFail) elFail.textContent = a.failed_count || 0;
+            if (elCanc) elCanc.textContent = a.cancelled_count || 0;
+            if (elAmt) elAmt.textContent = "₹" + Number(a.total_amount_paid || 0).toLocaleString("en-IN");
+        }
+
+        adminPaymentsList = (data && Array.isArray(data.payments)) ? data.payments : [];
+        filterAdminPaymentsTable();
+    } catch (err) {
+        console.error("Error loading admin payments:", err);
+        showNotification("Error", "Failed to load payments database.", "error");
+    }
+}
+
+function filterAdminPaymentsTable() {
+    const searchVal = (document.getElementById("admin-payment-search")?.value || "").toLowerCase().trim();
+    const statusVal = document.getElementById("admin-payment-status-filter")?.value || "all";
+
+    let filtered = adminPaymentsList.filter(p => {
+        const matchesSearch = !searchVal || 
+            (p.payment_id || "").toLowerCase().includes(searchVal) ||
+            (p.application_id || "").toLowerCase().includes(searchVal) ||
+            (p.beneficiary_name || "").toLowerCase().includes(searchVal) ||
+            (p.scheme_name || "").toLowerCase().includes(searchVal) ||
+            (p.payment_reference || "").toLowerCase().includes(searchVal);
+
+        const matchesStatus = statusVal === "all" || p.payment_status === statusVal;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    renderAdminPaymentsTable(filtered);
+}
+
+function renderAdminPaymentsTable(payments) {
+    const tbody = document.getElementById("admin-payments-table-body");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (payments.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-8 text-slate-400 font-medium text-xs">
+                    No welfare payments match the selected criteria
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    payments.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
+
+        const badgeClass = getPaymentBadgeClass(p.payment_status);
+
+        tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-bold text-xs text-indigo-600">
+                ${p.payment_id}
+                <div class="text-[10px] text-slate-400 font-normal">App: ${p.application_id}</div>
+            </td>
+            <td class="py-3 px-4 font-bold text-slate-800 text-xs">${p.beneficiary_name || 'N/A'}</td>
+            <td class="py-3 px-4 text-xs font-semibold text-slate-700">${p.scheme_name}</td>
+            <td class="py-3 px-4 font-extrabold text-emerald-700 text-xs">₹${Number(p.amount || 0).toLocaleString("en-IN")}</td>
+            <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${badgeClass}">
+                    ${p.payment_status}
+                </span>
+            </td>
+            <td class="py-3 px-4 font-mono text-xs text-slate-700 font-semibold">${p.payment_reference || '—'}</td>
+            <td class="py-3 px-4 text-right">
+                <button onclick="openUpdatePaymentModal('${p.payment_id}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200/80 flex items-center gap-1 ml-auto cursor-pointer">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Update Status
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+}
+
+function openUpdatePaymentModal(paymentId) {
+    const payment = adminPaymentsList.find(p => p.payment_id === paymentId);
+    if (!payment) return;
+
+    document.getElementById("paymentModalId").value = payment.payment_id;
+    document.getElementById("paymentModalBeneficiary").textContent = payment.beneficiary_name || 'N/A';
+    document.getElementById("paymentModalScheme").textContent = payment.scheme_name;
+    document.getElementById("paymentModalAmount").textContent = "₹" + Number(payment.amount || 0).toLocaleString("en-IN");
+    document.getElementById("paymentModalCurrentStatus").textContent = payment.payment_status;
+    document.getElementById("paymentModalCurrentStatus").className = `font-extrabold ${getPaymentBadgeClass(payment.payment_status)}`;
+
+    const statusSelect = document.getElementById("paymentModalStatus");
+    if (statusSelect) statusSelect.value = payment.payment_status;
+
+    document.getElementById("paymentModalRef").value = payment.payment_reference || "";
+    document.getElementById("paymentModalRemarks").value = payment.remarks || "";
+
+    const modal = document.getElementById("updatePaymentModal");
+    if (modal) modal.classList.remove("hidden");
+    if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+}
+
+function closeUpdatePaymentModal() {
+    const modal = document.getElementById("updatePaymentModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+async function handlePaymentStatusSubmit(event) {
+    if (event) event.preventDefault();
+
+    const paymentId = document.getElementById("paymentModalId").value;
+    const newStatus = document.getElementById("paymentModalStatus").value;
+    const paymentRef = document.getElementById("paymentModalRef").value;
+    const remarks = document.getElementById("paymentModalRemarks").value;
+
+    const btn = document.getElementById("btnPaymentSubmit");
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Updating...`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+
+        const res = await ApiService.updatePaymentStatus(paymentId, {
+            payment_status: newStatus,
+            payment_reference: paymentRef,
+            remarks: remarks
+        });
+
+        showNotification("Payment Updated", res.message || `Payment ${paymentId} updated to "${newStatus}". Email notification sent.`, "success");
+        closeUpdatePaymentModal();
+        await loadAdminPayments();
+
+    } catch (err) {
+        showNotification("Update Error", err.message || "Failed to update payment status.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Update Status & Notify`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+    }
+}
+
+function downloadPaymentReportCSV() {
+    if (!adminPaymentsList || adminPaymentsList.length === 0) {
+        showNotification("Export Notice", "No payments available to export.", "info");
+        return;
+    }
+
+    const headers = ["Payment ID", "Application ID", "User ID", "Beneficiary Name", "Scheme Name", "Amount (INR)", "Payment Status", "Payment Reference", "Approved By", "Approved At", "Paid At", "Remarks"];
+    const rows = adminPaymentsList.map(p => [
+        `"${p.payment_id || ''}"`,
+        `"${p.application_id || ''}"`,
+        `"${p.user_id || ''}"`,
+        `"${(p.beneficiary_name || '').replace(/"/g, '""')}"`,
+        `"${(p.scheme_name || '').replace(/"/g, '""')}"`,
+        p.amount || 0,
+        `"${p.payment_status || ''}"`,
+        `"${p.payment_reference || ''}"`,
+        `"${p.approved_by || ''}"`,
+        `"${p.approved_at || ''}"`,
+        `"${p.paid_at || ''}"`,
+        `"${(p.remarks || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `welfare_payments_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification("Export Complete", "Welfare payments report CSV downloaded successfully.", "success");
+}
+
+// Window bindings for payment management
+window.loadAdminPayments = loadAdminPayments;
+window.filterAdminPaymentsTable = filterAdminPaymentsTable;
+window.openUpdatePaymentModal = openUpdatePaymentModal;
+window.closeUpdatePaymentModal = closeUpdatePaymentModal;
+window.handlePaymentStatusSubmit = handlePaymentStatusSubmit;
+window.downloadPaymentReportCSV = downloadPaymentReportCSV;
+
 
 
 

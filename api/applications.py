@@ -23,7 +23,7 @@ app.add_middleware(
 import secrets
 from app.models.schemas import (
     ApplicationCreate, ApplicationStatusUpdate,
-    AppOtpInitiateRequest, AppOtpVerifyRequest
+    AppOtpInitiateRequest, AppOtpVerifyRequest, PaymentStatusUpdate
 )
 
 PENDING_APPLICATION_OTPS: Dict[str, Dict[str, Any]] = {}
@@ -459,21 +459,62 @@ async def direct_apply_for_scheme(req: ApplicationCreate, user: Dict[str, Any] =
         "security_check": fraud_res
     }
 
-@app.put("/api/applications/{app_id}/status")
-async def update_app_status(app_id: str, req: ApplicationStatusUpdate, admin: Dict[str, Any] = Depends(require_admin_user)):
-    updated = db.update_application_status(app_id, req.status, req.remarks)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Application not found")
-
-    # Update timeline history based on new status
-    timeline = updated.get("timeline_history", [])
-    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-
     if req.status == "Approved":
         for t in timeline:
             t["status"] = "Completed"
             if not t["timestamp"]:
                 t["timestamp"] = now_iso
+        
+        # Automatically create Payment Record (One Application = One Payment)
+        existing_payments = db.get_payments(application_id=app_id)
+        if not existing_payments:
+            scheme = db.get_scheme_by_id(updated.get("scheme_id", "")) or {}
+            amount = 6000.00
+            if scheme.get("amount"):
+                try:
+                    amount = float(scheme["amount"])
+                except Exception:
+                    pass
+            elif scheme.get("benefits"):
+                import re
+                nums = re.findall(r'₹?\s*(\d[\d,]+)', str(scheme.get("benefits", "")))
+                if nums:
+                    try:
+                        amount = float(nums[0].replace(",", ""))
+                    except Exception:
+                        pass
+
+            pay_id = f"pay-{uuid.uuid4().hex[:8]}"
+            payment_record = {
+                "id": pay_id,
+                "payment_id": pay_id,
+                "application_id": app_id,
+                "user_id": updated.get("user_id"),
+                "scheme_id": updated.get("scheme_id"),
+                "scheme_name": updated.get("scheme_name"),
+                "beneficiary_name": updated.get("user_name", "Beneficiary"),
+                "amount": amount,
+                "payment_status": "Pending",
+                "payment_reference": "",
+                "approved_by": admin.get("email", "admin@welfare.gov"),
+                "approved_at": now_iso,
+                "paid_at": "",
+                "remarks": req.remarks or "Application approved. Payment pending authorization.",
+                "created_at": now_iso,
+                "updated_at": now_iso
+            }
+            db.add_payment(payment_record)
+            db.add_audit_log("Payment Record Created", admin.get("email", "Admin"), f"Automatic payment record {pay_id} created for approved application {app_id} (Amount: ₹{amount})")
+            
+            # Send Approval Email with Payment Status = Pending
+            user_email = updated.get("user_email")
+            if user_email:
+                try:
+                    EmailNotificationService.send_approval_with_payment_status(
+                        user_email, app_id, updated.get("scheme_name", "Scheme"), updated.get("user_name", "Beneficiary"), amount
+                    )
+                except Exception as err:
+                    print(f"[APPROVAL PAYMENT EMAIL EXCEPTION]: {err}")
     elif req.status == "Rejected":
         if len(timeline) >= 4:
             timeline[3]["status"] = "Rejected"
@@ -488,9 +529,138 @@ async def update_app_status(app_id: str, req: ApplicationStatusUpdate, admin: Di
     updated["timeline_history"] = timeline
     db.add_audit_log("Application Status Updated", admin.get("email", "Admin"), f"Application {app_id} status updated to '{req.status}'")
 
-    # Trigger Email Notification for Status Update (Module 6)
     user_email = updated.get("user_email")
-    if user_email:
+    if user_email and req.status != "Approved":
         EmailNotificationService.send_status_update(user_email, app_id, updated.get("scheme_name", "Scheme"), req.status, req.remarks)
 
     return {"message": "Application status updated", "application": updated}
+
+
+# PAYMENT MANAGEMENT ENDPOINTS
+
+ALLOWED_PAYMENT_STATUSES = {"Pending", "Processing", "Completed", "Failed", "Cancelled"}
+
+@app.get("/api/payments")
+@app.get("/api/admin/payments")
+async def get_all_payments(
+    status: str = None,
+    search: str = None,
+    admin: Dict[str, Any] = Depends(require_admin_user)
+):
+    payments = db.get_payments()
+    if status and status.lower() != "all":
+        payments = [p for p in payments if p.get("payment_status", "").lower() == status.lower()]
+    if search:
+        s = search.lower()
+        payments = [
+            p for p in payments if (
+                s in p.get("beneficiary_name", "").lower() or
+                s in p.get("scheme_name", "").lower() or
+                s in p.get("application_id", "").lower() or
+                s in p.get("payment_id", "").lower() or
+                s in p.get("payment_reference", "").lower()
+            )
+        ]
+    
+    all_p = db.get_payments()
+    analytics = {
+        "total_payments": len(all_p),
+        "pending": len([p for p in all_p if p.get("payment_status") == "Pending"]),
+        "processing": len([p for p in all_p if p.get("payment_status") == "Processing"]),
+        "completed": len([p for p in all_p if p.get("payment_status") == "Completed"]),
+        "failed": len([p for p in all_p if p.get("payment_status") == "Failed"]),
+        "cancelled": len([p for p in all_p if p.get("payment_status") == "Cancelled"]),
+        "total_amount_paid": sum([float(p.get("amount", 0)) for p in all_p if p.get("payment_status") == "Completed"])
+    }
+    
+    return {
+        "status": "success",
+        "count": len(payments),
+        "payments": payments,
+        "analytics": analytics
+    }
+
+@app.get("/api/payments/me")
+@app.get("/api/applications/payments")
+async def get_my_payments(user: Dict[str, Any] = Depends(require_current_user)):
+    user_payments = db.get_payments(user_id=user["id"])
+    return {
+        "status": "success",
+        "count": len(user_payments),
+        "payments": user_payments
+    }
+
+@app.put("/api/payments/{payment_id}/status")
+async def update_payment_status(
+    payment_id: str,
+    req: PaymentStatusUpdate,
+    admin: Dict[str, Any] = Depends(require_admin_user)
+):
+    new_status = req.payment_status.strip()
+    if new_status not in ALLOWED_PAYMENT_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid payment status '{new_status}'. Allowed statuses: Pending, Processing, Completed, Failed, Cancelled."
+        )
+    
+    payment = db.get_payment_by_id(payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment record not found.")
+
+    old_status = payment.get("payment_status", "Pending")
+
+    if old_status == "Completed" and new_status in ["Pending", "Processing"]:
+        raise HTTPException(status_code=400, detail="Completed payments cannot be reverted to Pending or Processing.")
+    if old_status in ["Failed", "Cancelled"] and new_status == "Pending":
+        raise HTTPException(status_code=400, detail=f"Payments in state '{old_status}' cannot be reset to Pending.")
+
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    update_data = {
+        "payment_status": new_status,
+        "payment_reference": req.payment_reference if req.payment_reference is not None else payment.get("payment_reference", ""),
+        "remarks": req.remarks if req.remarks is not None else payment.get("remarks", ""),
+        "updated_at": now_iso
+    }
+
+    if new_status == "Completed" and not payment.get("paid_at"):
+        update_data["paid_at"] = now_iso
+
+    updated_payment = db.update_payment(payment_id, update_data)
+
+    db.add_audit_log(
+        "Payment Status Updated",
+        admin.get("email", "Admin"),
+        f"Payment {payment_id} for app {payment.get('application_id')} updated from '{old_status}' to '{new_status}'. Remarks: {req.remarks or 'N/A'}"
+    )
+
+    app_id = payment.get("application_id", "")
+    app_data = db.fetch_rows("applications", {"id": app_id})
+    user_email = (app_data[0].get("user_email") if app_data else None) or payment.get("beneficiary_name", "")
+
+    if app_data and app_data[0].get("user_email"):
+        user_email = app_data[0]["user_email"]
+
+    if user_email and "@" in str(user_email):
+        try:
+            scheme_name = payment.get("scheme_name", "Welfare Scheme")
+            amount = float(payment.get("amount", 0))
+            pay_ref = update_data.get("payment_reference", "")
+            paid_date = update_data.get("paid_at", now_iso)[:10]
+
+            if old_status == "Pending" and new_status == "Processing":
+                EmailNotificationService.send_payment_processing_email(user_email, payment_id, scheme_name, amount)
+            elif new_status == "Completed":
+                EmailNotificationService.send_payment_completed_email(user_email, payment_id, scheme_name, amount, pay_ref, paid_date)
+            elif new_status == "Failed":
+                EmailNotificationService.send_payment_failed_email(user_email, payment_id, scheme_name, amount, req.remarks or "")
+            elif new_status == "Cancelled":
+                EmailNotificationService.send_payment_cancelled_email(user_email, payment_id, scheme_name, amount, req.remarks or "")
+        except Exception as err:
+            print(f"[PAYMENT STATUS EMAIL EXCEPTION]: {err}")
+
+    return {
+        "status": "success",
+        "message": f"Payment status successfully updated to {new_status}.",
+        "payment": updated_payment
+    }
+

@@ -449,8 +449,33 @@ class ApiService {
         return await this.request("/api/admin/supabase-status");
     }
 
+    // Payment Management
+    static async getPayments(status = null, search = null) {
+        let queryParams = [];
+        if (status && status !== "all") queryParams.push(`status=${encodeURIComponent(status)}`);
+        if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+        const qs = queryParams.length ? `?${queryParams.join("&")}` : "";
+        return await this.request(`/api/payments${qs}`);
+    }
+
+    static async updatePaymentStatus(paymentId, paymentStatus, paymentReference = "", remarks = "") {
+        return await this.request(`/api/payments/${paymentId}/status`, {
+            method: "PUT",
+            body: JSON.stringify({
+                payment_status: paymentStatus,
+                payment_reference: paymentReference,
+                remarks: remarks
+            })
+        });
+    }
+
+    static async getMyPayments() {
+        return await this.request("/api/payments/me");
+    }
+
     static getExportReportsUrl() {
         const token = this.getAuthToken();
         return `${API_BASE}/api/admin/reports/export?token=${encodeURIComponent(token)}`;
     }
 }
+

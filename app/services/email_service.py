@@ -275,3 +275,94 @@ class EmailNotificationService:
         body_text = f"Dear User,\n\nYour password reset token is: {reset_token}\nValid for 15 minutes.\n\nIf you did not request this, please ignore this email."
         return cls.send_email(to_email, subject, body_html, body_text)
 
+    @classmethod
+    def send_approval_with_payment_status(cls, to_email: str, app_id: str, scheme_name: str, beneficiary_name: str, amount: float) -> Tuple[bool, str]:
+        subject = f"🎉 Application Approved - Payment Pending: {scheme_name}"
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; line-height: 1.6;">
+            <h2 style="color: #16a34a;">Congratulations! Application Approved</h2>
+            <p>Dear <strong>{beneficiary_name}</strong>,</p>
+            <p>Your application for <strong>{scheme_name}</strong> (Ref ID: <code>{app_id}</code>) has been <strong>Approved</strong> by the verification committee.</p>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin: 16px 0;">
+                <h4 style="margin: 0 0 10px 0; color: #15803d;">Direct Benefit Transfer (DBT) Payment Details</h4>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li><strong>Application Status:</strong> Approved</li>
+                    <li><strong>Payment Status:</strong> <span style="color: #d97706; font-weight: bold;">Pending</span></li>
+                    <li><strong>Sanctioned Amount:</strong> ₹{amount:,.2f}</li>
+                </ul>
+            </div>
+            <p>Your benefit payment has been queued for processing and will be transferred directly to your registered bank account.</p>
+            <p style="font-size: 12px; color: #64748b;">Ministry of Electronics & IT | Government of India</p>
+        </div>
+        """
+        body_text = f"Dear {beneficiary_name},\n\nYour application {app_id} for '{scheme_name}' has been APPROVED!\nPayment Status: Pending\nSanctioned Amount: ₹{amount:,.2f}\n\nRegards,\nAI Government Welfare Eligibility Assistant"
+        return cls.send_email(to_email, subject, body_html, body_text)
+
+    @classmethod
+    def send_payment_processing_email(cls, to_email: str, payment_id: str, scheme_name: str, amount: float) -> Tuple[bool, str]:
+        subject = f"🔄 Payment Processing Alert: {scheme_name}"
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; line-height: 1.6;">
+            <h2 style="color: #0284c7;">Direct Benefit Transfer Payment Processing</h2>
+            <p>Dear Beneficiary,</p>
+            <p>Your welfare benefit payment of <strong>₹{amount:,.2f}</strong> for scheme <strong>{scheme_name}</strong> (Payment ID: <code>{payment_id}</code>) is currently being <strong>Processed</strong> by the Treasury Bank.</p>
+            <p>You will receive a final confirmation email with the bank transaction reference code once credit is complete.</p>
+            <p style="font-size: 12px; color: #64748b;">Ministry of Electronics & IT | Government of India</p>
+        </div>
+        """
+        body_text = f"Payment Alert: Payment {payment_id} of ₹{amount:,.2f} for '{scheme_name}' is currently Processing."
+        return cls.send_email(to_email, subject, body_html, body_text)
+
+    @classmethod
+    def send_payment_completed_email(cls, to_email: str, payment_id: str, scheme_name: str, amount: float, payment_reference: str, paid_date: str) -> Tuple[bool, str]:
+        subject = f"✅ Payment Successfully Credited: {scheme_name}"
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; line-height: 1.6;">
+            <h2 style="color: #16a34a;">Benefit Payment Credited Successfully!</h2>
+            <p>Dear Beneficiary,</p>
+            <p>We are pleased to inform you that your welfare benefit payment has been successfully credited to your bank account via Direct Benefit Transfer (DBT).</p>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <tr><td style="padding: 10px; font-weight: bold;">Scheme Name:</td><td style="padding: 10px;">{scheme_name}</td></tr>
+                <tr><td style="padding: 10px; font-weight: bold;">Amount Paid:</td><td style="padding: 10px; color: #16a34a; font-weight: bold; font-size: 16px;">₹{amount:,.2f}</td></tr>
+                <tr><td style="padding: 10px; font-weight: bold;">Bank Reference (UTR):</td><td style="padding: 10px; font-family: monospace; font-weight: bold;">{payment_reference or 'N/A'}</td></tr>
+                <tr><td style="padding: 10px; font-weight: bold;">Payment Date:</td><td style="padding: 10px;">{paid_date}</td></tr>
+                <tr><td style="padding: 10px; font-weight: bold;">Payment Status:</td><td style="padding: 10px; color: #16a34a; font-weight: bold;">Completed</td></tr>
+            </table>
+            <p style="font-size: 12px; color: #64748b;">Ministry of Electronics & IT | Government of India</p>
+        </div>
+        """
+        body_text = f"Payment Completed: ₹{amount:,.2f} for '{scheme_name}' credited on {paid_date}. UTR Ref: {payment_reference}."
+        return cls.send_email(to_email, subject, body_html, body_text)
+
+    @classmethod
+    def send_payment_failed_email(cls, to_email: str, payment_id: str, scheme_name: str, amount: float, remarks: str = "") -> Tuple[bool, str]:
+        subject = f"⚠️ Payment Issue Alert: {scheme_name}"
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; line-height: 1.6;">
+            <h2 style="color: #dc2626;">Payment Processing Failed</h2>
+            <p>Dear Beneficiary,</p>
+            <p>The transfer of <strong>₹{amount:,.2f}</strong> for scheme <strong>{scheme_name}</strong> (Payment ID: <code>{payment_id}</code>) could not be completed.</p>
+            <p><strong>Reason / Remarks:</strong> {remarks or 'Bank account details mismatch or bank server timeout.'}</p>
+            <p>Our accounts officer is reviewing the transaction. Please check your bank account details on the portal.</p>
+            <p style="font-size: 12px; color: #64748b;">Ministry of Electronics & IT | Government of India</p>
+        </div>
+        """
+        body_text = f"Payment Failed: Transaction {payment_id} for '{scheme_name}' failed. Reason: {remarks}"
+        return cls.send_email(to_email, subject, body_html, body_text)
+
+    @classmethod
+    def send_payment_cancelled_email(cls, to_email: str, payment_id: str, scheme_name: str, amount: float, remarks: str = "") -> Tuple[bool, str]:
+        subject = f"🚫 Payment Cancelled: {scheme_name}"
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; line-height: 1.6;">
+            <h2 style="color: #991b1b;">Welfare Payment Cancelled</h2>
+            <p>Dear Beneficiary,</p>
+            <p>The payment of <strong>₹{amount:,.2f}</strong> for scheme <strong>{scheme_name}</strong> (Payment ID: <code>{payment_id}</code>) has been <strong>Cancelled</strong> by the administration.</p>
+            <p><strong>Remarks:</strong> {remarks or 'Transaction cancelled.'}</p>
+            <p style="font-size: 12px; color: #64748b;">Ministry of Electronics & IT | Government of India</p>
+        </div>
+        """
+        body_text = f"Payment Cancelled: Transaction {payment_id} for '{scheme_name}' was cancelled. Remarks: {remarks}"
+        return cls.send_email(to_email, subject, body_html, body_text)
+
+
