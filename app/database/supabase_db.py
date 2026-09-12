@@ -902,18 +902,24 @@ class SupabaseDatabase:
         # Prevent duplicate payment records for the same application
         app_id = payment_data.get("application_id")
         if app_id:
-            existing = [p for p in self.get_payments() if p.get("application_id") == app_id]
+            existing = [p for p in self.get_payments(application_id=app_id) if p.get("application_id") == app_id]
             if existing:
                 return existing[0]
 
         if "payment_id" not in payment_data:
             payment_data["payment_id"] = payment_data.get("id", f"pay-{uuid.uuid4().hex[:8]}")
 
+        clean_payment = dict(payment_data)
+        if clean_payment.get("paid_at") == "":
+            clean_payment["paid_at"] = None
+        if clean_payment.get("approved_at") == "":
+            clean_payment["approved_at"] = None
+
         self._in_memory_payments.insert(0, payment_data)
 
         if self.is_supabase_configured:
             try:
-                res = self.insert_row("payments", payment_data)
+                res = self.insert_row("payments", clean_payment)
                 if isinstance(res, dict) and res.get("id"):
                     return res
             except Exception as err:
@@ -930,7 +936,7 @@ class SupabaseDatabase:
         if self.is_supabase_configured:
             try:
                 rows = self.fetch_rows("payments", filters if filters else None)
-                if isinstance(rows, list) and len(rows) > 0:
+                if isinstance(rows, list):
                     return rows
             except Exception as err:
                 print(f"[SUPABASE GET PAYMENTS EXCEPTION]: {err}")

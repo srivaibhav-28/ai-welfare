@@ -516,7 +516,7 @@ async def update_app_status(
                 "payment_reference": "",
                 "approved_by": admin.get("email", "admin@welfare.gov"),
                 "approved_at": now_iso,
-                "paid_at": "",
+                "paid_at": None,
                 "remarks": req.remarks or "Application approved. Payment pending authorization.",
                 "created_at": now_iso,
                 "updated_at": now_iso

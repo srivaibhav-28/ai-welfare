@@ -1331,7 +1331,8 @@ async function loadApplicationsView() {
         const apps = await ApiService.getApplications();
         state.applications = apps || [];
         try {
-            state.myPayments = await ApiService.getMyPayments();
+            const payRes = await ApiService.getMyPayments();
+            state.myPayments = (payRes && Array.isArray(payRes.payments)) ? payRes.payments : (Array.isArray(payRes) ? payRes : []);
         } catch (pErr) {
             state.myPayments = [];
         }
