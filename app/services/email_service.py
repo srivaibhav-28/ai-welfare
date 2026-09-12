@@ -252,3 +252,26 @@ class EmailNotificationService:
         """
         body_text = f"Deadline Alert: {scheme_name} closes in {days_left} days. Complete your application now."
         return cls.send_email(to_email, subject, body_html, body_text)
+
+    @classmethod
+    def send_password_reset_email(cls, to_email: str, reset_token: str, reset_url: str = "") -> Tuple[bool, str]:
+        subject = "🔑 Password Reset Request - Government Welfare Portal"
+        link_html = f'<p style="margin: 20px 0;"><a href="{reset_url}" style="background-color: #ea580c; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Reset Password</a></p>' if reset_url else ""
+        body_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; line-height: 1.6;">
+            <h2 style="color: #ea580c;">National Welfare Portal Password Reset</h2>
+            <p>Dear User,</p>
+            <p>We received a request to reset your password for your Government Welfare Portal account.</p>
+            <p>Your secure password reset verification code is:</p>
+            <div style="background: #fff7ed; border: 2px dashed #f97316; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 3px; color: #c2410c; margin: 15px 0; border-radius: 8px;">
+                {reset_token}
+            </div>
+            {link_html}
+            <p>This password reset code is valid for <strong>15 minutes</strong> and can only be used once.</p>
+            <p style="font-size: 12px; color: #64748b; margin-top: 20px;">If you did not request a password reset, please ignore this email. Your password will remain unchanged.</p>
+            <p style="font-size: 12px; color: #64748b;">Ministry of Electronics & IT | Government of India</p>
+        </div>
+        """
+        body_text = f"Dear User,\n\nYour password reset token is: {reset_token}\nValid for 15 minutes.\n\nIf you did not request this, please ignore this email."
+        return cls.send_email(to_email, subject, body_html, body_text)
+

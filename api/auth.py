@@ -7,7 +7,8 @@ from app.config import config
 from app.database.supabase_db import db
 from app.models.schemas import (
     UserRegister, UserLogin, TokenResponse, ChangePassword,
-    OTPVerifyRequest, OTPResendRequest, GoogleAuthRequest
+    OTPVerifyRequest, OTPResendRequest, GoogleAuthRequest,
+    ForgotPasswordRequest, ResetPasswordRequest
 )
 from app.services.auth_service import (
     hash_password, verify_password, create_access_token, require_current_user,
@@ -418,4 +419,67 @@ async def change_password(req: ChangePassword, user: Dict[str, Any] = Depends(re
 @app.get("/api/auth/me")
 async def get_me(user: Dict[str, Any] = Depends(require_current_user)):
     return user
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    email = req.email.strip().lower()
+    user = db.get_user_by_email(email)
+    if user:
+        import secrets
+        from datetime import datetime, timezone, timedelta
+        reset_token = secrets.token_urlsafe(24)
+        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+
+        db.save_password_reset_token(email, reset_token, expires_at)
+
+        from app.services.email_service import EmailNotificationService
+        EmailNotificationService.send_password_reset_email(email, reset_token)
+
+    return {
+        "success": True,
+        "message": "If an account exists, a password reset email has been sent."
+    }
+
+@app.post("/api/auth/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    email = req.email.strip().lower()
+    token = req.token.strip()
+    new_password = req.new_password.strip()
+
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long.")
+
+    token_record = db.get_password_reset_token(token)
+    if not token_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired password reset token.")
+
+    if token_record.get("used"):
+        raise HTTPException(status_code=400, detail="This password reset token has already been used.")
+
+    if token_record.get("email", "").strip().lower() != email:
+        raise HTTPException(status_code=400, detail="Token email mismatch.")
+
+    from datetime import datetime, timezone
+    expires_at_str = token_record.get("expires_at", "")
+    if expires_at_str:
+        try:
+            expires_at = datetime.fromisoformat(expires_at_str)
+            if datetime.now(timezone.utc) > expires_at:
+                raise HTTPException(status_code=400, detail="Password reset token has expired. Please request a new token.")
+        except ValueError:
+            pass
+
+    user = db.get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User account not found.")
+
+    new_hash = hash_password(new_password)
+    db.update_user_password(user["id"], new_hash)
+    db.invalidate_password_reset_token(token)
+
+    return {
+        "status": "success",
+        "message": "Password has been successfully updated. You can now log in with your new password."
+    }
+
 

@@ -3829,4 +3829,182 @@ window.filterUserRole = filterUserRole;
 window.openApplicationTimelineModal = openApplicationTimelineModal;
 window.closeTimelineModal = closeTimelineModal;
 
+// PASSWORD VISIBILITY TOGGLE & FORGOT PASSWORD MODAL HANDLERS
+function togglePasswordVisibility(inputId, btnElement) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === "password";
+    input.type = isPassword ? "text" : "password";
+
+    if (btnElement) {
+        btnElement.innerHTML = `<i data-lucide="${isPassword ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>`;
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+            window.lucide.createIcons();
+        }
+    }
+}
+
+function openForgotPasswordModal() {
+    const modal = document.getElementById("forgotPasswordModal");
+    if (!modal) return;
+
+    // Reset forms
+    const form1 = document.getElementById("forgotPasswordFormStep1");
+    const form2 = document.getElementById("forgotPasswordFormStep2");
+    if (form1) form1.classList.remove("hidden");
+    if (form2) form2.classList.add("hidden");
+
+    // Pre-fill email from login input if available
+    const landingEmailInput = document.getElementById("landingAuthEmail");
+    const adminEmailInput = document.getElementById("adminAuthEmail");
+    const forgotEmailInput = document.getElementById("forgotEmail");
+    if (forgotEmailInput) {
+        const prefEmail = (landingEmailInput && landingEmailInput.value) || (adminEmailInput && adminEmailInput.value) || "";
+        forgotEmailInput.value = prefEmail;
+    }
+
+    modal.classList.remove("hidden");
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+}
+
+function closeForgotPasswordModal() {
+    const modal = document.getElementById("forgotPasswordModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+async function handleForgotPasswordSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const emailInput = document.getElementById("forgotEmail");
+    const btn = document.getElementById("btnForgotStep1Submit");
+
+    const email = emailInput ? emailInput.value.trim() : "";
+    if (!email) {
+        showNotification("Input Error", "Please enter your registered email address.", "error");
+        return;
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending Token...`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+
+        const res = await ApiService.forgotPassword(email);
+
+        showNotification("Reset Code Sent", res.message || "Password reset instructions sent to email.", "success");
+
+        // Move to Step 2
+        const form1 = document.getElementById("forgotPasswordFormStep1");
+        const form2 = document.getElementById("forgotPasswordFormStep2");
+        const targetEmailDisp = document.getElementById("forgotTargetEmailDisplay");
+        const resetTokenInput = document.getElementById("forgotResetToken");
+
+        if (form1) form1.classList.add("hidden");
+        if (form2) form2.classList.remove("hidden");
+        if (targetEmailDisp) targetEmailDisp.textContent = email;
+        if (resetTokenInput) resetTokenInput.value = "";
+
+    } catch (err) {
+        showNotification("Forgot Password Error", err.message || "Failed to process forgot password request.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Send Reset Link & Code`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+    }
+}
+
+async function handleResetPasswordSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const emailInput = document.getElementById("forgotEmail");
+    const tokenInput = document.getElementById("forgotResetToken");
+    const newPassInput = document.getElementById("forgotNewPassword");
+    const confirmPassInput = document.getElementById("forgotConfirmPassword");
+    const btn = document.getElementById("btnForgotStep2Submit");
+
+    const email = emailInput ? emailInput.value.trim() : "";
+    const token = tokenInput ? tokenInput.value.trim() : "";
+    const newPass = newPassInput ? newPassInput.value : "";
+    const confirmPass = confirmPassInput ? confirmPassInput.value : "";
+
+    if (!email || !token) {
+        showNotification("Validation Error", "Email address and Reset Token are required.", "error");
+        return;
+    }
+
+    if (!newPass || newPass.length < 6) {
+        showNotification("Validation Error", "New password must be at least 6 characters long.", "error");
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        showNotification("Validation Error", "New password and Confirm Password do not match.", "error");
+        return;
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Updating Password...`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+
+        const res = await ApiService.resetPassword(email, token, newPass);
+
+        showNotification("Password Updated", res.message || "Your password has been reset successfully!", "success");
+
+        closeForgotPasswordModal();
+
+        // Pre-fill email and password in login form
+        const landingEmailInput = document.getElementById("landingAuthEmail");
+        const landingPasswordInput = document.getElementById("landingAuthPassword");
+        if (landingEmailInput) landingEmailInput.value = email;
+        if (landingPasswordInput) landingPasswordInput.value = newPass;
+
+    } catch (err) {
+        showNotification("Reset Password Error", err.message || "Failed to reset password.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Update Password & Sign In`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+    }
+}
+
+// Check URL query parameters for reset token on initialization
+window.addEventListener("DOMContentLoaded", () => {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const resetToken = urlParams.get("reset_token");
+        const email = urlParams.get("email");
+        if (resetToken) {
+            openForgotPasswordModal();
+            const emailInput = document.getElementById("forgotEmail");
+            const tokenInput = document.getElementById("forgotResetToken");
+            const form1 = document.getElementById("forgotPasswordFormStep1");
+            const form2 = document.getElementById("forgotPasswordFormStep2");
+            const targetEmailDisp = document.getElementById("forgotTargetEmailDisplay");
+
+            if (emailInput && email) emailInput.value = email;
+            if (tokenInput) tokenInput.value = resetToken;
+            if (targetEmailDisp && email) targetEmailDisp.textContent = email;
+            if (form1) form1.classList.add("hidden");
+            if (form2) form2.classList.remove("hidden");
+        }
+    } catch (e) {}
+});
+
+// Expose functions to global window scope
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.openForgotPasswordModal = openForgotPasswordModal;
+window.closeForgotPasswordModal = closeForgotPasswordModal;
+window.handleForgotPasswordSubmit = handleForgotPasswordSubmit;
+window.handleResetPasswordSubmit = handleResetPasswordSubmit;
+
+
 

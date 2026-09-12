@@ -836,4 +836,43 @@ class SupabaseDatabase:
                 pass
         return True
 
+    def save_password_reset_token(self, email: str, token: str, expires_at_iso: str) -> Dict[str, Any]:
+        if not hasattr(self, "_in_memory_reset_tokens"):
+            self._in_memory_reset_tokens = {}
+        payload = {
+            "email": email.strip().lower(),
+            "token": token,
+            "expires_at": expires_at_iso,
+            "used": False
+        }
+        self._in_memory_reset_tokens[token] = payload
+        if self.is_supabase_configured:
+            try:
+                self.insert_row("password_resets", payload)
+            except Exception:
+                pass
+        return payload
+
+    def get_password_reset_token(self, token: str) -> Optional[Dict[str, Any]]:
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("password_resets", {"token": token})
+                if rows:
+                    return rows[0]
+            except Exception:
+                pass
+        if hasattr(self, "_in_memory_reset_tokens"):
+            return self._in_memory_reset_tokens.get(token)
+        return None
+
+    def invalidate_password_reset_token(self, token: str):
+        if hasattr(self, "_in_memory_reset_tokens") and token in self._in_memory_reset_tokens:
+            self._in_memory_reset_tokens[token]["used"] = True
+        if self.is_supabase_configured:
+            try:
+                self.update_row("password_resets", {"token": token}, {"used": True})
+            except Exception:
+                pass
+
 db = SupabaseDatabase()
+

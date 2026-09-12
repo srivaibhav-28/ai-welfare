@@ -230,6 +230,20 @@ class ApiService {
         });
     }
 
+    static async forgotPassword(email) {
+        return await this.request("/api/auth/forgot-password", {
+            method: "POST",
+            body: JSON.stringify({ email })
+        });
+    }
+
+    static async resetPassword(email, token, newPassword) {
+        return await this.request("/api/auth/reset-password", {
+            method: "POST",
+            body: JSON.stringify({ email, token, new_password: newPassword })
+        });
+    }
+
     static async getCurrentUser() {
         return await this.request("/api/auth/me");
     }
