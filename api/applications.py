@@ -459,6 +459,24 @@ async def direct_apply_for_scheme(req: ApplicationCreate, user: Dict[str, Any] =
         "security_check": fraud_res
     }
 
+@app.put("/api/applications/{app_id}/status")
+async def update_app_status(
+    app_id: str,
+    req: ApplicationStatusUpdate,
+    admin: Dict[str, Any] = Depends(require_admin_user)
+):
+    app_obj = db.get_application_by_id(app_id)
+    if not app_obj:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    old_status = app_obj.get("status", "Submitted")
+    updated = db.update_application_status(app_id, req.status, req.remarks)
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update application status")
+
+    timeline = updated.get("timeline_history", [])
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
     if req.status == "Approved":
         for t in timeline:
             t["status"] = "Completed"
