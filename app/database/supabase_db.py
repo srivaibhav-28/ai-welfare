@@ -682,6 +682,19 @@ class SupabaseDatabase:
         apps = self.fetch_rows("applications", filters)
         return apps
 
+    def get_application_by_id(self, app_id: str) -> Optional[Dict[str, Any]]:
+        if self.is_supabase_configured:
+            try:
+                rows = self.fetch_rows("applications", {"id": app_id})
+                if rows:
+                    return rows[0]
+            except Exception:
+                pass
+        for a in self._in_memory_applications:
+            if a.get("id") == app_id:
+                return a
+        return None
+
     def add_application(self, app_data: Dict[str, Any]):
         core_app_columns = {
             "id", "user_id", "user_name", "user_email", "scheme_id",

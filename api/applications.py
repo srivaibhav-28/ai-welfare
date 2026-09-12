@@ -474,7 +474,7 @@ async def update_app_status(
     if not updated:
         raise HTTPException(status_code=500, detail="Failed to update application status")
 
-    timeline = updated.get("timeline_history", [])
+    timeline = updated.get("timeline_history") or app_obj.get("timeline_history") or []
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     if req.status == "Approved":
