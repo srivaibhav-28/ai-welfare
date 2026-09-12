@@ -4081,26 +4081,45 @@ let adminPaymentsList = [];
 async function loadAdminPayments() {
     try {
         const data = await ApiService.getPayments();
-        if (data && data.analytics) {
-            const a = data.analytics;
-            const elTotal = document.getElementById("payStatTotal") || document.getElementById("pm-total-count");
-            const elPend = document.getElementById("payStatPending") || document.getElementById("pm-pending-count");
-            const elProc = document.getElementById("payStatProcessing") || document.getElementById("pm-processing-count");
-            const elComp = document.getElementById("payStatCompleted") || document.getElementById("pm-completed-count");
-            const elFail = document.getElementById("payStatFailed") || document.getElementById("pm-failed-count");
-            const elCanc = document.getElementById("payStatCancelled") || document.getElementById("pm-cancelled-count");
-            const elAmt = document.getElementById("payStatTotalPaid") || document.getElementById("pm-total-amount");
+        console.log("API", data);
+        console.log("Analytics", data ? data.analytics : null);
+        console.log("Payments", data ? (data.payments || data) : null);
 
-            if (elTotal) elTotal.textContent = a.total_payments ?? a.total_count ?? 0;
-            if (elPend) elPend.textContent = a.pending ?? a.pending_count ?? 0;
-            if (elProc) elProc.textContent = a.processing ?? a.processing_count ?? 0;
-            if (elComp) elComp.textContent = a.completed ?? a.completed_count ?? 0;
-            if (elFail) elFail.textContent = a.failed ?? a.failed_count ?? 0;
-            if (elCanc) elCanc.textContent = a.cancelled ?? a.cancelled_count ?? 0;
-            if (elAmt) elAmt.textContent = "₹" + Number(a.total_amount_paid || 0).toLocaleString("en-IN");
-        }
+        const paymentsArray = (data && Array.isArray(data.payments)) 
+            ? data.payments 
+            : ((data && Array.isArray(data.data)) 
+                ? data.data 
+                : ((data && Array.isArray(data.items)) 
+                    ? data.items 
+                    : (Array.isArray(data) ? data : [])));
 
-        adminPaymentsList = (data && Array.isArray(data.payments)) ? data.payments : [];
+        const analyticsObj = (data && data.analytics) ? data.analytics : {
+            total_payments: paymentsArray.length,
+            pending: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "pending").length,
+            processing: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "processing").length,
+            completed: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "completed").length,
+            failed: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "failed").length,
+            cancelled: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "cancelled").length,
+            total_amount_paid: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "completed").reduce((sum, p) => sum + Number(p.amount || 0), 0)
+        };
+
+        const elTotal = document.getElementById("payStatTotal");
+        const elPend = document.getElementById("payStatPending");
+        const elProc = document.getElementById("payStatProcessing");
+        const elComp = document.getElementById("payStatCompleted");
+        const elFail = document.getElementById("payStatFailed");
+        const elCanc = document.getElementById("payStatCancelled");
+        const elAmt = document.getElementById("payStatTotalPaid");
+
+        if (elTotal) elTotal.textContent = analyticsObj.total_payments ?? paymentsArray.length;
+        if (elPend) elPend.textContent = analyticsObj.pending ?? 0;
+        if (elProc) elProc.textContent = analyticsObj.processing ?? 0;
+        if (elComp) elComp.textContent = analyticsObj.completed ?? 0;
+        if (elFail) elFail.textContent = analyticsObj.failed ?? 0;
+        if (elCanc) elCanc.textContent = analyticsObj.cancelled ?? 0;
+        if (elAmt) elAmt.textContent = "₹" + Number(analyticsObj.total_amount_paid || 0).toLocaleString("en-IN");
+
+        adminPaymentsList = paymentsArray;
         filterAdminPaymentsTable();
     } catch (err) {
         console.error("Error loading admin payments:", err);
@@ -4109,18 +4128,18 @@ async function loadAdminPayments() {
 }
 
 function filterAdminPaymentsTable() {
-    const searchVal = (document.getElementById("adminPaySearch")?.value || document.getElementById("admin-payment-search")?.value || "").toLowerCase().trim();
-    const statusVal = (document.getElementById("adminPayFilterStatus")?.value || document.getElementById("admin-payment-status-filter")?.value || "all").toLowerCase().trim();
+    const searchVal = (document.getElementById("adminPaySearch")?.value || "").toLowerCase().trim();
+    const statusVal = (document.getElementById("adminPayFilterStatus")?.value || "all").toLowerCase().trim();
 
     let filtered = adminPaymentsList.filter(p => {
         const matchesSearch = !searchVal || 
-            (p.payment_id || "").toLowerCase().includes(searchVal) ||
+            (p.payment_id || p.id || "").toLowerCase().includes(searchVal) ||
             (p.application_id || "").toLowerCase().includes(searchVal) ||
-            (p.beneficiary_name || "").toLowerCase().includes(searchVal) ||
+            (p.beneficiary_name || p.user_name || "").toLowerCase().includes(searchVal) ||
             (p.scheme_name || "").toLowerCase().includes(searchVal) ||
             (p.payment_reference || "").toLowerCase().includes(searchVal);
 
-        const matchesStatus = statusVal === "all" || (p.payment_status || "").toLowerCase() === statusVal;
+        const matchesStatus = statusVal === "all" || (p.payment_status || "pending").toLowerCase() === statusVal;
 
         return matchesSearch && matchesStatus;
     });
@@ -4129,15 +4148,18 @@ function filterAdminPaymentsTable() {
 }
 
 function renderAdminPaymentsTable(payments) {
-    const tbody = document.getElementById("adminPaymentsTableBody") || document.getElementById("admin-payments-table-body");
-    if (!tbody) return;
+    const tbody = document.getElementById("adminPaymentsTableBody");
+    if (!tbody) {
+        console.error("[RENDER PAYMENTS TABLE ERROR]: tbody element not found in DOM");
+        return;
+    }
 
     tbody.innerHTML = "";
 
-    if (payments.length === 0) {
+    if (!Array.isArray(payments) || payments.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-8 text-slate-400 font-medium text-xs">
+                <td colspan="8" class="text-center py-8 text-slate-400 font-medium text-xs">
                     No welfare payments match the selected criteria
                 </td>
             </tr>
@@ -4150,23 +4172,31 @@ function renderAdminPaymentsTable(payments) {
         tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
 
         const badgeClass = getPaymentBadgeClass(p.payment_status);
+        const pId = p.payment_id || p.id || 'N/A';
+        const appId = p.application_id || 'N/A';
+        const benName = p.beneficiary_name || p.user_name || 'N/A';
+        const schName = p.scheme_name || 'N/A';
+        const statusStr = p.payment_status || 'Pending';
+        const refStr = p.payment_reference || '—';
+        const appDate = p.approved_at ? p.approved_at.split('T')[0] : (p.created_at ? p.created_at.split('T')[0] : '—');
 
         tr.innerHTML = `
             <td class="py-3 px-4 font-mono font-bold text-xs text-indigo-600">
-                ${p.payment_id}
-                <div class="text-[10px] text-slate-400 font-normal">App: ${p.application_id}</div>
+                ${pId}
+                <div class="text-[10px] text-slate-400 font-normal">App: ${appId}</div>
             </td>
-            <td class="py-3 px-4 font-bold text-slate-800 text-xs">${p.beneficiary_name || 'N/A'}</td>
-            <td class="py-3 px-4 text-xs font-semibold text-slate-700">${p.scheme_name}</td>
+            <td class="py-3 px-4 font-bold text-slate-800 text-xs">${benName}</td>
+            <td class="py-3 px-4 text-xs font-semibold text-slate-700">${schName}</td>
             <td class="py-3 px-4 font-extrabold text-emerald-700 text-xs">₹${Number(p.amount || 0).toLocaleString("en-IN")}</td>
             <td class="py-3 px-4">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${badgeClass}">
-                    ${p.payment_status}
+                    ${statusStr}
                 </span>
             </td>
-            <td class="py-3 px-4 font-mono text-xs text-slate-700 font-semibold">${p.payment_reference || '—'}</td>
+            <td class="py-3 px-4 font-mono text-xs text-slate-700 font-semibold">${refStr}</td>
+            <td class="py-3 px-4 text-xs font-semibold text-slate-400">${appDate}</td>
             <td class="py-3 px-4 text-right">
-                <button onclick="openUpdatePaymentModal('${p.payment_id}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200/80 flex items-center gap-1 ml-auto cursor-pointer">
+                <button onclick="openUpdatePaymentModal('${pId}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200/80 flex items-center gap-1 ml-auto cursor-pointer">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Update Status
                 </button>
             </td>

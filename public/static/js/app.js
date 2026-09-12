@@ -1330,11 +1330,34 @@ async function loadApplicationsView() {
     try {
         const apps = await ApiService.getApplications();
         state.applications = apps || [];
+        try {
+            const payRes = await ApiService.getMyPayments();
+            state.myPayments = (payRes && Array.isArray(payRes.payments)) ? payRes.payments : (Array.isArray(payRes) ? payRes : []);
+        } catch (pErr) {
+            state.myPayments = [];
+        }
         filterApplicationsTracker();
         const eligibleList = (state.recommendations || []).filter(r => r.is_eligible);
         updateQuickStats(eligibleList.length, state.applications.length);
     } catch (e) {
         console.error("App load error:", e);
+    }
+}
+
+function getPaymentBadgeClass(status) {
+    switch (status) {
+        case "Completed":
+            return "bg-emerald-100 text-emerald-800 border-emerald-300";
+        case "Processing":
+            return "bg-blue-100 text-blue-800 border-blue-300";
+        case "Pending":
+            return "bg-amber-100 text-amber-800 border-amber-300";
+        case "Failed":
+            return "bg-rose-100 text-rose-800 border-rose-300";
+        case "Cancelled":
+            return "bg-slate-100 text-slate-700 border-slate-300";
+        default:
+            return "bg-amber-100 text-amber-800 border-amber-300";
     }
 }
 
@@ -1402,6 +1425,11 @@ function renderApplicationsList(apps) {
         const uploadedDocs = app.uploaded_documents || {};
         const docsCount = Object.keys(uploadedDocs).length;
 
+        // Payment details only if application is Approved
+        const payment = (app.status === "Approved" && Array.isArray(state.myPayments)) 
+            ? state.myPayments.find(p => p.application_id === app.id) 
+            : null;
+
         card.innerHTML = `
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
@@ -1444,6 +1472,43 @@ function renderApplicationsList(apps) {
                     </div>
                 </div>
             </div>
+
+            ${app.status === "Approved" ? `
+                <!-- CITIZEN WELFARE PAYMENT INFORMATION (Approved Only) -->
+                <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-3 shadow-xs">
+                    <div class="flex items-center justify-between border-b border-emerald-200/80 pb-2">
+                        <span class="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
+                            <i data-lucide="credit-card" class="w-4 h-4 text-emerald-600"></i> Welfare Payment Details
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-full font-extrabold border text-[11px] ${getPaymentBadgeClass(payment ? payment.payment_status : 'Pending')}">
+                            ${payment ? payment.payment_status : 'Pending'}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-slate-700">
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Amount</span>
+                            <span class="font-extrabold text-emerald-700 text-sm">${payment && payment.amount ? '₹' + Number(payment.amount).toLocaleString('en-IN') : '₹' + (app.amount ? Number(app.amount).toLocaleString('en-IN') : '0')}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Payment Reference</span>
+                            <span class="font-mono font-bold text-slate-800 text-[11px]">${payment && payment.payment_reference ? payment.payment_reference : 'Pending Generation'}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Approved Date</span>
+                            <span class="font-semibold text-slate-800 text-[11px]">${payment && payment.approved_at ? payment.approved_at.split('T')[0] : (app.applied_date || 'Approved')}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500 font-semibold uppercase">Paid Date</span>
+                            <span class="font-semibold text-slate-800 text-[11px]">${payment && payment.paid_at ? payment.paid_at.split('T')[0] : 'Pending'}</span>
+                        </div>
+                    </div>
+                    ${payment && payment.remarks ? `
+                        <div class="text-[11px] text-emerald-800 pt-1 border-t border-emerald-200/60 font-medium">
+                            <strong>Remarks:</strong> ${payment.remarks}
+                        </div>
+                    ` : ''}
+                </div>
+            ` : ''}
 
             ${app.remarks ? `
                 <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 flex items-start gap-2.5">
@@ -1942,6 +2007,8 @@ function switchAdminSubTab(subTabName) {
         loadAdminReports();
     } else if (subTabName === "profile") {
         loadAdminProfile();
+    } else if (subTabName === "payments") {
+        loadAdminPayments();
     }
 
     initLucide();
@@ -3828,5 +3895,426 @@ window.loadAdminSchemes = loadAdminSchemes;
 window.filterUserRole = filterUserRole;
 window.openApplicationTimelineModal = openApplicationTimelineModal;
 window.closeTimelineModal = closeTimelineModal;
+
+// PASSWORD VISIBILITY TOGGLE & FORGOT PASSWORD MODAL HANDLERS
+function togglePasswordVisibility(inputId, btnElement) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === "password";
+    input.type = isPassword ? "text" : "password";
+
+    if (btnElement) {
+        btnElement.innerHTML = `<i data-lucide="${isPassword ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>`;
+        if (window.lucide && typeof window.lucide.createIcons === "function") {
+            window.lucide.createIcons();
+        }
+    }
+}
+
+function openForgotPasswordModal() {
+    const modal = document.getElementById("forgotPasswordModal");
+    if (!modal) return;
+
+    // Reset forms
+    const form1 = document.getElementById("forgotPasswordFormStep1");
+    const form2 = document.getElementById("forgotPasswordFormStep2");
+    if (form1) form1.classList.remove("hidden");
+    if (form2) form2.classList.add("hidden");
+
+    // Pre-fill email from login input if available
+    const landingEmailInput = document.getElementById("landingAuthEmail");
+    const adminEmailInput = document.getElementById("adminAuthEmail");
+    const forgotEmailInput = document.getElementById("forgotEmail");
+    if (forgotEmailInput) {
+        const prefEmail = (landingEmailInput && landingEmailInput.value) || (adminEmailInput && adminEmailInput.value) || "";
+        forgotEmailInput.value = prefEmail;
+    }
+
+    modal.classList.remove("hidden");
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+}
+
+function closeForgotPasswordModal() {
+    const modal = document.getElementById("forgotPasswordModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+async function handleForgotPasswordSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const emailInput = document.getElementById("forgotEmail");
+    const btn = document.getElementById("btnForgotStep1Submit");
+
+    const email = emailInput ? emailInput.value.trim() : "";
+    if (!email) {
+        showNotification("Input Error", "Please enter your registered email address.", "error");
+        return;
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending Token...`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+
+        const res = await ApiService.forgotPassword(email);
+
+        showNotification("Reset Code Sent", res.message || "Password reset instructions sent to email.", "success");
+
+        // Move to Step 2
+        const form1 = document.getElementById("forgotPasswordFormStep1");
+        const form2 = document.getElementById("forgotPasswordFormStep2");
+        const targetEmailDisp = document.getElementById("forgotTargetEmailDisplay");
+        const resetTokenInput = document.getElementById("forgotResetToken");
+
+        if (form1) form1.classList.add("hidden");
+        if (form2) form2.classList.remove("hidden");
+        if (targetEmailDisp) targetEmailDisp.textContent = email;
+        if (resetTokenInput) resetTokenInput.value = "";
+
+    } catch (err) {
+        showNotification("Forgot Password Error", err.message || "Failed to process forgot password request.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Send Reset Link & Code`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+    }
+}
+
+async function handleResetPasswordSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const emailInput = document.getElementById("forgotEmail");
+    const tokenInput = document.getElementById("forgotResetToken");
+    const newPassInput = document.getElementById("forgotNewPassword");
+    const confirmPassInput = document.getElementById("forgotConfirmPassword");
+    const btn = document.getElementById("btnForgotStep2Submit");
+
+    const email = emailInput ? emailInput.value.trim() : "";
+    const token = tokenInput ? tokenInput.value.trim() : "";
+    const newPass = newPassInput ? newPassInput.value : "";
+    const confirmPass = confirmPassInput ? confirmPassInput.value : "";
+
+    if (!email || !token) {
+        showNotification("Validation Error", "Email address and Reset Token are required.", "error");
+        return;
+    }
+
+    if (!newPass || newPass.length < 6) {
+        showNotification("Validation Error", "New password must be at least 6 characters long.", "error");
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        showNotification("Validation Error", "New password and Confirm Password do not match.", "error");
+        return;
+    }
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Updating Password...`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+
+        const res = await ApiService.resetPassword(email, token, newPass);
+
+        showNotification("Password Updated", res.message || "Your password has been reset successfully!", "success");
+
+        closeForgotPasswordModal();
+
+        // Pre-fill email and password in login form
+        const landingEmailInput = document.getElementById("landingAuthEmail");
+        const landingPasswordInput = document.getElementById("landingAuthPassword");
+        if (landingEmailInput) landingEmailInput.value = email;
+        if (landingPasswordInput) landingPasswordInput.value = newPass;
+
+    } catch (err) {
+        showNotification("Reset Password Error", err.message || "Failed to reset password.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Update Password & Sign In`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+    }
+}
+
+// Check URL query parameters for reset token on initialization
+window.addEventListener("DOMContentLoaded", () => {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const resetToken = urlParams.get("reset_token");
+        const email = urlParams.get("email");
+        if (resetToken) {
+            openForgotPasswordModal();
+            const emailInput = document.getElementById("forgotEmail");
+            const tokenInput = document.getElementById("forgotResetToken");
+            const form1 = document.getElementById("forgotPasswordFormStep1");
+            const form2 = document.getElementById("forgotPasswordFormStep2");
+            const targetEmailDisp = document.getElementById("forgotTargetEmailDisplay");
+
+            if (emailInput && email) emailInput.value = email;
+            if (tokenInput) tokenInput.value = resetToken;
+            if (targetEmailDisp && email) targetEmailDisp.textContent = email;
+            if (form1) form1.classList.add("hidden");
+            if (form2) form2.classList.remove("hidden");
+        }
+    } catch (e) {}
+});
+
+// Expose functions to global window scope
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.openForgotPasswordModal = openForgotPasswordModal;
+window.closeForgotPasswordModal = closeForgotPasswordModal;
+window.handleForgotPasswordSubmit = handleForgotPasswordSubmit;
+window.handleResetPasswordSubmit = handleResetPasswordSubmit;
+
+// ====================================================================
+// ADMIN WELFARE PAYMENT MANAGEMENT SYSTEM
+// ====================================================================
+let adminPaymentsList = [];
+
+async function loadAdminPayments() {
+    try {
+        const data = await ApiService.getPayments();
+        console.log("API", data);
+        console.log("Analytics", data ? data.analytics : null);
+        console.log("Payments", data ? (data.payments || data) : null);
+
+        const paymentsArray = (data && Array.isArray(data.payments)) 
+            ? data.payments 
+            : ((data && Array.isArray(data.data)) 
+                ? data.data 
+                : ((data && Array.isArray(data.items)) 
+                    ? data.items 
+                    : (Array.isArray(data) ? data : [])));
+
+        const analyticsObj = (data && data.analytics) ? data.analytics : {
+            total_payments: paymentsArray.length,
+            pending: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "pending").length,
+            processing: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "processing").length,
+            completed: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "completed").length,
+            failed: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "failed").length,
+            cancelled: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "cancelled").length,
+            total_amount_paid: paymentsArray.filter(p => (p.payment_status || "").toLowerCase() === "completed").reduce((sum, p) => sum + Number(p.amount || 0), 0)
+        };
+
+        const elTotal = document.getElementById("payStatTotal");
+        const elPend = document.getElementById("payStatPending");
+        const elProc = document.getElementById("payStatProcessing");
+        const elComp = document.getElementById("payStatCompleted");
+        const elFail = document.getElementById("payStatFailed");
+        const elCanc = document.getElementById("payStatCancelled");
+        const elAmt = document.getElementById("payStatTotalPaid");
+
+        if (elTotal) elTotal.textContent = analyticsObj.total_payments ?? paymentsArray.length;
+        if (elPend) elPend.textContent = analyticsObj.pending ?? 0;
+        if (elProc) elProc.textContent = analyticsObj.processing ?? 0;
+        if (elComp) elComp.textContent = analyticsObj.completed ?? 0;
+        if (elFail) elFail.textContent = analyticsObj.failed ?? 0;
+        if (elCanc) elCanc.textContent = analyticsObj.cancelled ?? 0;
+        if (elAmt) elAmt.textContent = "₹" + Number(analyticsObj.total_amount_paid || 0).toLocaleString("en-IN");
+
+        adminPaymentsList = paymentsArray;
+        filterAdminPaymentsTable();
+    } catch (err) {
+        console.error("Error loading admin payments:", err);
+        showNotification("Error", "Failed to load payments database.", "error");
+    }
+}
+
+function filterAdminPaymentsTable() {
+    const searchVal = (document.getElementById("adminPaySearch")?.value || "").toLowerCase().trim();
+    const statusVal = (document.getElementById("adminPayFilterStatus")?.value || "all").toLowerCase().trim();
+
+    let filtered = adminPaymentsList.filter(p => {
+        const matchesSearch = !searchVal || 
+            (p.payment_id || p.id || "").toLowerCase().includes(searchVal) ||
+            (p.application_id || "").toLowerCase().includes(searchVal) ||
+            (p.beneficiary_name || p.user_name || "").toLowerCase().includes(searchVal) ||
+            (p.scheme_name || "").toLowerCase().includes(searchVal) ||
+            (p.payment_reference || "").toLowerCase().includes(searchVal);
+
+        const matchesStatus = statusVal === "all" || (p.payment_status || "pending").toLowerCase() === statusVal;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    renderAdminPaymentsTable(filtered);
+}
+
+function renderAdminPaymentsTable(payments) {
+    const tbody = document.getElementById("adminPaymentsTableBody");
+    if (!tbody) {
+        console.error("[RENDER PAYMENTS TABLE ERROR]: tbody element not found in DOM");
+        return;
+    }
+
+    tbody.innerHTML = "";
+
+    if (!Array.isArray(payments) || payments.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-8 text-slate-400 font-medium text-xs">
+                    No welfare payments match the selected criteria
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    payments.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100";
+
+        const badgeClass = getPaymentBadgeClass(p.payment_status);
+        const pId = p.payment_id || p.id || 'N/A';
+        const appId = p.application_id || 'N/A';
+        const benName = p.beneficiary_name || p.user_name || 'N/A';
+        const schName = p.scheme_name || 'N/A';
+        const statusStr = p.payment_status || 'Pending';
+        const refStr = p.payment_reference || '—';
+        const appDate = p.approved_at ? p.approved_at.split('T')[0] : (p.created_at ? p.created_at.split('T')[0] : '—');
+
+        tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-bold text-xs text-indigo-600">
+                ${pId}
+                <div class="text-[10px] text-slate-400 font-normal">App: ${appId}</div>
+            </td>
+            <td class="py-3 px-4 font-bold text-slate-800 text-xs">${benName}</td>
+            <td class="py-3 px-4 text-xs font-semibold text-slate-700">${schName}</td>
+            <td class="py-3 px-4 font-extrabold text-emerald-700 text-xs">₹${Number(p.amount || 0).toLocaleString("en-IN")}</td>
+            <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${badgeClass}">
+                    ${statusStr}
+                </span>
+            </td>
+            <td class="py-3 px-4 font-mono text-xs text-slate-700 font-semibold">${refStr}</td>
+            <td class="py-3 px-4 text-xs font-semibold text-slate-400">${appDate}</td>
+            <td class="py-3 px-4 text-right">
+                <button onclick="openUpdatePaymentModal('${pId}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200/80 flex items-center gap-1 ml-auto cursor-pointer">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Update Status
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+}
+
+function openUpdatePaymentModal(paymentId) {
+    const payment = adminPaymentsList.find(p => p.payment_id === paymentId);
+    if (!payment) return;
+
+    document.getElementById("paymentModalId").value = payment.payment_id;
+    document.getElementById("paymentModalBeneficiary").textContent = payment.beneficiary_name || 'N/A';
+    document.getElementById("paymentModalScheme").textContent = payment.scheme_name;
+    document.getElementById("paymentModalAmount").textContent = "₹" + Number(payment.amount || 0).toLocaleString("en-IN");
+    document.getElementById("paymentModalCurrentStatus").textContent = payment.payment_status;
+    document.getElementById("paymentModalCurrentStatus").className = `font-extrabold ${getPaymentBadgeClass(payment.payment_status)}`;
+
+    const statusSelect = document.getElementById("paymentModalStatus");
+    if (statusSelect) statusSelect.value = payment.payment_status;
+
+    document.getElementById("paymentModalRef").value = payment.payment_reference || "";
+    document.getElementById("paymentModalRemarks").value = payment.remarks || "";
+
+    const modal = document.getElementById("updatePaymentModal");
+    if (modal) modal.classList.remove("hidden");
+    if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+}
+
+function closeUpdatePaymentModal() {
+    const modal = document.getElementById("updatePaymentModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+async function handlePaymentStatusSubmit(event) {
+    if (event) event.preventDefault();
+
+    const paymentId = document.getElementById("paymentModalId").value;
+    const newStatus = document.getElementById("paymentModalStatus").value;
+    const paymentRef = document.getElementById("paymentModalRef").value;
+    const remarks = document.getElementById("paymentModalRemarks").value;
+
+    const btn = document.getElementById("btnPaymentSubmit");
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Updating...`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+
+        const res = await ApiService.updatePaymentStatus(paymentId, {
+            payment_status: newStatus,
+            payment_reference: paymentRef,
+            remarks: remarks
+        });
+
+        showNotification("Payment Updated", res.message || `Payment ${paymentId} updated to "${newStatus}". Email notification sent.`, "success");
+        closeUpdatePaymentModal();
+        await loadAdminPayments();
+
+    } catch (err) {
+        showNotification("Update Error", err.message || "Failed to update payment status.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Update Status & Notify`;
+            if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+        }
+    }
+}
+
+function downloadPaymentReportCSV() {
+    if (!adminPaymentsList || adminPaymentsList.length === 0) {
+        showNotification("Export Notice", "No payments available to export.", "info");
+        return;
+    }
+
+    const headers = ["Payment ID", "Application ID", "User ID", "Beneficiary Name", "Scheme Name", "Amount (INR)", "Payment Status", "Payment Reference", "Approved By", "Approved At", "Paid At", "Remarks"];
+    const rows = adminPaymentsList.map(p => [
+        `"${p.payment_id || ''}"`,
+        `"${p.application_id || ''}"`,
+        `"${p.user_id || ''}"`,
+        `"${(p.beneficiary_name || '').replace(/"/g, '""')}"`,
+        `"${(p.scheme_name || '').replace(/"/g, '""')}"`,
+        p.amount || 0,
+        `"${p.payment_status || ''}"`,
+        `"${p.payment_reference || ''}"`,
+        `"${p.approved_by || ''}"`,
+        `"${p.approved_at || ''}"`,
+        `"${p.paid_at || ''}"`,
+        `"${(p.remarks || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `welfare_payments_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification("Export Complete", "Welfare payments report CSV downloaded successfully.", "success");
+}
+
+// Window bindings for payment management
+window.loadAdminPayments = loadAdminPayments;
+window.filterAdminPaymentsTable = filterAdminPaymentsTable;
+window.openUpdatePaymentModal = openUpdatePaymentModal;
+window.closeUpdatePaymentModal = closeUpdatePaymentModal;
+window.handlePaymentStatusSubmit = handlePaymentStatusSubmit;
+window.downloadPaymentReportCSV = downloadPaymentReportCSV;
+
+
 
 

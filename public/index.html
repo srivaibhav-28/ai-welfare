@@ -397,7 +397,16 @@
                                                 class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                                             <input type="password" id="landingAuthPassword" placeholder="••••••••"
                                                 required
-                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                                class="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                            <button type="button" onclick="togglePasswordVisibility('landingAuthPassword', this)"
+                                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-600 focus:outline-none cursor-pointer p-1 transition-colors" title="Toggle password visibility">
+                                                <i data-lucide="eye" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                        <div id="landingAuthForgotPasswordRow" class="flex justify-end mt-1.5">
+                                            <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-bold text-amber-600 hover:text-amber-700 hover:underline cursor-pointer focus:outline-none">
+                                                Forgot Password?
+                                            </button>
                                         </div>
                                     </div>
 
@@ -407,7 +416,11 @@
                                             <i data-lucide="lock"
                                                 class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                                             <input type="password" id="landingAuthConfirmPassword" placeholder="••••••••"
-                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                                class="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all">
+                                            <button type="button" onclick="togglePasswordVisibility('landingAuthConfirmPassword', this)"
+                                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-600 focus:outline-none cursor-pointer p-1 transition-colors" title="Toggle password visibility">
+                                                <i data-lucide="eye" class="w-4 h-4"></i>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -643,7 +656,16 @@
                                                 class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                                             <input type="password" id="adminAuthPassword" placeholder="••••••••"
                                                 required
-                                                class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                                class="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all">
+                                            <button type="button" onclick="togglePasswordVisibility('adminAuthPassword', this)"
+                                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 focus:outline-none cursor-pointer p-1 transition-colors" title="Toggle password visibility">
+                                                <i data-lucide="eye" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                        <div class="flex justify-end mt-1.5">
+                                            <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-bold text-purple-600 hover:text-purple-700 hover:underline cursor-pointer focus:outline-none">
+                                                Forgot Password?
+                                            </button>
                                         </div>
                                     </div>
 
@@ -1274,6 +1296,12 @@
                                     <i data-lucide="user-cog" class="w-4 h-4 text-indigo-400"></i>
                                     <span>9. Admin Profile</span>
                                 </button>
+
+                                <button onclick="switchAdminSubTab('payments')" id="adminNav-payments"
+                                    class="admin-sidebar-btn w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+                                    <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
+                                    <span>10. Payment Mgmt</span>
+                                </button>
                             </nav>
                         </div>
 
@@ -1847,6 +1875,96 @@
                                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Test Supabase DB Connection
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- SCREEN 10: PAYMENT MANAGEMENT -->
+                        <div id="adminPanel-payments" class="admin-panel-screen space-y-6 hidden">
+                            <div class="pb-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <h2 class="text-2xl font-black text-white tracking-tight">Welfare Payment & DBT Distribution Desk</h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Manage Direct Benefit Transfers for approved welfare beneficiaries. Live Supabase DB sync.</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="downloadPaymentReportCSV()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                                        <i data-lucide="download" class="w-4 h-4"></i> Export CSV Report
+                                    </button>
+                                    <button onclick="loadAdminPayments()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Refresh Payments">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Payment Analytics Stat Cards -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Payments</span>
+                                    <div id="payStatTotal" class="text-xl font-black text-white mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Pending</span>
+                                    <div id="payStatPending" class="text-xl font-black text-amber-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Processing</span>
+                                    <div id="payStatProcessing" class="text-xl font-black text-sky-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Completed</span>
+                                    <div id="payStatCompleted" class="text-xl font-black text-emerald-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Failed</span>
+                                    <div id="payStatFailed" class="text-xl font-black text-rose-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Cancelled</span>
+                                    <div id="payStatCancelled" class="text-xl font-black text-slate-400 mt-1">0</div>
+                                </div>
+                                <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/80 col-span-2 sm:col-span-1">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Amount Paid</span>
+                                    <div id="payStatTotalPaid" class="text-xl font-black text-emerald-300 mt-1">₹0</div>
+                                </div>
+                            </div>
+
+                            <!-- Search & Filter Controls -->
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-800/60 p-4 rounded-2xl border border-slate-700/80">
+                                <div class="relative w-full sm:w-80">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                    <input type="text" id="adminPaySearch" oninput="loadAdminPayments()" placeholder="Search beneficiary, scheme, or App ID..."
+                                        class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-medium text-white focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <label class="text-xs font-bold text-slate-400 whitespace-nowrap">Filter Status:</label>
+                                    <select id="adminPayFilterStatus" onchange="loadAdminPayments()" class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-medium text-white focus:outline-none focus:border-indigo-500">
+                                        <option value="All">All Payment Statuses</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Failed">Failed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Payments Table -->
+                            <div class="bg-slate-800/60 p-5 rounded-2xl border border-slate-700/80 overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase">
+                                            <th class="p-3">Payment ID</th>
+                                            <th class="p-3">Beneficiary</th>
+                                            <th class="p-3">Scheme & App ID</th>
+                                            <th class="p-3">Amount (₹)</th>
+                                            <th class="p-3">Payment Status</th>
+                                            <th class="p-3">Bank Reference (UTR)</th>
+                                            <th class="p-3">Approved Date</th>
+                                            <th class="p-3">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminPaymentsTableBody" class="divide-y divide-slate-800 text-xs text-slate-200">
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </main>
@@ -2508,6 +2626,150 @@
                     Cancel
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- FORGOT / RESET PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative overflow-hidden">
+            <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Decorative Top Accent -->
+            <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600"></div>
+
+            <div class="text-center mb-6 pt-2">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <i data-lucide="key-round" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900" id="forgotModalTitle">Reset Your Password</h3>
+                <p class="text-xs text-slate-500 mt-1" id="forgotModalSubtitle">Enter your registered email to receive password reset instructions</p>
+            </div>
+
+            <!-- STEP 1: REQUEST RESET TOKEN FORM -->
+            <form id="forgotPasswordFormStep1" onsubmit="handleForgotPasswordSubmit(event); return false;" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Registered Email Address *</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="email" id="forgotEmail" placeholder="name@example.com" required
+                            class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all">
+                    </div>
+                </div>
+
+                <button type="submit" id="btnForgotStep1Submit"
+                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="send" class="w-4 h-4"></i> Send Reset Link & Code
+                </button>
+            </form>
+
+            <!-- STEP 2: RESET PASSWORD FORM (Hidden by default) -->
+            <form id="forgotPasswordFormStep2" onsubmit="handleResetPasswordSubmit(event); return false;" class="space-y-4 hidden">
+                <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-3 text-xs text-amber-800 font-medium">
+                    Reset code sent to <span id="forgotTargetEmailDisplay" class="font-bold"></span>. Check your inbox!
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Reset Token / Code *</label>
+                    <div class="relative">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="forgotResetToken" placeholder="Paste reset code from email" required
+                            class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">New Password *</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="password" id="forgotNewPassword" placeholder="Minimum 6 characters" required minlength="6"
+                            class="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all">
+                        <button type="button" onclick="togglePasswordVisibility('forgotNewPassword', this)"
+                            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-600 focus:outline-none cursor-pointer p-1 transition-colors" title="Toggle password visibility">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Confirm New Password *</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="password" id="forgotConfirmPassword" placeholder="Re-enter new password" required minlength="6"
+                            class="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all">
+                        <button type="button" onclick="togglePasswordVisibility('forgotConfirmPassword', this)"
+                            class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-600 focus:outline-none cursor-pointer p-1 transition-colors" title="Toggle password visibility">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnForgotStep2Submit"
+                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold text-sm shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> Update Password & Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- UPDATE PAYMENT STATUS MODAL (Admin) -->
+    <div id="updatePaymentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeUpdatePaymentModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Update Welfare Payment</h3>
+                    <p class="text-xs text-slate-500 font-medium">Manage payment state, transaction reference, and remarks</p>
+                </div>
+            </div>
+
+            <!-- Payment Summary Box -->
+            <div class="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-200/80 space-y-2 text-xs">
+                <div class="flex justify-between"><span class="text-slate-500 font-semibold">Beneficiary:</span> <span id="paymentModalBeneficiary" class="font-bold text-slate-800"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500 font-semibold">Scheme:</span> <span id="paymentModalScheme" class="font-bold text-slate-800"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500 font-semibold">Benefit Amount:</span> <span id="paymentModalAmount" class="font-bold text-emerald-700 text-sm"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500 font-semibold">Current Status:</span> <span id="paymentModalCurrentStatus" class="font-semibold"></span></div>
+            </div>
+
+            <form id="updatePaymentForm" onsubmit="handlePaymentStatusSubmit(event); return false;" class="space-y-4">
+                <input type="hidden" id="paymentModalId" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">New Payment Status *</label>
+                    <select id="paymentModalStatus" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all">
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Failed">Failed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Payment Reference / UTR Number</label>
+                    <input type="text" id="paymentModalRef" placeholder="e.g. UTR9876543210" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Remarks / Internal Notes</label>
+                    <textarea id="paymentModalRemarks" rows="2" placeholder="e.g. Disbursed via Bank Transfer" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeUpdatePaymentModal()" class="px-4 py-2.5 rounded-xl text-slate-600 font-semibold text-xs hover:bg-slate-100 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="btnPaymentSubmit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="save" class="w-4 h-4"></i> Update Status & Notify
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
