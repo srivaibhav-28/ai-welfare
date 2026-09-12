@@ -6,6 +6,7 @@ import traceback
 from typing import Dict, List, Any, Optional
 import requests
 from app.config import config
+from app.admin_constants import ADMIN_EMAIL, ADMIN_NAME, ADMIN_USER_ID, ADMIN_PASSWORD_HASH
 
 INITIAL_SCHEMES = [
     {
@@ -228,22 +229,13 @@ INITIAL_SCHEMES = [
 
 INITIAL_USERS = [
     {
-        "id": "usr-admin-01",
-        "email": "admin@aiwelfare.gov",
-        "password_hash": "Admin@123",
-        "name": "System Administrator",
+        "id": ADMIN_USER_ID,
+        "email": ADMIN_EMAIL,
+        "password_hash": ADMIN_PASSWORD_HASH,
+        "name": ADMIN_NAME,
         "role": "admin",
         "is_verified": True,
-        "profile": {}
-    },
-    {
-        "id": "usr-admin-02",
-        "email": "admin@welfare.gov",
-        "password_hash": "admin123",
-        "name": "System Administrator",
-        "role": "admin",
-        "is_verified": True,
-        "profile": {}
+        "profile": {"role": "admin"}
     },
     {
         "id": "usr-citizen-01",
@@ -515,10 +507,7 @@ class SupabaseDatabase:
         if self.is_supabase_configured:
             rows = self.fetch_rows("users", {"email": clean_email})
             if rows:
-                u = rows[0]
-                if clean_email == "admin@welfare.gov" and not u.get("password_hash"):
-                    u["password_hash"] = "admin123"
-                return u
+                return rows[0]
             return None
         for u in self._in_memory_users:
             if u.get("email", "").strip().lower() == clean_email:
@@ -536,7 +525,64 @@ class SupabaseDatabase:
                 return u
         return None
 
+    def ensure_single_admin(self) -> Dict[str, Any]:
+        """
+        Enforces single system administrator architecture in Supabase database.
+        Ensures public.users contains EXACTLY ONE admin record:
+        id = ADMIN_USER_ID, email = ADMIN_EMAIL, role = 'admin'.
+        Safely removes or converts any duplicate or secondary admin accounts.
+        """
+        admin_user = {
+            "id": ADMIN_USER_ID,
+            "email": ADMIN_EMAIL,
+            "password_hash": ADMIN_PASSWORD_HASH,
+            "name": ADMIN_NAME,
+            "mobile_number": "",
+            "role": "admin",
+            "is_verified": True,
+            "profile": {"role": "admin"}
+        }
+
+        # Keep in-memory cache synchronized with single admin
+        self._in_memory_users = [u for u in self._in_memory_users if u.get("role") != "admin" or u.get("id") == ADMIN_USER_ID]
+        if not any(u.get("id") == ADMIN_USER_ID for u in self._in_memory_users):
+            self._in_memory_users.insert(0, admin_user)
+
+        if self.is_supabase_configured:
+            try:
+                # 1. Fetch all user rows from Supabase
+                all_users = self.fetch_rows("users") or []
+                admin_rows = [u for u in all_users if u.get("role") == "admin" or u.get("email", "").strip().lower() == ADMIN_EMAIL]
+
+                # 2. Cleanup any secondary or duplicate admin accounts
+                for row in admin_rows:
+                    r_id = row.get("id")
+                    r_email = (row.get("email") or "").strip().lower()
+                    if r_id != ADMIN_USER_ID or r_email != ADMIN_EMAIL:
+                        if r_email != ADMIN_EMAIL:
+                            self.update_row("users", {"id": r_id}, {"role": "citizen"})
+                        else:
+                            self.delete_rows("users", {"id": r_id})
+
+                # 3. Ensure the single canonical admin record exists in Supabase
+                existing_canonical = self.fetch_rows("users", {"id": ADMIN_USER_ID})
+                if existing_canonical:
+                    self.update_row("users", {"id": ADMIN_USER_ID}, admin_user)
+                else:
+                    self.insert_row("users", admin_user)
+            except Exception as e:
+                print(f"[SINGLE ADMIN SYNC EXCEPTION]: {e}")
+
+        return admin_user
+
     def add_user(self, user: Dict[str, Any]):
+        user_email = user.get("email", "").strip().lower()
+        user_role = user.get("role", "citizen")
+        if user_role == "admin" and user_email != ADMIN_EMAIL:
+            raise ValueError(f"Creation of additional admin accounts ({user_email}) is strictly prohibited.")
+        if user_email == ADMIN_EMAIL:
+            return self.ensure_single_admin()
+
         # Maintain in-memory synchronization
         existing_idx = next((i for i, u in enumerate(self._in_memory_users) if u.get("id") == user.get("id") or u.get("email", "").lower() == user.get("email", "").lower()), None)
         if existing_idx is not None:

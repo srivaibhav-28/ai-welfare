@@ -8,7 +8,7 @@ ADMIN_NAME = os.getenv("ADMIN_NAME", "System Administrator").strip()
 _DEFAULT_ADMIN_HASH = os.getenv("ADMIN_PASSWORD_HASH") or "$pbkdf2-sha256$29000$nNO6d.5d6/0/B6CUstZ6zw$C7IDjSIOWLsw02bzgOYufBBx/sQa5rlXDLbocFkGq84"
 ADMIN_PASSWORD_HASH = _DEFAULT_ADMIN_HASH.strip()
 
-ADMIN_USER_ID = "usr-admin-system-001"
+ADMIN_USER_ID = os.getenv("ADMIN_USER_ID", "usr-admin-aadc2d").strip()
 
 def authenticate_admin(email: str, plain_password: str) -> bool:
     """
@@ -20,4 +20,4 @@ def authenticate_admin(email: str, plain_password: str) -> bool:
         return False
     if email.strip().lower() != ADMIN_EMAIL:
         return False
-    return verify_password(plain_password, ADMIN_PASSWORD_HASH) or plain_password in ["Admin@123456", "Admin@123"]
+    return verify_password(plain_password, ADMIN_PASSWORD_HASH)

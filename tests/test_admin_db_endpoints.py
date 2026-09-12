@@ -8,7 +8,7 @@ def test_admin_db_table_endpoints(monkeypatch):
     class FakeSupabaseDB:
         def __init__(self):
             self.rows = []
-            self.data = {"users": [{"id": "usr-admin-01", "email": "admin@welfare.gov", "password_hash": "admin123", "role": "admin", "name": "Admin"}]}
+            self.data = {"users": [{"id": "usr-admin-system-001", "email": "admin@welfare.gov", "password_hash": "admin123", "role": "admin", "name": "Admin"}]}
 
         def save_data(self):
             pass
@@ -26,7 +26,7 @@ def test_admin_db_table_endpoints(monkeypatch):
             for u in self.data.get("users", []):
                 if u.get("email") == email:
                     return u
-            return {"id": "usr-admin-01", "email": email, "role": "admin", "name": "Admin"}
+            return {"id": "usr-admin-system-001", "email": email, "role": "admin", "name": "Admin"}
 
         def get_users(self):
             return self.data.get("users", [])
@@ -50,7 +50,7 @@ def test_admin_db_table_endpoints(monkeypatch):
 
     client = TestClient(app)
 
-    token = "token_usr-admin-01_1"
+    token = "token_usr-admin-system-001_1"
     headers = {"Authorization": f"Bearer {token}"}
 
     response = client.get("/api/admin/db/users", headers=headers)

@@ -14,6 +14,8 @@ from app.services.auth_service import (
     store_pending_registration, verify_pending_otp, resend_pending_otp,
     get_pending_registration
 )
+from app.admin_constants import ADMIN_EMAIL, ADMIN_NAME, ADMIN_USER_ID, authenticate_admin
+
 
 app = FastAPI(title="AI Welfare Auth API", version="2.0.0")
 
@@ -58,10 +60,10 @@ async def register_user(req: UserRegister):
     clean_email = req.email.strip().lower()
     existing = db.get_user_by_email(clean_email)
 
-    if req.role == "admin":
+    if req.role == "admin" or clean_email == ADMIN_EMAIL:
         raise HTTPException(
             status_code=403,
-            detail="Admin registration is disabled. System administrator accounts must log in via Admin Portal."
+            detail="Admin registration is prohibited. System administrator accounts must log in via Admin Portal."
         )
 
     if existing and existing.get("is_verified", True):
@@ -199,6 +201,11 @@ async def resend_otp(req: OTPResendRequest):
 @app.post("/api/auth/google", response_model=TokenResponse)
 async def google_auth(req: GoogleAuthRequest):
     clean_email = req.email.strip().lower()
+    if req.role == "admin" or clean_email == ADMIN_EMAIL:
+        raise HTTPException(
+            status_code=403,
+            detail="Google login as admin is prohibited. System administrator accounts must log in via Admin Portal."
+        )
     auth_uuid = (req.id or req.user_id or req.google_id or "").strip()
     if not auth_uuid:
         auth_uuid = f"usr-{uuid.uuid4().hex[:8]}"
@@ -314,21 +321,17 @@ async def google_auth(req: GoogleAuthRequest):
 @app.post("/api/auth/login", response_model=TokenResponse)
 async def login_user(req: UserLogin):
     req_email = req.email.strip().lower()
+    if req_email == ADMIN_EMAIL:
+        raise HTTPException(
+            status_code=403,
+            detail="Administrator login must use the Admin Portal endpoint /api/admin/login."
+        )
     user = db.get_user_by_email(req_email)
-
-    # Seed default admin if requested admin account is not present in runtime DB
-    if not user and ("admin" in req_email or req_email in ["admin@aiwelfare.gov", "admin@welfare.gov"]):
-        admin_user = {
-            "id": f"usr-admin-{uuid.uuid4().hex[:6]}",
-            "email": req_email,
-            "password_hash": hash_password("Admin@123" if "aiwelfare" in req_email else "admin123"),
-            "name": "System Administrator",
-            "role": "admin",
-            "is_verified": True,
-            "profile": {}
-        }
-        db.add_user(admin_user)
-        user = admin_user
+    if user and user.get("role") == "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Administrator login must use the Admin Portal endpoint /api/admin/login."
+        )
 
     if not user:
         raise HTTPException(
@@ -373,7 +376,6 @@ async def login_user(req: UserLogin):
 
 @app.post("/api/admin/login", response_model=TokenResponse)
 async def admin_login_user(req: UserLogin):
-    from app.admin_constants import ADMIN_EMAIL, ADMIN_NAME, ADMIN_USER_ID, authenticate_admin
     req_email = req.email.strip().lower()
     print("=" * 80)
     print(f"[BACKEND ADMIN LOGIN REQUEST RECEIVED]: email='{req_email}'")
@@ -385,17 +387,16 @@ async def admin_login_user(req: UserLogin):
             detail="Invalid Admin Credentials. Access Denied."
         )
 
-    admin_user = {
-        "id": ADMIN_USER_ID,
+    try:
+        db.ensure_single_admin()
+    except Exception as e:
+        print(f"[ADMIN LOGIN SYNC WARNING]: {e}")
+    token = create_access_token({
+        "sub": ADMIN_USER_ID,
         "email": ADMIN_EMAIL,
-        "name": ADMIN_NAME,
-        "mobile_number": "",
         "role": "admin",
-        "is_verified": True,
-        "profile": {"role": "admin"}
-    }
-    db.add_user(admin_user)
-    token = create_access_token({"sub": ADMIN_USER_ID, "role": "admin"})
+        "name": ADMIN_NAME
+    })
 
     return {
         "access_token": token,
@@ -407,6 +408,17 @@ async def admin_login_user(req: UserLogin):
         "role": "admin",
         "is_verified": True
     }
+
+@app.post("/api/admin/register")
+@app.post("/api/admin/signup")
+@app.post("/api/admin/invite")
+@app.post("/api/admin/import")
+@app.post("/api/admin/promote")
+async def block_secondary_admin_creation_auth():
+    raise HTTPException(
+        status_code=403,
+        detail="Prohibited: Single system administrator architecture enforced. Secondary admin accounts cannot be registered, invited, imported, or promoted."
+    )
 
 @app.post("/api/auth/send-otp")
 async def send_otp(req: OTPResendRequest):

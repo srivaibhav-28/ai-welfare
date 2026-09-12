@@ -31,18 +31,18 @@ async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
             detail="Invalid Admin Credentials. Access Denied."
         )
 
-    # Ensure single admin record exists in public.users / db cache
-    admin_record = {
-        "id": ADMIN_USER_ID,
-        "email": ADMIN_EMAIL,
-        "name": ADMIN_NAME,
-        "mobile_number": "",
-        "role": "admin",
-        "is_verified": True,
-        "profile": {"role": "admin"}
-    }
+    # Ensure single admin record exists in public.users in Supabase database
+    try:
+        db.ensure_single_admin()
+    except Exception as e:
+        print(f"[ADMIN AUTH SYNC WARNING]: {e}")
     
-    token = create_access_token({"sub": ADMIN_USER_ID, "role": "admin"})
+    token = create_access_token({
+        "sub": ADMIN_USER_ID,
+        "email": ADMIN_EMAIL,
+        "role": "admin",
+        "name": ADMIN_NAME
+    })
 
     return {
         "access_token": token,
@@ -53,3 +53,15 @@ async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
         "role": "admin",
         "is_verified": True
     }
+
+@app.post("/api/admin/register")
+@app.post("/api/admin/signup")
+@app.post("/api/admin/invite")
+@app.post("/api/admin/import")
+@app.post("/api/admin/promote")
+async def block_secondary_admin_creation():
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Prohibited: Single system administrator architecture enforced. Secondary admin accounts cannot be registered, invited, imported, or promoted."
+    )
+

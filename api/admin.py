@@ -39,17 +39,17 @@ async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
             detail="Invalid Admin Credentials. Access Denied."
         )
 
-    admin_record = {
-        "id": ADMIN_USER_ID,
-        "email": ADMIN_EMAIL,
-        "name": ADMIN_NAME,
-        "mobile_number": "",
-        "role": "admin",
-        "is_verified": True,
-        "profile": {"role": "admin"}
-    }
+    try:
+        db.ensure_single_admin()
+    except Exception as e:
+        print(f"[ADMIN LOGIN SYNC WARNING]: {e}")
     
-    token = create_access_token({"sub": ADMIN_USER_ID, "role": "admin"})
+    token = create_access_token({
+        "sub": ADMIN_USER_ID,
+        "email": ADMIN_EMAIL,
+        "role": "admin",
+        "name": ADMIN_NAME
+    })
 
     return {
         "access_token": token,
@@ -60,6 +60,17 @@ async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
         "role": "admin",
         "is_verified": True
     }
+
+@app.post("/api/admin/register")
+@app.post("/api/admin/signup")
+@app.post("/api/admin/invite")
+@app.post("/api/admin/import")
+@app.post("/api/admin/promote")
+async def block_secondary_admin_creation_portal():
+    raise HTTPException(
+        status_code=403,
+        detail="Prohibited: Single system administrator architecture enforced. Secondary admin accounts cannot be registered, invited, imported, or promoted."
+    )
 
 @app.post("/api/admin/schemes")
 async def admin_create_scheme(req: SchemeCreate, admin: Dict[str, Any] = Depends(require_admin_user)):
@@ -288,6 +299,8 @@ async def admin_create_db_row(table_name: str, payload: Dict[str, Any], admin: D
     allowed_tables = {"users", "schemes", "applications", "user_documents"}
     if table_name not in allowed_tables:
         raise HTTPException(status_code=400, detail="Unsupported table")
+    if table_name == "users" and (payload.get("role") == "admin" or payload.get("email", "").strip().lower() == ADMIN_EMAIL):
+        raise HTTPException(status_code=403, detail="Creation of additional admin accounts is prohibited.")
     return db.insert_row(table_name, payload)
 
 @app.put("/api/admin/db/{table_name}/{row_id}")
@@ -295,6 +308,8 @@ async def admin_update_db_row(table_name: str, row_id: str, payload: Dict[str, A
     allowed_tables = {"users", "schemes", "applications", "user_documents"}
     if table_name not in allowed_tables:
         raise HTTPException(status_code=400, detail="Unsupported table")
+    if table_name == "users" and payload.get("role") == "admin":
+        raise HTTPException(status_code=403, detail="Promoting users to admin role is prohibited.")
     return db.update_row(table_name, {"id": row_id}, payload)
 
 @app.delete("/api/admin/db/{table_name}/{row_id}")
