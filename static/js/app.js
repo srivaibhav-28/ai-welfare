@@ -4083,20 +4083,20 @@ async function loadAdminPayments() {
         const data = await ApiService.getPayments();
         if (data && data.analytics) {
             const a = data.analytics;
-            const elTotal = document.getElementById("pm-total-count");
-            const elPend = document.getElementById("pm-pending-count");
-            const elProc = document.getElementById("pm-processing-count");
-            const elComp = document.getElementById("pm-completed-count");
-            const elFail = document.getElementById("pm-failed-count");
-            const elCanc = document.getElementById("pm-cancelled-count");
-            const elAmt = document.getElementById("pm-total-amount");
+            const elTotal = document.getElementById("payStatTotal") || document.getElementById("pm-total-count");
+            const elPend = document.getElementById("payStatPending") || document.getElementById("pm-pending-count");
+            const elProc = document.getElementById("payStatProcessing") || document.getElementById("pm-processing-count");
+            const elComp = document.getElementById("payStatCompleted") || document.getElementById("pm-completed-count");
+            const elFail = document.getElementById("payStatFailed") || document.getElementById("pm-failed-count");
+            const elCanc = document.getElementById("payStatCancelled") || document.getElementById("pm-cancelled-count");
+            const elAmt = document.getElementById("payStatTotalPaid") || document.getElementById("pm-total-amount");
 
-            if (elTotal) elTotal.textContent = a.total_count || 0;
-            if (elPend) elPend.textContent = a.pending_count || 0;
-            if (elProc) elProc.textContent = a.processing_count || 0;
-            if (elComp) elComp.textContent = a.completed_count || 0;
-            if (elFail) elFail.textContent = a.failed_count || 0;
-            if (elCanc) elCanc.textContent = a.cancelled_count || 0;
+            if (elTotal) elTotal.textContent = a.total_payments ?? a.total_count ?? 0;
+            if (elPend) elPend.textContent = a.pending ?? a.pending_count ?? 0;
+            if (elProc) elProc.textContent = a.processing ?? a.processing_count ?? 0;
+            if (elComp) elComp.textContent = a.completed ?? a.completed_count ?? 0;
+            if (elFail) elFail.textContent = a.failed ?? a.failed_count ?? 0;
+            if (elCanc) elCanc.textContent = a.cancelled ?? a.cancelled_count ?? 0;
             if (elAmt) elAmt.textContent = "₹" + Number(a.total_amount_paid || 0).toLocaleString("en-IN");
         }
 
@@ -4109,8 +4109,8 @@ async function loadAdminPayments() {
 }
 
 function filterAdminPaymentsTable() {
-    const searchVal = (document.getElementById("admin-payment-search")?.value || "").toLowerCase().trim();
-    const statusVal = document.getElementById("admin-payment-status-filter")?.value || "all";
+    const searchVal = (document.getElementById("adminPaySearch")?.value || document.getElementById("admin-payment-search")?.value || "").toLowerCase().trim();
+    const statusVal = (document.getElementById("adminPayFilterStatus")?.value || document.getElementById("admin-payment-status-filter")?.value || "all").toLowerCase().trim();
 
     let filtered = adminPaymentsList.filter(p => {
         const matchesSearch = !searchVal || 
@@ -4120,7 +4120,7 @@ function filterAdminPaymentsTable() {
             (p.scheme_name || "").toLowerCase().includes(searchVal) ||
             (p.payment_reference || "").toLowerCase().includes(searchVal);
 
-        const matchesStatus = statusVal === "all" || p.payment_status === statusVal;
+        const matchesStatus = statusVal === "all" || (p.payment_status || "").toLowerCase() === statusVal;
 
         return matchesSearch && matchesStatus;
     });
@@ -4129,7 +4129,7 @@ function filterAdminPaymentsTable() {
 }
 
 function renderAdminPaymentsTable(payments) {
-    const tbody = document.getElementById("admin-payments-table-body");
+    const tbody = document.getElementById("adminPaymentsTableBody") || document.getElementById("admin-payments-table-body");
     if (!tbody) return;
 
     tbody.innerHTML = "";

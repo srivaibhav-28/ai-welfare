@@ -101,6 +101,56 @@ ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pending_registrations ENABLE ROW LEVEL SECURITY;
 
+-- Payments Table
+CREATE TABLE IF NOT EXISTS payments (
+    id TEXT PRIMARY KEY,
+    payment_id TEXT,
+    application_id TEXT REFERENCES applications(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    scheme_id TEXT,
+    scheme_name TEXT,
+    beneficiary_name TEXT,
+    amount NUMERIC DEFAULT 0.00,
+    payment_status TEXT NOT NULL DEFAULT 'Pending',
+    payment_reference TEXT DEFAULT '',
+    approved_by TEXT DEFAULT '',
+    approved_at TEXT DEFAULT '',
+    paid_at TEXT DEFAULT '',
+    remarks TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_application_id ON payments(application_id);
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+
+-- Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    target_user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT DEFAULT 'info',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    sent_by TEXT DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_target_user_id ON notifications(target_user_id);
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- Audit Logs Table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id TEXT PRIMARY KEY,
+    action TEXT NOT NULL,
+    performed_by TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    ip_address TEXT DEFAULT '127.0.0.1',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'applications' AND policyname = 'Allow public read write applications') THEN
@@ -117,5 +167,14 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'pending_registrations' AND policyname = 'Allow public read write pending_registrations') THEN
         CREATE POLICY "Allow public read write pending_registrations" ON pending_registrations FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'payments' AND policyname = 'Allow public read write payments') THEN
+        CREATE POLICY "Allow public read write payments" ON payments FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Allow public read write notifications') THEN
+        CREATE POLICY "Allow public read write notifications" ON notifications FOR ALL USING (true) WITH CHECK (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'audit_logs' AND policyname = 'Allow public read write audit_logs') THEN
+        CREATE POLICY "Allow public read write audit_logs" ON audit_logs FOR ALL USING (true) WITH CHECK (true);
     END IF;
 END $$;

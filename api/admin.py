@@ -120,13 +120,30 @@ async def admin_update_scheme_rules(scheme_id: str, req: SchemeRuleUpdate, admin
 async def admin_get_users(admin: Dict[str, Any] = Depends(require_admin_user)):
     users = db.get_users()
     apps = db.get_applications()
+    all_docs = db.fetch_rows("user_documents")
+    docs_by_user = {}
+    for r in (all_docs or []):
+        u_id = r.get("user_id")
+        d_name = r.get("document_name")
+        if u_id and d_name:
+            if u_id not in docs_by_user:
+                docs_by_user[u_id] = {}
+            docs_by_user[u_id][d_name] = {
+                "status": r.get("status"),
+                "upload_date": r.get("upload_date"),
+                "file_name": r.get("file_name"),
+                "file_url": r.get("file_url"),
+                "remarks": r.get("remarks"),
+                "verified_by": r.get("verified_by")
+            }
+
     safe_users = []
     for u in users:
         u_copy = dict(u)
         u_copy.pop("password_hash", None)
         user_apps = [a for a in apps if a.get("user_id") == u["id"]]
         u_copy["applications_count"] = len(user_apps)
-        u_copy["user_documents"] = db.get_user_documents(u["id"])
+        u_copy["user_documents"] = docs_by_user.get(u["id"], {})
         safe_users.append(u_copy)
     return safe_users
 
@@ -206,9 +223,9 @@ async def admin_get_supabase_status(admin: Dict[str, Any] = Depends(require_admi
 @app.get("/api/admin/dashboard")
 @app.get("/api/admin/analytics")
 async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user)):
-    users = db.fetch_rows("users") or db.get_users()
-    schemes = db.fetch_rows("schemes") or db.get_schemes()
-    apps = db.fetch_rows("applications") or db.get_applications()
+    users = db.get_users()
+    schemes = db.get_schemes()
+    apps = db.get_applications()
 
     status_counts = {
         "Applied": 0,
@@ -286,28 +303,33 @@ async def admin_get_analytics(admin: Dict[str, Any] = Depends(require_admin_user
         "most_applied_scheme": most_applied,
         "approval_rate": round((approved_count / total_apps_len) * 100, 1) if total_apps_len > 0 else 0.0,
         "rejection_rate": round((rejected_count / total_apps_len) * 100, 1) if total_apps_len > 0 else 0.0,
+        "status_distribution": status_counts,
         "application_status_distribution": status_counts,
+        "category_distribution": category_counts,
         "scheme_category_distribution": category_counts,
         "monthly_applications": monthly_apps,
-        "top_applied_schemes": dict(top_schemes),
+        "district_distribution": district_counts,
         "applications_by_district": district_counts,
+        "gender_distribution": gender_counts,
         "applications_by_gender": gender_counts,
+        "income_distribution": income_brackets,
         "applications_by_income": income_brackets,
-        "recent_users": users[-5:],
-        "recent_applications": apps[-5:]
+        "top_applied_schemes": dict(top_schemes),
+        "recent_applications": apps[-5:],
+        "recent_users": users[-5:]
     }
+
+ALLOWED_DB_TABLES = {"users", "schemes", "applications", "user_documents", "payments", "notifications", "audit_logs"}
 
 @app.get("/api/admin/db/{table_name}")
 async def admin_get_db_table(table_name: str, admin: Dict[str, Any] = Depends(require_admin_user)):
-    allowed_tables = {"users", "schemes", "applications", "user_documents"}
-    if table_name not in allowed_tables:
+    if table_name not in ALLOWED_DB_TABLES:
         raise HTTPException(status_code=400, detail="Unsupported table")
     return db.fetch_rows(table_name)
 
 @app.post("/api/admin/db/{table_name}")
 async def admin_create_db_row(table_name: str, payload: Dict[str, Any], admin: Dict[str, Any] = Depends(require_admin_user)):
-    allowed_tables = {"users", "schemes", "applications", "user_documents"}
-    if table_name not in allowed_tables:
+    if table_name not in ALLOWED_DB_TABLES:
         raise HTTPException(status_code=400, detail="Unsupported table")
     if table_name == "users" and (payload.get("role") == "admin" or payload.get("email", "").strip().lower() == ADMIN_EMAIL):
         raise HTTPException(status_code=403, detail="Creation of additional admin accounts is prohibited.")
@@ -315,8 +337,7 @@ async def admin_create_db_row(table_name: str, payload: Dict[str, Any], admin: D
 
 @app.put("/api/admin/db/{table_name}/{row_id}")
 async def admin_update_db_row(table_name: str, row_id: str, payload: Dict[str, Any], admin: Dict[str, Any] = Depends(require_admin_user)):
-    allowed_tables = {"users", "schemes", "applications", "user_documents"}
-    if table_name not in allowed_tables:
+    if table_name not in ALLOWED_DB_TABLES:
         raise HTTPException(status_code=400, detail="Unsupported table")
     if table_name == "users" and payload.get("role") == "admin":
         raise HTTPException(status_code=403, detail="Promoting users to admin role is prohibited.")
@@ -324,8 +345,7 @@ async def admin_update_db_row(table_name: str, row_id: str, payload: Dict[str, A
 
 @app.delete("/api/admin/db/{table_name}/{row_id}")
 async def admin_delete_db_row(table_name: str, row_id: str, admin: Dict[str, Any] = Depends(require_admin_user)):
-    allowed_tables = {"users", "schemes", "applications", "user_documents"}
-    if table_name not in allowed_tables:
+    if table_name not in ALLOWED_DB_TABLES:
         raise HTTPException(status_code=400, detail="Unsupported table")
     deleted = db.delete_rows(table_name, {"id": row_id})
     return {"deleted": deleted}

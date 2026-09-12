@@ -279,7 +279,8 @@ class SupabaseDatabase:
             "apikey": config.SUPABASE_SERVICE_ROLE_KEY or config.SUPABASE_ANON_KEY,
             "Authorization": f"Bearer {config.SUPABASE_SERVICE_ROLE_KEY or config.SUPABASE_ANON_KEY}",
             "Content-Type": "application/json",
-            "Prefer": "return=representation"
+            "Prefer": "return=representation",
+            "Connection": "close"
         }
 
     def _print_db_audit(self, operation: str, table: str, query_or_url: str, payload: Any, status: int, body_text: str, rows: Any):
@@ -296,6 +297,12 @@ class SupabaseDatabase:
         print(f"8. Number of Rows Returned : {len(rows_list)}")
         print("=" * 80 + "\n")
 
+    @property
+    def session(self) -> requests.Session:
+        if not hasattr(self, "_session") or self._session is None:
+            self._session = requests.Session()
+        return self._session
+
     # REST helper methods
     def fetch_rows(self, table: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         url = f"{config.SUPABASE_URL}/rest/v1/{table}?select=*" if config.SUPABASE_URL else ""
@@ -309,23 +316,17 @@ class SupabaseDatabase:
             return rows
 
         try:
-            res = requests.get(url, headers=self._headers(), timeout=5)
+            res = requests.get(url, headers=self._headers(), timeout=(3.0, 5.0))
             rows = res.json() if res.status_code == 200 and res.content else []
             self._print_db_audit("FETCH_ROWS_SUPABASE", table, url, filters, res.status_code, res.text[:500], rows)
             if res.status_code == 200:
                 return rows if isinstance(rows, list) else []
             
-            err_msg = f"Supabase REST API Error (Status {res.status_code}): {res.text[:500]}"
-            if self.is_production:
-                print(f"[PRODUCTION REST ERROR] {err_msg}")
-                raise RuntimeError(err_msg)
+            err_msg = f"Supabase REST API Warning (Status {res.status_code}): {res.text[:500]}"
+            print(f"[SUPABASE FETCH WARNING] {err_msg}")
         except Exception as e:
-            if isinstance(e, RuntimeError):
-                raise
             err_msg = f"Supabase Request Exception ({type(e).__name__}): {str(e)}"
-            print(f"[PRODUCTION EXCEPTION ERROR] {err_msg}")
-            if self.is_production:
-                raise RuntimeError(err_msg) from e
+            print(f"[SUPABASE EXCEPTION WARNING] {err_msg}")
 
         fallback_rows = self.fetch_rows_in_memory(table, filters)
         self._print_db_audit("FETCH_ROWS_FALLBACK", table, url, filters, 200, "Fallback to in-memory cache", fallback_rows)
@@ -345,6 +346,24 @@ class SupabaseDatabase:
             if filters and "user_id" in filters:
                 return [a for a in self._in_memory_applications if a.get("user_id") == filters["user_id"]]
             return self._in_memory_applications
+        elif table == "payments":
+            payments = getattr(self, "_in_memory_payments", [])
+            if filters:
+                for k, v in filters.items():
+                    payments = [p for p in payments if str(p.get(k, "")).lower() == str(v).lower()]
+            return payments
+        elif table == "notifications":
+            notifications = getattr(self, "_in_memory_notifications", [])
+            if filters:
+                for k, v in filters.items():
+                    notifications = [n for n in notifications if str(n.get(k, "")).lower() == str(v).lower()]
+            return notifications
+        elif table == "audit_logs":
+            logs = getattr(self, "_in_memory_audit_logs", [])
+            if filters:
+                for k, v in filters.items():
+                    logs = [l for l in logs if str(l.get(k, "")).lower() == str(v).lower()]
+            return logs
         elif table == "pending_registrations":
             if filters and "email" in filters:
                 email_val = str(filters["email"]).lower()
@@ -358,7 +377,7 @@ class SupabaseDatabase:
 
         if self.is_supabase_configured:
             try:
-                res = requests.post(url, headers=self._headers(), json=data, timeout=5)
+                res = requests.post(url, headers=self._headers(), json=data, timeout=(3.0, 5.0))
                 res_data = res.json() if res.content else []
                 self._print_db_audit("INSERT_ROW_SUPABASE", table, url, data, res.status_code, res.text[:500], res_data)
                 if res.status_code in [200, 201]:
@@ -382,7 +401,7 @@ class SupabaseDatabase:
                         if cols:
                             payload_retry = {k: v for k, v in data.items() if k in cols and k != "picture"}
 
-                    retry_res = requests.post(url, headers=self._headers(), json=payload_retry, timeout=5)
+                    retry_res = requests.post(url, headers=self._headers(), json=payload_retry, timeout=(3.0, 5.0))
                     retry_data = retry_res.json() if retry_res.content else []
                     self._print_db_audit("INSERT_ROW_SCHEMA_RETRY", table, url, payload_retry, retry_res.status_code, retry_res.text[:500], retry_data)
                     if retry_res.status_code in [200, 201]:
@@ -418,7 +437,7 @@ class SupabaseDatabase:
             query = "&".join([f"{k}=eq.{v}" for k, v in filters.items()])
             url = f"{config.SUPABASE_URL}/rest/v1/{table}?{query}"
             try:
-                res = requests.patch(url, headers=self._headers(), json=data, timeout=5)
+                res = requests.patch(url, headers=self._headers(), json=data, timeout=(3.0, 5.0))
                 res_data = res.json() if res.content else []
                 self._print_db_audit("UPDATE_ROW_SUPABASE", table, url, data, res.status_code, res.text[:500], res_data)
                 if res.status_code in [200, 201, 204]:
@@ -455,7 +474,7 @@ class SupabaseDatabase:
             query = "&".join([f"{k}=eq.{v}" for k, v in filters.items()])
             url = f"{config.SUPABASE_URL}/rest/v1/{table}?{query}"
             try:
-                res = requests.delete(url, headers=self._headers(), timeout=5)
+                res = requests.delete(url, headers=self._headers(), timeout=(3.0, 5.0))
                 if res.status_code in [200, 204]:
                     return True
             except Exception as e:

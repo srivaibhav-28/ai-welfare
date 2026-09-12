@@ -560,18 +560,20 @@ ALLOWED_PAYMENT_STATUSES = {"Pending", "Processing", "Completed", "Failed", "Can
 
 @app.get("/api/payments")
 @app.get("/api/admin/payments")
+@app.get("/api/payments/analytics")
 async def get_all_payments(
     status: str = None,
     search: str = None,
     admin: Dict[str, Any] = Depends(require_admin_user)
 ):
-    payments = db.get_payments()
+    all_p = db.get_payments()
+    filtered_payments = all_p
     if status and status.lower() != "all":
-        payments = [p for p in payments if p.get("payment_status", "").lower() == status.lower()]
+        filtered_payments = [p for p in all_p if p.get("payment_status", "").lower() == status.lower()]
     if search:
         s = search.lower()
-        payments = [
-            p for p in payments if (
+        filtered_payments = [
+            p for p in filtered_payments if (
                 s in p.get("beneficiary_name", "").lower() or
                 s in p.get("scheme_name", "").lower() or
                 s in p.get("application_id", "").lower() or
@@ -580,7 +582,6 @@ async def get_all_payments(
             )
         ]
     
-    all_p = db.get_payments()
     analytics = {
         "total_payments": len(all_p),
         "pending": len([p for p in all_p if p.get("payment_status") == "Pending"]),
@@ -593,8 +594,8 @@ async def get_all_payments(
     
     return {
         "status": "success",
-        "count": len(payments),
-        "payments": payments,
+        "count": len(filtered_payments),
+        "payments": filtered_payments,
         "analytics": analytics
     }
 
