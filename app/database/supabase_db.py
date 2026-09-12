@@ -758,9 +758,17 @@ class SupabaseDatabase:
         return doc_info
 
     def get_notifications(self, target_user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        notifs = self.fetch_rows("notifications")
-        if not notifs:
+        if self.is_supabase_configured:
+            try:
+                notifs = self.fetch_rows("notifications")
+                if notifs is None:
+                    notifs = []
+            except Exception as err:
+                print(f"[SUPABASE GET NOTIFICATIONS WARNING]: {err}")
+                notifs = []
+        else:
             notifs = self._in_memory_notifications
+
         if target_user_id:
             return [n for n in notifs if n.get("target_user_id") is None or n.get("target_user_id") == target_user_id]
         return notifs

@@ -48,6 +48,10 @@
       "dest": "/api/applications.py"
     },
     {
+      "src": "/api/payments(.*)",
+      "dest": "/api/applications.py"
+    },
+    {
       "src": "/api/upload(.*)",
       "dest": "/api/documents.py"
     },
@@ -62,6 +66,10 @@
     {
       "src": "/api/admin/reports(.*)",
       "dest": "/api/reports.py"
+    },
+    {
+      "src": "/api/admin/payments(.*)",
+      "dest": "/api/applications.py"
     },
     {
       "src": "/api/admin(.*)",
