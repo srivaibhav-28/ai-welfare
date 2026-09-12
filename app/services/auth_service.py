@@ -287,6 +287,28 @@ def require_current_user(user: Optional[Dict[str, Any]] = Depends(get_current_us
     return user
 
 def require_admin_user(user: Dict[str, Any] = Depends(require_current_user)) -> Dict[str, Any]:
+    # 1. Fetch user from live Supabase database
+    db_user = db.get_user_by_id(user.get("id"))
+    if not db_user:
+        db_user = db.get_user_by_email(user.get("email", ""))
+
+    if not db_user:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Admin account does not exist in Supabase database."
+        )
+
+    if (
+        db_user.get("role") != "admin"
+        or db_user.get("email", "").strip().lower() != ADMIN_EMAIL
+        or db_user.get("id") != ADMIN_USER_ID
+        or db_user.get("is_blocked", False)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Admin privileges required or account inactive. Access Denied."
+        )
+
     if (
         user.get("role") != "admin"
         or user.get("email", "").strip().lower() != ADMIN_EMAIL
@@ -294,6 +316,7 @@ def require_admin_user(user: Dict[str, Any] = Depends(require_current_user)) -> 
     ):
         raise HTTPException(
             status_code=403,
-            detail="Forbidden: Admin privileges required. Access Denied."
+            detail="Forbidden: Admin token claims mismatch. Access Denied."
         )
-    return user
+
+    return db_user

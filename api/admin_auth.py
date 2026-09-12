@@ -19,19 +19,24 @@ class AdminLoginRequest(BaseModel):
 
 @app.post("/api/admin/login")
 async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
-    """
-    Surgical Admin Login Endpoint.
-    Only the single configured system administrator can log in.
-    Admin registration, public signup, OTP, and invite codes are disabled.
-    """
     clean_email = req.email.strip().lower()
-    if not authenticate_admin(clean_email, req.password):
+    user = db.get_user_by_email(clean_email)
+    if not user and clean_email == ADMIN_EMAIL:
+        user = db.ensure_single_admin()
+
+    if not user or user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Admin Credentials. Access Denied."
         )
 
-    # Ensure single admin record exists in public.users in Supabase database
+    from app.services.auth_service import verify_password
+    if not verify_password(req.password, user.get("password_hash", "")):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Admin Credentials. Access Denied."
+        )
+
     try:
         db.ensure_single_admin()
     except Exception as e:
@@ -41,14 +46,14 @@ async def admin_login(req: AdminLoginRequest) -> Dict[str, Any]:
         "sub": ADMIN_USER_ID,
         "email": ADMIN_EMAIL,
         "role": "admin",
-        "name": ADMIN_NAME
+        "name": user.get("name") or ADMIN_NAME
     })
 
     return {
         "access_token": token,
         "token_type": "bearer",
         "user_id": ADMIN_USER_ID,
-        "name": ADMIN_NAME,
+        "name": user.get("name") or ADMIN_NAME,
         "email": ADMIN_EMAIL,
         "role": "admin",
         "is_verified": True

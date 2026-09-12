@@ -321,17 +321,13 @@ async def google_auth(req: GoogleAuthRequest):
 @app.post("/api/auth/login", response_model=TokenResponse)
 async def login_user(req: UserLogin):
     req_email = req.email.strip().lower()
-    if req_email == ADMIN_EMAIL:
-        raise HTTPException(
-            status_code=403,
-            detail="Administrator login must use the Admin Portal endpoint /api/admin/login."
-        )
+
+    # 1. Fetch user from Supabase database
     user = db.get_user_by_email(req_email)
-    if user and user.get("role") == "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Administrator login must use the Admin Portal endpoint /api/admin/login."
-        )
+
+    # If admin user missing from DB but email matches ADMIN_EMAIL, ensure single admin record in DB
+    if not user and req_email == ADMIN_EMAIL:
+        user = db.ensure_single_admin()
 
     if not user:
         raise HTTPException(
@@ -339,11 +335,23 @@ async def login_user(req: UserLogin):
             detail="No account found with this email address. Please register to create a new account."
         )
 
+    # 2. Authenticate directly against Supabase database password_hash
     if not verify_password(req.password, user.get("password_hash", "")):
         raise HTTPException(
             status_code=401,
             detail="Incorrect password. Please try again."
         )
+
+    user_role = user.get("role", "citizen")
+    if user_role == "admin":
+        db.ensure_single_admin()
+        user_id = ADMIN_USER_ID
+        user_name = user.get("name") or ADMIN_NAME
+        user_email = ADMIN_EMAIL
+    else:
+        user_id = user["id"]
+        user_name = user.get("name") or user["email"].split("@")[0].capitalize()
+        user_email = user["email"]
 
     if not user.get("is_verified", True):
         resend_pending_otp(user["email"])
@@ -353,10 +361,10 @@ async def login_user(req: UserLogin):
         )
 
     token = create_access_token({
-        "sub": user["id"],
-        "email": user["email"],
-        "name": user.get("name") or user["email"].split("@")[0].capitalize(),
-        "role": user.get("role", "citizen")
+        "sub": user_id,
+        "email": user_email,
+        "name": user_name,
+        "role": user_role
     })
     from api.users import check_profile_completion
     prof = user.get("profile", {}) or {}
@@ -365,49 +373,18 @@ async def login_user(req: UserLogin):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user_id": user["id"],
-        "name": user.get("name") or user["email"].split("@")[0].capitalize(),
-        "email": user["email"],
+        "user_id": user_id,
+        "name": user_name,
+        "email": user_email,
         "mobile_number": user.get("mobile_number") or "",
-        "role": user.get("role", "citizen"),
+        "role": user_role,
         "is_verified": True,
         "has_completed_profile": has_comp
     }
 
 @app.post("/api/admin/login", response_model=TokenResponse)
 async def admin_login_user(req: UserLogin):
-    req_email = req.email.strip().lower()
-    print("=" * 80)
-    print(f"[BACKEND ADMIN LOGIN REQUEST RECEIVED]: email='{req_email}'")
-    print("=" * 80)
-    
-    if not authenticate_admin(req_email, req.password):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid Admin Credentials. Access Denied."
-        )
-
-    try:
-        db.ensure_single_admin()
-    except Exception as e:
-        print(f"[ADMIN LOGIN SYNC WARNING]: {e}")
-    token = create_access_token({
-        "sub": ADMIN_USER_ID,
-        "email": ADMIN_EMAIL,
-        "role": "admin",
-        "name": ADMIN_NAME
-    })
-
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user_id": ADMIN_USER_ID,
-        "name": ADMIN_NAME,
-        "email": ADMIN_EMAIL,
-        "mobile_number": "",
-        "role": "admin",
-        "is_verified": True
-    }
+    return await login_user(req)
 
 @app.post("/api/admin/register")
 @app.post("/api/admin/signup")

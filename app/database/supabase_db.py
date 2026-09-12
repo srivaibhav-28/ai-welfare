@@ -236,31 +236,6 @@ INITIAL_USERS = [
         "role": "admin",
         "is_verified": True,
         "profile": {"role": "admin"}
-    },
-    {
-        "id": "usr-citizen-01",
-        "email": "citizen@welfare.gov",
-        "password_hash": "password123",
-        "name": "Rajesh Kumar",
-        "role": "citizen",
-        "is_verified": True,
-        "profile": {
-            "name": "Rajesh Kumar",
-            "age": 42,
-            "gender": "Male",
-            "state": "Uttar Pradesh",
-            "district": "Varanasi",
-            "occupation": "Farmer",
-            "annual_income": 120000,
-            "education": "Secondary",
-            "caste_category": "OBC",
-            "disability_status": False,
-            "student_status": False,
-            "farmer_status": True,
-            "senior_citizen_status": False,
-            "widow_status": False,
-            "bpl_status": True
-        }
     }
 ]
 
