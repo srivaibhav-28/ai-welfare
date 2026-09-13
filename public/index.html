@@ -1958,7 +1958,7 @@
                                             <th class="p-3">Amount (₹)</th>
                                             <th class="p-3">Payment Status</th>
                                             <th class="p-3">Bank Reference (UTR)</th>
-                                            <th class="p-3">Approved Date</th>
+                                            <th class="p-3">Paid / Approved Date</th>
                                             <th class="p-3">Action</th>
                                         </tr>
                                     </thead>
@@ -2735,6 +2735,13 @@
                 <div class="flex justify-between"><span class="text-slate-500 font-semibold">Scheme:</span> <span id="paymentModalScheme" class="font-bold text-slate-800"></span></div>
                 <div class="flex justify-between"><span class="text-slate-500 font-semibold">Benefit Amount:</span> <span id="paymentModalAmount" class="font-bold text-emerald-700 text-sm"></span></div>
                 <div class="flex justify-between"><span class="text-slate-500 font-semibold">Current Status:</span> <span id="paymentModalCurrentStatus" class="font-semibold"></span></div>
+                
+                <div class="pt-2 border-t border-slate-200/80 space-y-1.5 mt-2">
+                    <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">Beneficiary Bank Details</div>
+                    <div class="flex justify-between"><span class="text-slate-500 font-semibold">Account Holder Name:</span> <span id="paymentModalAccountHolder" class="font-bold text-slate-800"></span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 font-semibold">Account Number:</span> <span id="paymentModalAccountNumber" class="font-mono font-bold text-slate-800"></span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 font-semibold">IFSC Code:</span> <span id="paymentModalIfsc" class="font-mono font-bold text-slate-800"></span></div>
+                </div>
             </div>
 
             <form id="updatePaymentForm" onsubmit="handlePaymentStatusSubmit(event); return false;" class="space-y-4">

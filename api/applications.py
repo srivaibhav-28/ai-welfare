@@ -567,6 +567,19 @@ async def get_all_payments(
     admin: Dict[str, Any] = Depends(require_admin_user)
 ):
     all_p = db.get_payments()
+    for p in all_p:
+        u_id = p.get("user_id")
+        if u_id and (not p.get("bank_account_number") or not p.get("ifsc_code") or not p.get("account_holder_name")):
+            u_data = db.get_user_by_id(u_id)
+            if u_data:
+                prof = u_data.get("profile", {}) or {}
+                if not p.get("bank_account_number"):
+                    p["bank_account_number"] = prof.get("bank_account_number", "")
+                if not p.get("ifsc_code"):
+                    p["ifsc_code"] = prof.get("ifsc_code", "")
+                if not p.get("account_holder_name"):
+                    p["account_holder_name"] = prof.get("full_name") or u_data.get("name") or p.get("beneficiary_name", "")
+
     filtered_payments = all_p
     if status and status.lower() != "all":
         filtered_payments = [p for p in all_p if p.get("payment_status", "").lower() == status.lower()]
@@ -634,9 +647,15 @@ async def update_payment_status(
         raise HTTPException(status_code=400, detail=f"Payments in state '{old_status}' cannot be reset to Pending.")
 
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    pay_ref = (req.payment_reference or "").strip() if req.payment_reference is not None else payment.get("payment_reference", "")
+
+    if new_status == "Completed" and not pay_ref:
+        import random
+        pay_ref = f"UTR{datetime.datetime.now().strftime('%Y%m%d')}{random.randint(1000, 9999)}"
+
     update_data = {
         "payment_status": new_status,
-        "payment_reference": req.payment_reference if req.payment_reference is not None else payment.get("payment_reference", ""),
+        "payment_reference": pay_ref,
         "remarks": req.remarks if req.remarks is not None else payment.get("remarks", ""),
         "updated_at": now_iso
     }

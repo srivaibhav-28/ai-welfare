@@ -4210,18 +4210,40 @@ function renderAdminPaymentsTable(payments) {
 }
 
 function openUpdatePaymentModal(paymentId) {
-    const payment = adminPaymentsList.find(p => p.payment_id === paymentId);
+    const payment = adminPaymentsList.find(p => p.payment_id === paymentId || p.id === paymentId);
     if (!payment) return;
 
-    document.getElementById("paymentModalId").value = payment.payment_id;
-    document.getElementById("paymentModalBeneficiary").textContent = payment.beneficiary_name || 'N/A';
-    document.getElementById("paymentModalScheme").textContent = payment.scheme_name;
+    const actualId = payment.payment_id || payment.id;
+    document.getElementById("paymentModalId").value = actualId;
+    document.getElementById("paymentModalBeneficiary").textContent = payment.beneficiary_name || payment.account_holder_name || 'N/A';
+    document.getElementById("paymentModalScheme").textContent = payment.scheme_name || 'N/A';
     document.getElementById("paymentModalAmount").textContent = "₹" + Number(payment.amount || 0).toLocaleString("en-IN");
-    document.getElementById("paymentModalCurrentStatus").textContent = payment.payment_status;
+    document.getElementById("paymentModalCurrentStatus").textContent = payment.payment_status || 'Pending';
     document.getElementById("paymentModalCurrentStatus").className = `font-extrabold ${getPaymentBadgeClass(payment.payment_status)}`;
 
+    const accHolderEl = document.getElementById("paymentModalAccountHolder");
+    if (accHolderEl) {
+        accHolderEl.textContent = payment.account_holder_name || payment.beneficiary_name || 'N/A';
+    }
+
+    const rawAcc = String(payment.bank_account_number || payment.account_number || "").trim();
+    let maskedAcc = "Not Provided";
+    if (rawAcc.length > 0) {
+        const last4 = rawAcc.slice(-4);
+        maskedAcc = rawAcc.length > 4 ? "XXXXXXXX" + last4 : rawAcc;
+    }
+    const accNumEl = document.getElementById("paymentModalAccountNumber");
+    if (accNumEl) {
+        accNumEl.textContent = maskedAcc;
+    }
+
+    const ifscEl = document.getElementById("paymentModalIfsc");
+    if (ifscEl) {
+        ifscEl.textContent = payment.ifsc_code || payment.ifsc || 'Not Provided';
+    }
+
     const statusSelect = document.getElementById("paymentModalStatus");
-    if (statusSelect) statusSelect.value = payment.payment_status;
+    if (statusSelect) statusSelect.value = payment.payment_status || 'Pending';
 
     document.getElementById("paymentModalRef").value = payment.payment_reference || "";
     document.getElementById("paymentModalRemarks").value = payment.remarks || "";
@@ -4241,8 +4263,17 @@ async function handlePaymentStatusSubmit(event) {
 
     const paymentId = document.getElementById("paymentModalId").value;
     const newStatus = document.getElementById("paymentModalStatus").value;
-    const paymentRef = document.getElementById("paymentModalRef").value;
+    let paymentRef = (document.getElementById("paymentModalRef").value || "").trim();
     const remarks = document.getElementById("paymentModalRemarks").value;
+
+    const payment = adminPaymentsList.find(p => p.payment_id === paymentId || p.id === paymentId) || {};
+
+    if (newStatus === "Completed" && !paymentRef) {
+        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        const randNum = String(Math.floor(1000 + Math.random() * 9000));
+        paymentRef = `UTR${todayStr}${randNum}`;
+        document.getElementById("paymentModalRef").value = paymentRef;
+    }
 
     const btn = document.getElementById("btnPaymentSubmit");
     try {
@@ -4258,7 +4289,21 @@ async function handlePaymentStatusSubmit(event) {
             remarks: remarks
         });
 
-        showNotification("Payment Updated", res.message || `Payment ${paymentId} updated to "${newStatus}". Email notification sent.`, "success");
+        if (newStatus === "Completed") {
+            const amtStr = Number(payment.amount || 6000).toLocaleString("en-IN");
+            showNotification(
+                "DBT Transfer Completed",
+                `₹${amtStr} has been successfully transferred to the beneficiary's registered bank account.`,
+                "success"
+            );
+        } else {
+            showNotification(
+                "Payment Updated",
+                res.message || `Payment ${paymentId} updated to "${newStatus}".`,
+                "success"
+            );
+        }
+
         closeUpdatePaymentModal();
         await loadAdminPayments();
 

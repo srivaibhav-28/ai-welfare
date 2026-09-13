@@ -459,13 +459,19 @@ class ApiService {
     }
 
     static async updatePaymentStatus(paymentId, paymentStatus, paymentReference = "", remarks = "") {
-        return await this.request(`/api/payments/${paymentId}/status`, {
-            method: "PUT",
-            body: JSON.stringify({
+        let payload = {};
+        if (typeof paymentStatus === "object" && paymentStatus !== null) {
+            payload = paymentStatus;
+        } else {
+            payload = {
                 payment_status: paymentStatus,
                 payment_reference: paymentReference,
                 remarks: remarks
-            })
+            };
+        }
+        return await this.request(`/api/payments/${paymentId}/status`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
         });
     }
 
